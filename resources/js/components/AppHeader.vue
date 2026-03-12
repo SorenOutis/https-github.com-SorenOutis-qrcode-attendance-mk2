@@ -31,6 +31,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
@@ -238,6 +239,8 @@ const rightNavItems: NavItem[] = [
                         </div>
                     </div>
 
+                    <ThemeToggle />
+        
                     <DropdownMenu>
                         <DropdownMenuTrigger :as-child="true">
                             <Button

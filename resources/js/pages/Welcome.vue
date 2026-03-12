@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, onUnmounted, ref, computed } from 'vue';
 import gsap from 'gsap';
 import { dashboard, login, register } from '@/routes';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 
 type Comment = {
     id: number;
@@ -181,6 +182,7 @@ onUnmounted(() => {
                 <span>QR_ATTENDANCE</span>
             </div>
             <nav class="flex items-center gap-6">
+                <ThemeToggle />
                 <Link
                     v-if="$page.props.auth?.user"
                     :href="dashboard()"

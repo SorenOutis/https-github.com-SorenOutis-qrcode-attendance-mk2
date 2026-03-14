@@ -104,10 +104,8 @@ class AttendanceController extends Controller
         if ($existing->isEmpty()) {
             if ($now->lessThanOrEqualTo($start->addMinutes($graceMinutes))) {
                 $status = 'Present';
-            } elseif ($now->lessThanOrEqualTo($end)) {
-                $status = 'Late';
             } else {
-                $status = 'Time Out';
+                $status = 'Late';
             }
         } else {
             // Any subsequent scan for the same slot is treated as time out

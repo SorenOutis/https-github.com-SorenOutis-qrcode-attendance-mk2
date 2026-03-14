@@ -36,6 +36,7 @@ type Student = {
     section?: string | null;
     qr_token: string;
     schedule?: { start: string; end: string }[];
+    today_statuses?: string[];
     latest_attendance?: {
         id: number;
         status: string;
@@ -555,6 +556,21 @@ function startScanningLoop() {
                 scanned_at: data.attendance.scanned_at,
                 status: data.attendance.status,
             };
+            // Optimistically update the matching student's today_statuses in the prop
+            const matchedStudent = props.students.find((s) => s.id === data.student.id);
+            if (matchedStudent) {
+                if (!matchedStudent.today_statuses) {
+                    (matchedStudent as any).today_statuses = [];
+                }
+                if (!matchedStudent.today_statuses!.includes(data.attendance.status)) {
+                    matchedStudent.today_statuses!.push(data.attendance.status);
+                }
+                matchedStudent.latest_attendance = {
+                    id: data.attendance.id,
+                    status: data.attendance.status,
+                    scanned_at: data.attendance.scanned_at,
+                };
+            }
             scanError.value = null;
             scanFeedback.value = 'success';
             scanResultModalOpen.value = true;
@@ -772,8 +788,18 @@ onMounted(() => {
                                 <th class="px-4 py-2 text-xs font-medium">
                                     Student #
                                 </th>
-                                <th class="px-4 py-2 text-xs font-medium">
-                                    Status
+                                <!-- Status columns -->
+                                <th class="px-4 py-2 text-xs font-medium text-center text-emerald-600 dark:text-emerald-400">
+                                    Present
+                                </th>
+                                <th class="px-4 py-2 text-xs font-medium text-center text-amber-500 dark:text-amber-400">
+                                    Late
+                                </th>
+                                <th class="px-4 py-2 text-xs font-medium text-center text-blue-500 dark:text-blue-400">
+                                    Time Out
+                                </th>
+                                <th class="px-4 py-2 text-xs font-medium text-center text-rose-500 dark:text-rose-400">
+                                    Absent
                                 </th>
                                 <th class="px-4 py-2 text-xs font-medium">
                                     Section
@@ -781,9 +807,6 @@ onMounted(() => {
                                 <th class="px-4 py-2 text-xs font-medium">
                                     Email
                                 </th>
-                                <!-- <th class="px-4 py-2 text-right text-xs font-medium">
-                                    QR
-                                </th> -->
                             </tr>
                         </thead>
                         <tbody>
@@ -792,7 +815,7 @@ onMounted(() => {
                                 class="border-b last:border-b-0"
                             >
                                 <td
-                                    colspan="6"
+                                    colspan="9"
                                     class="px-4 py-6 text-center text-xs text-muted-foreground"
                                 >
                                     No students yet. Use the
@@ -825,67 +848,62 @@ onMounted(() => {
                                 <td class="px-4 py-2 text-xs text-muted-foreground">
                                     {{ student.student_number }}
                                 </td>
-                                <td class="px-4 py-2" @click.stop v-if="activeTab === 'active'">
-                                    <div class="flex flex-col gap-1">
+                                <!-- Status indicator columns (active students) -->
+                                <template v-if="activeTab === 'active'">
+                                    <!-- Present -->
+                                    <td class="px-4 py-2 text-center" @click.stop>
+                                        <span v-if="student.today_statuses?.includes('Present')"
+                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40"
+                                            title="Present"
+                                        >
+                                            <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                        </span>
+                                        <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
+                                    </td>
+                                    <!-- Late -->
+                                    <td class="px-4 py-2 text-center" @click.stop>
+                                        <span v-if="student.today_statuses?.includes('Late')"
+                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/40"
+                                            title="Late"
+                                        >
+                                            <svg class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                        </span>
+                                        <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
+                                    </td>
+                                    <!-- Time Out -->
+                                    <td class="px-4 py-2 text-center" @click.stop>
+                                        <span v-if="student.today_statuses?.includes('Time Out')"
+                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40"
+                                            title="Time Out"
+                                        >
+                                            <svg class="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                        </span>
+                                        <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
+                                    </td>
+                                    <!-- Absent: show when no scans today, or explicitly marked Absent -->
+                                    <td class="px-4 py-2 text-center" @click.stop>
+                                        <span v-if="!student.today_statuses?.length || student.today_statuses?.includes('Absent')"
+                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-900/40"
+                                            title="Absent"
+                                        >
+                                            <svg class="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                        </span>
+                                        <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
+                                    </td>
+                                </template>
+                                <!-- Deleted students: span across 4 status cols + show restore/delete buttons -->
+                                <template v-else>
+                                    <td colspan="4" class="px-4 py-2" @click.stop>
                                         <div class="flex items-center gap-2">
-                                            <span
-                                                v-if="!student.latest_attendance"
-                                                class="text-xs font-medium text-muted-foreground"
-                                            >
-                                                Absent
-                                            </span>
-                                            <select
-                                                v-else
-                                                class="h-8 rounded-md border bg-background px-2 text-xs text-foreground"
-                                                :value="student.latest_attendance.status"
-                                                @change="
-                                                    updateLatestStatus(
-                                                        student,
-                                                        ($event.target as HTMLSelectElement)
-                                                            .value,
-                                                    )
-                                                "
-                                            >
-                                                <option value="Present">
-                                                    Present
-                                                </option>
-                                                <option value="Late">Late</option>
-                                                <option value="Time Out">
-                                                    Time Out
-                                                </option>
-                                                <option value="Absent">
-                                                    Absent
-                                                </option>
-                                            </select>
+                                            <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" title="Restore" @click="restoreStudent(student.id)">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                                            </Button>
+                                            <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50" title="Delete Permanently" @click="forceDeleteStudent(student.id)">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                            </Button>
                                         </div>
-                                        <span
-                                            v-if="student.latest_attendance"
-                                            class="text-[11px] text-muted-foreground"
-                                        >
-                                            {{
-                                                formatDateTime(
-                                                    student.latest_attendance.scanned_at,
-                                                )
-                                            }}
-                                        </span>
-                                        <span
-                                            v-else
-                                            class="text-[11px] text-muted-foreground"
-                                        >
-                                            {{ new Date().toLocaleDateString() }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-2" @click.stop v-else>
-                                    <div class="flex items-center gap-2">
-                                        <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" title="Restore" @click="restoreStudent(student.id)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
-                                        </Button>
-                                        <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50" title="Delete Permanently" @click="forceDeleteStudent(student.id)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                        </Button>
-                                    </div>
-                                </td>
+                                    </td>
+                                </template>
                                 <td class="px-4 py-2 text-xs text-muted-foreground">
                                     {{ student.section || '—' }}
                                 </td>

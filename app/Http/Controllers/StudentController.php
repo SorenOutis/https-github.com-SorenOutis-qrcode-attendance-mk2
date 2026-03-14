@@ -51,23 +51,31 @@ class StudentController extends Controller
             ->groupBy('student_id')
             ->map(fn ($items) => $items->first());
 
-        $mapStudent = function ($student) use ($latestByStudent) {
+        // All unique statuses recorded today per student (for multi-checkmark columns)
+        $statusesByStudent = Attendance::query()
+            ->whereDate('scanned_at', $date)
+            ->get(['student_id', 'status'])
+            ->groupBy('student_id')
+            ->map(fn ($items) => $items->pluck('status')->unique()->values()->all());
+
+        $mapStudent = function ($student) use ($latestByStudent, $statusesByStudent) {
             $latest = $latestByStudent->get($student->id);
 
             return [
-                'id' => $student->id,
-                'name' => $student->name,
-                'student_number' => $student->student_number,
-                'email' => $student->email,
-                'section' => $student->section,
-                'qr_token' => $student->qr_token,
-                'schedule' => $student->schedule,
-                'created_at' => $student->created_at,
-                'deleted_at' => $student->deleted_at,
+                'id'               => $student->id,
+                'name'             => $student->name,
+                'student_number'   => $student->student_number,
+                'email'            => $student->email,
+                'section'          => $student->section,
+                'qr_token'         => $student->qr_token,
+                'schedule'         => $student->schedule,
+                'created_at'       => $student->created_at,
+                'deleted_at'       => $student->deleted_at,
+                'today_statuses'   => $statusesByStudent->get($student->id, []),
                 'latest_attendance' => $latest
                     ? [
-                        'id' => $latest->id,
-                        'status' => $latest->status,
+                        'id'         => $latest->id,
+                        'status'     => $latest->status,
                         'scanned_at' => $latest->scanned_at,
                     ]
                     : null,

@@ -41,6 +41,7 @@ type Student = {
         status: string;
         scanned_at: string;
     } | null;
+    deleted_at?: string | null;
 };
 
 type PageProps = {
@@ -1457,12 +1458,18 @@ onMounted(() => {
                             <!-- Scanner Overlay -->
                             <div 
                                 v-if="scanning"
-                                class="absolute inset-0 pointer-events-none border-2 border-emerald-500/30 transition-all duration-300"
+                                class="absolute inset-0 pointer-events-none border-2 border-emerald-500/30 transition-all duration-300 z-10"
                                 :class="{
                                     'border-emerald-500 scale-[1.02] bg-emerald-500/10': scanFeedback === 'success',
                                     'border-rose-500 scale-[1.02] bg-rose-500/10': scanFeedback === 'error',
                                 }"
                             >
+                                <!-- Scanning Line Animation -->
+                                <div 
+                                    v-if="!scanFeedback"
+                                    class="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent shadow-[0_0_15px_rgba(16,185,129,0.8)] animate-scan-line"
+                                ></div>
+
                                 <div class="absolute inset-0 flex items-center justify-center">
                                     <CheckCircle2 v-if="scanFeedback === 'success'" class="h-12 w-12 text-emerald-500 animate-in zoom-in duration-300" />
                                     <AlertCircle v-if="scanFeedback === 'error'" class="h-12 w-12 text-rose-500 animate-in zoom-in duration-300" />
@@ -1579,3 +1586,26 @@ onMounted(() => {
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+@keyframes scan {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+.animate-scan-line {
+    animation: scan 2s linear infinite;
+}
+
+.status-pulse {
+    transition: all 0.3s ease;
+}
+
+.glass-card {
+    background: rgba(var(--background), 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(var(--foreground), 0.1);
+}
+</style>

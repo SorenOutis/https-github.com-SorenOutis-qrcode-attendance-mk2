@@ -1477,36 +1477,11 @@ onMounted(() => {
                         </p>
 
                         <p
-                            v-if="scanError"
+                            v-if="scanError && !scanResultModalOpen"
                             class="text-xs font-medium text-destructive"
                         >
                             {{ scanError }}
                         </p>
-
-                        <div
-                            v-if="lastScanResult"
-                            class="rounded-lg border bg-muted/60 p-3 text-xs"
-                        >
-                            <p class="text-[11px] font-semibold uppercase">
-                                Last scan
-                            </p>
-                            <p class="mt-1 text-sm font-medium">
-                                {{ lastScanResult.student.name }}
-                            </p>
-                            <p class="text-xs text-muted-foreground">
-                                {{ lastScanResult.student.student_number }}
-                                ·
-                                {{ lastScanResult.student.section || 'No section' }}
-                            </p>
-                            <p class="mt-1 text-[11px] text-muted-foreground">
-                                Status:
-                                {{ lastScanResult.status }}
-                            </p>
-                            <p class="text-[11px] text-muted-foreground">
-                                Scanned at:
-                                {{ lastScanResult.scanned_at }}
-                            </p>
-                        </div>
 
                         <DialogFooter class="mt-2 flex justify-end gap-2">
                             <Button
@@ -1515,10 +1490,75 @@ onMounted(() => {
                                 size="sm"
                                 @click="closeScanModal"
                             >
-                                Close
+                                Close Scanner
                             </Button>
                         </DialogFooter>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            <!-- Scan Result Modal -->
+            <Dialog v-model:open="scanResultModalOpen" @update:open="(val) => !val && closeScanResultModal()">
+                <DialogContent class="max-w-xs sm:max-w-sm overflow-hidden p-0 rounded-2xl border-0 shadow-2xl">
+                    <div 
+                        class="p-6 text-center space-y-4"
+                        :class="scanError ? 'bg-rose-50/50 dark:bg-rose-950/20' : 'bg-emerald-50/50 dark:bg-emerald-950/20'"
+                    >
+                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+                             :class="scanError ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-600' : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600'"
+                        >
+                            <CheckCircle2 v-if="!scanError" class="h-8 w-8" />
+                            <AlertCircle v-else class="h-8 w-8" />
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <h3 class="text-lg font-bold">
+                                {{ scanError ? 'Scan Failed' : 'Attendance Recorded' }}
+                            </h3>
+                            <p v-if="!scanError && lastScanResult" class="text-sm font-medium">
+                                {{ lastScanResult.student.name }}
+                            </p>
+                            <p class="text-xs text-muted-foreground">
+                                {{ scanError || (lastScanResult ? `Status: ${lastScanResult.status}` : '') }}
+                            </p>
+                            <p v-if="!scanError && lastScanResult" class="text-[10px] text-muted-foreground/60">
+                                {{ formatDateTime(lastScanResult.scanned_at) }}
+                            </p>
+                        </div>
+
+                        <Button 
+                            class="w-full rounded-xl py-6 text-base font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            :variant="scanError ? 'destructive' : 'default'"
+                            @click="closeScanResultModal"
+                        >
+                            Close
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <!-- Generic Confirmation Modal -->
+            <Dialog v-model:open="confirmModalOpen">
+                <DialogContent class="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>{{ confirmTitle }}</DialogTitle>
+                    </DialogHeader>
+                    <div class="py-2">
+                        <p class="text-sm text-muted-foreground">
+                            {{ confirmDescription }}
+                        </p>
+                    </div>
+                    <DialogFooter class="flex gap-2">
+                        <Button variant="outline" @click="confirmModalOpen = false">
+                            Cancel
+                        </Button>
+                        <Button 
+                            :variant="confirmIsDestructive ? 'destructive' : 'default'"
+                            @click="handleConfirm"
+                        >
+                            Confirm
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

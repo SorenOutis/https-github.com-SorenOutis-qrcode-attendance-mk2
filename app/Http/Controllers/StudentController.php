@@ -52,12 +52,16 @@ class StudentController extends Controller
             ->groupBy('student_id')
             ->map(fn ($items) => $items->first());
 
-        // All unique statuses recorded today per student (for multi-checkmark columns)
+        // All unique statuses and their times recorded today per student
         $statusesByStudent = Attendance::query()
             ->whereDate('scanned_at', $date)
-            ->get(['student_id', 'status'])
+            ->orderBy('scanned_at')
+            ->get(['student_id', 'status', 'scanned_at'])
             ->groupBy('student_id')
-            ->map(fn ($items) => $items->pluck('status')->unique()->values()->all());
+            ->map(fn ($items) => $items->map(fn ($item) => [
+                'status' => $item->status,
+                'time' => $item->scanned_at->format('h:i A'),
+            ])->values()->all());
 
         $mapStudent = function ($student) use ($latestByStudent, $statusesByStudent) {
             $latest = $latestByStudent->get($student->id);

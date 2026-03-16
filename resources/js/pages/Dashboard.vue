@@ -47,7 +47,7 @@ type Student = {
     section?: string | null;
     qr_token: string;
     schedule?: { day: string; start: string; end: string }[];
-    today_statuses?: string[];
+    today_statuses?: { status: string; time: string }[];
     latest_attendance?: {
         id: number;
         status: string;
@@ -458,7 +458,19 @@ function openEditModal(student: Student) {
 function formatDateTime(iso: string) {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+}
+
+function formatTimeTo12h(timeStr?: string) {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let h = parseInt(parts[0]);
+    const m = parts[1];
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12;
+    return `${h}:${m} ${ampm}`;
 }
 
 function updateLatestStatus(student: Student, status: string) {
@@ -739,9 +751,14 @@ function startScanningLoop() {
                 if (!matchedStudent.today_statuses) {
                     (matchedStudent as any).today_statuses = [];
                 }
-                if (!matchedStudent.today_statuses!.includes(data.attendance.status)) {
-                    matchedStudent.today_statuses!.push(data.attendance.status);
-                }
+                const newStatus = {
+                    status: data.attendance.status,
+                    time: formatTimeTo12h(new Date(data.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }).slice(0, 5))
+                };
+                
+                // For simplicity, just push it (sequential logic handles uniqueness on re-index)
+                matchedStudent.today_statuses!.push(newStatus);
+
                 matchedStudent.latest_attendance = {
                     id: data.attendance.id,
                     status: data.attendance.status,
@@ -1090,37 +1107,43 @@ onMounted(() => {
                                 <template v-if="activeTab === 'active'">
                                     <!-- Present -->
                                     <td class="px-4 py-2 text-center" @click.stop>
-                                        <span v-if="student.today_statuses?.includes('Present')"
-                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40"
-                                            title="Present"
-                                        >
-                                            <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                        </span>
+                                        <div v-if="student.today_statuses?.some(s => s.status === 'Present')" class="flex flex-col items-center gap-1">
+                                            <template v-for="s in student.today_statuses?.filter(st => st.status === 'Present')">
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full">
+                                                    <CheckCircle2 class="w-3 h-3" />
+                                                    {{ s.time }}
+                                                </span>
+                                            </template>
+                                        </div>
                                         <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
                                     </td>
                                     <!-- Late -->
                                     <td class="px-4 py-2 text-center" @click.stop>
-                                        <span v-if="student.today_statuses?.includes('Late')"
-                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/40"
-                                            title="Late"
-                                        >
-                                            <svg class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                        </span>
+                                        <div v-if="student.today_statuses?.some(s => s.status === 'Late')" class="flex flex-col items-center gap-1">
+                                            <template v-for="s in student.today_statuses?.filter(st => st.status === 'Late')">
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">
+                                                    <AlertCircle class="w-3 h-3" />
+                                                    {{ s.time }}
+                                                </span>
+                                            </template>
+                                        </div>
                                         <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
                                     </td>
                                     <!-- Time Out -->
                                     <td class="px-4 py-2 text-center" @click.stop>
-                                        <span v-if="student.today_statuses?.includes('Time Out')"
-                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40"
-                                            title="Time Out"
-                                        >
-                                            <svg class="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                        </span>
+                                        <div v-if="student.today_statuses?.some(s => s.status === 'Time Out')" class="flex flex-col items-center gap-1">
+                                            <template v-for="s in student.today_statuses?.filter(st => st.status === 'Time Out')">
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">
+                                                    <CheckCircle2 class="w-3 h-3" />
+                                                    {{ s.time }}
+                                                </span>
+                                            </template>
+                                        </div>
                                         <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
                                     </td>
                                     <!-- Absent: show when scheduled today and no scans today, or explicitly marked Absent -->
                                     <td class="px-4 py-2 text-center" @click.stop v-if="activeTab === 'active'">
-                                        <span v-if="(isScheduledForToday(student) && (!student.today_statuses || student.today_statuses.length === 0)) || student.today_statuses?.includes('Absent')"
+                                        <span v-if="(isScheduledForToday(student) && (!student.today_statuses || student.today_statuses.length === 0)) || student.today_statuses?.some(s => s.status === 'Absent')"
                                             class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-900/40"
                                             title="Absent"
                                         >
@@ -1197,22 +1220,24 @@ onMounted(() => {
                                 </div>
                                 <div 
                                     v-if="activeTab === 'active'"
-                                    class="flex gap-1"
+                                    class="flex flex-wrap gap-1 justify-end"
                                 >
-                                    <div 
-                                        v-if="student.today_statuses?.includes('Present')"
-                                        class="h-5 w-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center"
-                                        title="Present"
-                                    >
-                                        <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                    </div>
-                                    <div 
-                                        v-if="student.today_statuses?.includes('Late')"
-                                        class="h-5 w-5 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center"
-                                        title="Late"
-                                    >
-                                        <svg class="w-3 h-3 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                    </div>
+                                    <template v-for="s in student.today_statuses">
+                                        <div 
+                                            class="h-5 flex items-center gap-1 rounded-full px-1.5 py-0.5"
+                                            :class="[
+                                                s.status === 'Present' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' :
+                                                s.status === 'Late' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' :
+                                                s.status === 'Time Out' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' :
+                                                'bg-muted'
+                                            ]"
+                                            :title="s.status"
+                                        >
+                                            <CheckCircle2 v-if="s.status !== 'Late'" class="w-2.5 h-2.5" />
+                                            <AlertCircle v-else class="w-2.5 h-2.5" />
+                                            <span class="text-[8px] font-bold">{{ s.time }}</span>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                             
@@ -1519,10 +1544,10 @@ onMounted(() => {
                                     >
                                         <div class="flex flex-col">
                                             <span class="font-medium">
-                                                {{ new Date(record.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+                                                {{ new Date(record.scanned_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) }}
                                             </span>
                                             <span v-if="record.slot_start" class="text-[10px] text-muted-foreground">
-                                                {{ record.slot_start }} – {{ record.slot_end }}
+                                                {{ formatTimeTo12h(record.slot_start) }} – {{ formatTimeTo12h(record.slot_end) }}
                                             </span>
                                         </div>
                                         <span
@@ -1913,7 +1938,7 @@ onMounted(() => {
                                 {{ scanError || (lastScanResult ? `Status: ${lastScanResult.status}` : '') }}
                             </p>
                             <p v-if="!scanError && lastScanResult && lastScanResult.slot_start" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold px-2 py-0.5 bg-emerald-500/10 rounded-full inline-block mt-1">
-                                Slot: {{ lastScanResult.slot_start }} – {{ lastScanResult.slot_end }}
+                                Slot: {{ formatTimeTo12h(lastScanResult.slot_start) }} – {{ formatTimeTo12h(lastScanResult.slot_end) }}
                             </p>
                             <p v-if="!scanError && lastScanResult" class="text-[10px] text-muted-foreground/60">
                                 {{ formatDateTime(lastScanResult.scanned_at) }}

@@ -54,47 +54,6 @@ class AttendanceController extends Controller
             ], 422);
         }
 
-        // Map ANY scan time to a slot:
-        // - If within a slot: use that slot
-        // - If between slots / before first slot: use the next upcoming slot
-        // - If after last slot: use the last slot
-        $slotIndex = null;
-        $slot = null;
-        $start = null;
-        $end = null;
-
-        foreach ($schedule as $i => $candidate) {
-            $candidateStart = CarbonImmutable::parse($date.' '.$candidate['start']);
-            $candidateEnd = CarbonImmutable::parse($date.' '.$candidate['end']);
-
-            if ($now->betweenIncluded($candidateStart, $candidateEnd)) {
-                $slotIndex = (int) $i;
-                $slot = $candidate;
-                $start = $candidateStart;
-                $end = $candidateEnd;
-                break;
-            }
-
-            if ($now->lessThan($candidateStart)) {
-                // Next upcoming slot
-                $slotIndex = (int) $i;
-                $slot = $candidate;
-                $start = $candidateStart;
-                $end = $candidateEnd;
-                break;
-            }
-        }
-
-        if ($slotIndex === null) {
-            // After all slots → last slot
-            $slotIndex = (int) ($schedule->count() - 1);
-            $slot = $schedule[$slotIndex];
-            $start = CarbonImmutable::parse($date.' '.$slot['start']);
-            $end = CarbonImmutable::parse($date.' '.$slot['end']);
-        }
-
-        $graceMinutes = 15;
-
         // Count existing attendance for this student today
         $dailyRecords = Attendance::query()
             ->where('student_id', $student->id)
@@ -102,22 +61,31 @@ class AttendanceController extends Controller
             ->orderBy('scanned_at')
             ->get();
 
-        if ($dailyRecords->count() >= 2) {
-            return response()->json([
-                'message' => 'You have already completed your attendance for today. You cannot be scanned again until the next day.',
-            ], 422);
-        }
+        $totalSlots = $schedule->count();
+        $recordsCount = $dailyRecords->count();
+        $graceMinutes = 15;
 
-        if ($dailyRecords->isEmpty()) {
-            // First scan of the day
+        if ($recordsCount < $totalSlots) {
+            // Sequential Check-in: The n-th scan of the day is for the n-th slot in the schedule
+            $slotIndex = $recordsCount;
+            $slot = (array) $schedule[$slotIndex];
+            $start = CarbonImmutable::parse($date.' '.$slot['start']);
+
             if ($now->lessThan($start->addMinutes($graceMinutes))) {
                 $status = 'Present';
             } else {
                 $status = 'Late';
             }
-        } else {
-            // Second scan of the day
+        } elseif ($recordsCount === $totalSlots) {
+            // The scan after all check-ins is the Time Out
             $status = 'Time Out';
+            // Use the last slot as the reference for the Time Out record
+            $slot = (array) $schedule->last();
+            $slotIndex = $totalSlots - 1;
+        } else {
+            return response()->json([
+                'message' => 'You have already completed your attendance for today.',
+            ], 422);
         }
 
         $attendance = Attendance::create([
@@ -141,13 +109,8 @@ class AttendanceController extends Controller
                 'id' => $attendance->id,
                 'scanned_at' => $attendance->scanned_at,
                 'status' => $attendance->status,
-                'slot_start' => $attendance->slot_start,
-                'slot_end' => $attendance->slot_end,
-            ],
-            'debug' => [
-                'server_now' => $now->toDateTimeString(),
-                'server_timezone' => config('app.timezone'),
-                'php_timezone' => date_default_timezone_get(),
+                'slot_start' => $attendance->slot_start->format('H:i'),
+                'slot_end' => $attendance->slot_end->format('H:i'),
             ],
         ]);
     }

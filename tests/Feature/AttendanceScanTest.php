@@ -47,3 +47,44 @@ test('scans at or after 15 minutes of schedule start are marked as Late', functi
     $response = $this->post(route('attendance.scan'), ['token' => 'test-token']);
     $response->assertJsonPath('attendance.status', 'Late');
 });
+
+test('handles multiple slots correctly', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $student = Student::create([
+        'name' => 'Multi Slot Student',
+        'student_number' => '2021-0002',
+        'email' => 'multi@example.com',
+        'qr_token' => 'multi-token',
+        'schedule' => [
+            ['day' => 'Monday', 'start' => '09:00', 'end' => '10:00'],
+            ['day' => 'Monday', 'start' => '13:00', 'end' => '14:00'],
+        ],
+    ]);
+
+    $baseDate = '2026-03-16'; // Monday
+
+    // 1. First slot check-in (9:05 AM) -> Present
+    CarbonImmutable::setTestNow(CarbonImmutable::parse("{$baseDate} 09:05:00"));
+    $response = $this->post(route('attendance.scan'), ['token' => 'multi-token']);
+    $response->assertJsonPath('attendance.status', 'Present');
+    $response->assertJsonPath('attendance.slot_start', '09:00');
+
+    // 2. Second scan at 9:10 AM -> Now counts for the 2nd slot (Early Check-in)
+    CarbonImmutable::setTestNow(CarbonImmutable::parse("{$baseDate} 09:10:00"));
+    $response = $this->post(route('attendance.scan'), ['token' => 'multi-token']);
+    $response->assertJsonPath('attendance.status', 'Present');
+    $response->assertJsonPath('attendance.slot_start', '13:00');
+
+    // 3. Final scan (2:05 PM) -> Time Out
+    CarbonImmutable::setTestNow(CarbonImmutable::parse("{$baseDate} 14:05:00"));
+    $response = $this->post(route('attendance.scan'), ['token' => 'multi-token']);
+    $response->assertJsonPath('attendance.status', 'Time Out');
+
+    // 5. Subsequent scan -> Error
+    CarbonImmutable::setTestNow(CarbonImmutable::parse("{$baseDate} 15:05:00"));
+    $response = $this->post(route('attendance.scan'), ['token' => 'multi-token']);
+    $response->assertStatus(422);
+    $response->assertJsonPath('message', 'You have already completed your attendance for today.');
+});

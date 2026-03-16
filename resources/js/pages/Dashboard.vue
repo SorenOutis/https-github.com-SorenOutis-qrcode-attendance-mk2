@@ -11,7 +11,7 @@ import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus, LayoutGrid, Table } from 'lucide-vue-next';
+import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar } from 'lucide-vue-next';
 import confetti from 'canvas-confetti';
 import {
     Dialog,
@@ -97,6 +97,63 @@ const filteredTrashedStudents = computed(() => {
         s.student_number.toLowerCase().includes(q) ||
         (s.section && s.section.toLowerCase().includes(q))
     );
+});
+
+const userName = computed(() => {
+    const user = page.props.auth.user;
+    if (!user || !user.name) return 'User';
+    return user.name.split(' ')[0];
+});
+
+const greeting = computed(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Good night';
+});
+
+const formattedCurrentDate = computed(() => {
+    return new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+});
+
+const stats = computed(() => {
+    const activeStudents = students.value;
+    return {
+        total: activeStudents.length,
+        present: activeStudents.filter(s => s.today_statuses?.some(ts => ts.status === 'Present')).length,
+        late: activeStudents.filter(s => s.today_statuses?.some(ts => ts.status === 'Late')).length,
+        absent: activeStudents.filter(s => s.today_statuses?.some(ts => ts.status === 'Absent')).length,
+        trashed: props.trashedStudents?.length || 0
+    };
+});
+
+const recentActivity = computed(() => {
+    const activity: { name: string; status: string; time: string; sortTime: number }[] = [];
+    
+    students.value.forEach(s => {
+        s.today_statuses?.forEach(ts => {
+            const [time, period] = ts.time.split(' ');
+            let [hours, minutes] = time.split(':').map(Number);
+            if (period === 'PM' && hours !== 12) hours += 12;
+            if (period === 'AM' && hours === 12) hours = 0;
+            const sortTime = hours * 60 + minutes;
+            
+            activity.push({
+                name: s.name,
+                status: ts.status,
+                time: ts.time,
+                sortTime: sortTime
+            });
+        });
+    });
+    
+    return activity.sort((a, b) => b.sortTime - a.sortTime).slice(0, 5);
 });
 
 const createModalOpen = ref(false);
@@ -823,14 +880,18 @@ onMounted(() => {
         // Wrap with a perspective container
         gsap.set(cardsRef.value, { perspective: 1000 });
 
+        // Ensure cards are visible before animation starts if something fails
+        gsap.set(cards, { opacity: 1, visibility: 'visible' });
+
         gsap.from(cards, {
             opacity: 0,
-            y: 50,
-            rotationX: -45,
-            z: -100,
-            duration: 1,
-            stagger: 0.15,
-            ease: 'back.out(1.5)',
+            y: 30,
+            rotationX: -15,
+            z: -20,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: 'power2.out',
+            clearProps: 'all' // Crucial: removes GSAP inline styles after completion
         });
         
         cards.forEach((card) => {
@@ -876,16 +937,16 @@ onMounted(() => {
 
     // 2. Table and Row Entrance
     if (tableRef.value) {
-        gsap.set(tableRef.value, { perspective: 1000 });
+        gsap.set(tableRef.value, { opacity: 1, visibility: 'visible', perspective: 1000 });
 
         gsap.from(tableRef.value, {
             opacity: 0,
-            y: 40,
-            rotationX: 20,
-            z: -50,
-            duration: 1,
+            y: 20,
+            rotationX: 10,
+            duration: 0.8,
             delay: 0.2,
-            ease: 'power3.out',
+            ease: 'power2.out',
+            clearProps: 'opacity,transform'
         });
         
         const rows = tableRef.value.querySelectorAll('tbody tr');
@@ -937,9 +998,20 @@ onMounted(() => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
+            <!-- Welcome Header -->
+            <div class="flex flex-col gap-1 px-1">
+                <h1 class="text-3xl font-bold tracking-tight">
+                    {{ greeting }}, {{ userName }}!
+                </h1>
+                <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar class="h-4 w-4" />
+                    <span>{{ formattedCurrentDate }}</span>
+                </div>
+            </div>
+
             <div
                 ref="cardsRef"
-                class="grid auto-rows-min gap-4 grid-cols-2 lg:grid-cols-4"
+                class="grid gap-4 grid-cols-2 lg:grid-cols-4"
             >
                 <div
                     data-card
@@ -947,16 +1019,11 @@ onMounted(() => {
                 >
                     <div class="flex items-center justify-between">
                         <div>
-                            <p
-                                class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80"
-                            >
+                            <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
                                 Total Students
                             </p>
                             <p class="mt-1 text-4xl font-bold tracking-tight">
-                                {{ searchQuery ? filteredStudents.length : students.length }}
-                            </p>
-                            <p v-if="searchQuery" class="text-[10px] text-muted-foreground mt-0.5">
-                                matching "{{ searchQuery }}"
+                                {{ searchQuery ? filteredStudents.length : stats.total }}
                             </p>
                         </div>
                         <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -967,25 +1034,114 @@ onMounted(() => {
 
                 <div
                     data-card
-                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm col-span-2 lg:col-span-3"
+                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
                 >
-                    <div class="flex h-full flex-col justify-center gap-1">
-                        <p
-                            class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80"
-                        >
-                            Security & Registry
-                        </p>
-                        <p class="text-[11px] leading-relaxed text-muted-foreground">
-                            Encrypted QR tokens ensure data integrity. Total Active: {{ students.length }} | Trashed: {{ props.trashedStudents.length }}
-                        </p>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
+                                Present Today
+                            </p>
+                            <p class="mt-1 text-4xl font-bold tracking-tight text-emerald-400">
+                                {{ stats.present }}
+                            </p>
+                        </div>
+                        <div class="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                            <CheckCircle2 class="h-5 w-5 text-emerald-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    data-card
+                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+                >
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
+                                Late Today
+                            </p>
+                            <p class="mt-1 text-4xl font-bold tracking-tight text-amber-400">
+                                {{ stats.late }}
+                            </p>
+                        </div>
+                        <div class="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                            <Clock class="h-5 w-5 text-amber-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    data-card
+                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+                >
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                                Absent Today
+                            </p>
+                            <p class="mt-1 text-4xl font-bold tracking-tight text-destructive">
+                                {{ stats.absent }}
+                            </p>
+                        </div>
+                        <div class="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                            <XCircle class="h-5 w-5 text-destructive" />
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div
-                ref="tableRef"
-                class="glass-card relative flex-1 overflow-hidden rounded-2xl shadow-sm md:min-h-min"
-            >
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
+                <div class="xl:col-span-1 flex flex-col gap-6">
+                    <!-- Recent Activity Feed -->
+                    <div class="glass-card overflow-hidden rounded-2xl shadow-sm">
+                        <div class="border-b p-4 flex items-center justify-between bg-muted/30">
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-muted-foreground">
+                                <Scan class="h-3.5 w-3.5" />
+                                Live Scan Feed
+                            </h2>
+                            <span class="text-[10px] text-muted-foreground/60 italic">Last 5</span>
+                        </div>
+                        <div class="p-0">
+                            <div v-if="recentActivity.length === 0" class="text-center py-8 text-sm text-muted-foreground italic">
+                                No activity today.
+                            </div>
+                            <div v-else class="divide-y border-t bg-background/50">
+                                <div v-for="(act, i) in recentActivity" :key="i" class="flex items-center justify-between p-3.5 hover:bg-muted/30 transition-colors group">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                                            <span class="text-[10px] font-bold text-primary">{{ act.name.charAt(0) }}</span>
+                                        </div>
+                                        <div class="flex flex-col overflow-hidden">
+                                            <span class="text-xs font-semibold group-hover:text-primary transition-colors text-foreground truncate">{{ act.name }}</span>
+                                            <div class="flex items-center gap-1.5">
+                                                <span 
+                                                    class="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                                                    :class="{
+                                                        'bg-green-500/10 text-green-500': act.status === 'Present',
+                                                        'bg-amber-500/10 text-amber-500': act.status === 'Late',
+                                                        'bg-blue-500/10 text-blue-500': act.status === 'Time Out',
+                                                        'bg-destructive/10 text-destructive': act.status === 'Absent'
+                                                    }"
+                                                >
+                                                    {{ act.status }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1 shrink-0">
+                                        <span class="text-[10px] font-bold text-muted-foreground">{{ act.time }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="xl:col-span-3">
+                    <div
+                        ref="tableRef"
+                        class="glass-card relative overflow-hidden rounded-2xl shadow-sm"
+                    >
                 <div class="flex flex-col border-b p-4 gap-4">
                     <div class="flex items-center gap-4">
                         <div class="flex rounded-lg bg-muted/50 p-1 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
@@ -1224,7 +1380,7 @@ onMounted(() => {
                     <div 
                         v-else
                         ref="studentsGridRef"
-                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                        class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
                     >
                         <div 
                             v-for="student in visibleStudents"
@@ -1294,8 +1450,10 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <Dialog v-model:open="createModalOpen">
+    <Dialog v-model:open="createModalOpen">
                 <DialogContent class="max-w-sm">
                     <DialogHeader>
                         <DialogTitle>
@@ -2088,8 +2246,13 @@ onMounted(() => {
 }
 
 .glass-card {
-    background: rgba(var(--background), 0.6);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(var(--foreground), 0.1);
+    background: rgba(23, 23, 23, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .glass-card {
+    background: rgba(15, 15, 15, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 </style>

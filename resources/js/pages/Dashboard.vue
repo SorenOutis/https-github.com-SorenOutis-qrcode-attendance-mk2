@@ -35,6 +35,8 @@ type AttendanceRecord = {
     id: number;
     status: string;
     scanned_at: string;
+    slot_start?: string;
+    slot_end?: string;
 };
 
 type Student = {
@@ -270,9 +272,12 @@ const lastScanResult = ref<{
     student: Student;
     scanned_at: string;
     status: string;
+    slot_start?: string;
+    slot_end?: string;
 } | null>(null);
 const scanFeedback = ref<'success' | 'error' | null>(null);
 const scanResultModalOpen = ref(false);
+const isCooldownActive = ref(false);
 
 const confirmModalOpen = ref(false);
 const confirmTitle = ref('');
@@ -610,9 +615,15 @@ function closeScanModal() {
 
 function closeScanResultModal() {
     scanResultModalOpen.value = false;
-    // When closing result, if scanner is still open, resume it
+    // When closing result, if scanner is still open, wait 2 seconds before resuming
     if (scanModalOpen.value && mediaStream) {
-        startScanningLoop();
+        isCooldownActive.value = true;
+        setTimeout(() => {
+            isCooldownActive.value = false;
+            if (scanModalOpen.value && mediaStream) {
+                startScanningLoop();
+            }
+        }, 2000);
     }
 }
 
@@ -719,6 +730,8 @@ function startScanningLoop() {
                 student: data.student,
                 scanned_at: data.attendance.scanned_at,
                 status: data.attendance.status,
+                slot_start: data.attendance.slot_start,
+                slot_end: data.attendance.slot_end,
             };
             // Optimistically update the matching student's today_statuses in the prop
             const matchedStudent = props.students.find((s) => s.id === data.student.id);
@@ -1504,9 +1517,14 @@ onMounted(() => {
                                         :key="record.id"
                                         class="flex items-center justify-between px-3 py-2 text-xs border-b last:border-b-0"
                                     >
-                                        <span class="text-muted-foreground">
-                                            {{ new Date(record.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
-                                        </span>
+                                        <div class="flex flex-col">
+                                            <span class="font-medium">
+                                                {{ new Date(record.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+                                            </span>
+                                            <span v-if="record.slot_start" class="text-[10px] text-muted-foreground">
+                                                {{ record.slot_start }} – {{ record.slot_end }}
+                                            </span>
+                                        </div>
                                         <span
                                             :class="[
                                                 'rounded-full px-2 py-0.5 text-[11px] font-semibold',
@@ -1800,12 +1818,23 @@ onMounted(() => {
                         <div
                             class="relative overflow-hidden rounded-lg border bg-black/80"
                         >
-                            <video
+                             <video
                                 ref="videoRef"
                                 class="h-64 w-full object-cover"
                                 playsinline
                                 muted
                             ></video>
+
+                            <!-- Cooldown Overlay -->
+                            <div 
+                                v-if="isCooldownActive"
+                                class="absolute inset-0 flex items-center justify-center bg-black/60 z-20 animate-in fade-in duration-300"
+                            >
+                                <div class="flex flex-col items-center gap-2">
+                                    <div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
+                                    <span class="text-sm font-semibold text-white">Ready in 2s...</span>
+                                </div>
+                            </div>
 
                             <!-- Scanner Overlay -->
                             <div 
@@ -1882,6 +1911,9 @@ onMounted(() => {
                             </p>
                             <p class="text-xs text-muted-foreground">
                                 {{ scanError || (lastScanResult ? `Status: ${lastScanResult.status}` : '') }}
+                            </p>
+                            <p v-if="!scanError && lastScanResult && lastScanResult.slot_start" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold px-2 py-0.5 bg-emerald-500/10 rounded-full inline-block mt-1">
+                                Slot: {{ lastScanResult.slot_start }} – {{ lastScanResult.slot_end }}
                             </p>
                             <p v-if="!scanError && lastScanResult" class="text-[10px] text-muted-foreground/60">
                                 {{ formatDateTime(lastScanResult.scanned_at) }}

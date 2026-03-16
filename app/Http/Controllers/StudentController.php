@@ -220,11 +220,13 @@ class StudentController extends Controller
     {
         $history = $student->attendances()
             ->orderByDesc('scanned_at')
-            ->get(['id', 'status', 'scanned_at'])
+            ->get(['id', 'status', 'scanned_at', 'slot_start', 'slot_end'])
             ->map(fn ($a) => [
                 'id' => $a->id,
                 'status' => $a->status,
                 'scanned_at' => $a->scanned_at->toISOString(),
+                'slot_start' => $a->slot_start?->format('H:i'),
+                'slot_end' => $a->slot_end?->format('H:i'),
             ]);
 
         return response()->json(['history' => $history]);

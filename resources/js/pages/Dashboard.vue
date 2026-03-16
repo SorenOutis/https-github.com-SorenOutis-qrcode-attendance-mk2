@@ -114,6 +114,7 @@ const infoStudent = ref<Student | null>(null);
 const attendanceHistory = ref<AttendanceRecord[]>([]);
 const historyExpanded = ref(false);
 const historyLoading = ref(false);
+const updatingRecordId = ref<number | null>(null);
 
 const el = ref<HTMLElement | null>(null);
 const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -486,6 +487,29 @@ function updateLatestStatus(student: Student, status: string) {
                     only: ['students'],
                     preserveScroll: true,
                 });
+            },
+        },
+    );
+}
+
+function updateHistoryStatus(recordId: number, status: string) {
+    if (updatingRecordId.value) return;
+    updatingRecordId.value = recordId;
+
+    router.put(
+        `/attendance/${recordId}`,
+        { status },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Update local history
+                const record = attendanceHistory.value.find((r) => r.id === recordId);
+                if (record) {
+                    record.status = status;
+                }
+            },
+            onFinish: () => {
+                updatingRecordId.value = null;
             },
         },
     );
@@ -1367,12 +1391,16 @@ onMounted(() => {
                                     :key="index"
                                     class="flex items-center gap-2"
                                 >
-                                    <select
-                                        v-model="slot.day"
-                                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        <option v-for="d in daysOfWeek" :key="d" :value="d">{{ d }}</option>
-                                    </select>
+                                    <Select v-model="slot.day">
+                                        <SelectTrigger class="w-full text-xs">
+                                            <SelectValue :placeholder="slot.day" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem v-for="d in daysOfWeek" :key="d" :value="d">
+                                                {{ d }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                     <Input
                                         v-model="slot.start"
                                         type="time"
@@ -1550,18 +1578,39 @@ onMounted(() => {
                                                 {{ formatTimeTo12h(record.slot_start) }} – {{ formatTimeTo12h(record.slot_end) }}
                                             </span>
                                         </div>
-                                        <span
-                                            :class="[
-                                                'rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                                                record.status === 'Present'  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
-                                                record.status === 'Late'     ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                                                record.status === 'Time Out' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' :
-                                                record.status === 'Absent'   ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
-                                                                               'bg-muted text-muted-foreground'
-                                            ]"
-                                        >
-                                            {{ record.status }}
-                                        </span>
+                                        <div class="flex items-center gap-1">
+                                            <Select 
+                                                :model-value="record.status" 
+                                                @update:model-value="(val) => updateHistoryStatus(record.id, val)"
+                                                :disabled="updatingRecordId === record.id"
+                                            >
+                                                <SelectTrigger class="h-6 min-w-[80px] border-none bg-transparent p-0 hover:bg-muted/50 focus:ring-0">
+                                                    <div v-if="updatingRecordId === record.id" class="flex items-center justify-center w-full">
+                                                        <span class="animate-pulse text-[10px] text-muted-foreground italic">Saving...</span>
+                                                    </div>
+                                                    <SelectValue v-else :placeholder="record.status">
+                                                        <span
+                                                            :class="[
+                                                                'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                                                                record.status === 'Present'  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                                                                record.status === 'Late'     ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                                                                record.status === 'Time Out' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' :
+                                                                record.status === 'Absent'   ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                                                                                               'bg-muted text-muted-foreground'
+                                                            ]"
+                                                        >
+                                                            {{ record.status }}
+                                                        </span>
+                                                    </SelectValue>
+                                                </SelectTrigger>
+                                                <SelectContent class="min-w-[120px]">
+                                                    <SelectItem value="Present" class="text-xs">Present</SelectItem>
+                                                    <SelectItem value="Late" class="text-xs">Late</SelectItem>
+                                                    <SelectItem value="Time Out" class="text-xs">Time Out</SelectItem>
+                                                    <SelectItem value="Absent" class="text-xs">Absent</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -1710,12 +1759,16 @@ onMounted(() => {
                                     :key="index"
                                     class="flex items-center gap-2"
                                 >
-                                    <select
-                                        v-model="slot.day"
-                                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        <option v-for="d in daysOfWeek" :key="d" :value="d">{{ d }}</option>
-                                    </select>
+                                    <Select v-model="slot.day">
+                                        <SelectTrigger class="w-full text-xs">
+                                            <SelectValue :placeholder="slot.day" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem v-for="d in daysOfWeek" :key="d" :value="d">
+                                                {{ d }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                     <Input
                                         v-model="slot.start"
                                         type="time"

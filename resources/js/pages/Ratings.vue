@@ -133,7 +133,7 @@ function starsArray(count: number) {
 
 onMounted(() => {
     // 1. Initial Page Heading Animation with 3D
-    const header = document.querySelector('.rounded-xl.border.bg-gradient-to-br');
+    const header = document.querySelector('.bg-white.dark\\:bg-black');
     if (header) {
         gsap.set(header.parentElement, { perspective: 1000 });
         gsap.from(header, {
@@ -184,8 +184,8 @@ onMounted(() => {
                 scale: 1.03,
                 z: 20,
                 zIndex: 50,
-                boxShadow: '0 25px 30px -10px rgba(var(--primary-rgb), 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
-                borderColor: 'rgba(var(--primary), 0.5)',
+                boxShadow: '0 25px 30px -10px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+                borderColor: 'var(--border-hover)',
                 duration: 0.4,
                 ease: 'power3.out'
             });
@@ -229,7 +229,7 @@ onMounted(() => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
             <div
-                class="rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-primary/10 via-background to-background p-4 shadow-sm dark:border-sidebar-border"
+                class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 shadow-xl text-zinc-900 dark:text-white"
             >
                 <h1 class="text-lg font-semibold text-foreground">
                     Ratings
@@ -327,7 +327,7 @@ onMounted(() => {
                     v-for="rating in ratings"
                     :key="rating.id"
                     data-rating-card
-                    class="break-inside-avoid mb-4 flex flex-col justify-between rounded-xl border border-sidebar-border/70 bg-background/80 p-4 text-sm shadow-sm backdrop-blur dark:border-sidebar-border"
+                    class="break-inside-avoid mb-4 flex flex-col justify-between rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 text-sm shadow-xl transition-colors hover:border-zinc-400 dark:hover:border-zinc-600 text-zinc-900 dark:text-white"
                 >
                     <div class="space-y-2">
                         <div class="flex items-center justify-between gap-2">
@@ -357,8 +357,8 @@ onMounted(() => {
                                         @click="setEditScore(i)"
                                     >
                                         <span
-                                            class="text-lg"
-                                            :class="i <= editScore ? 'text-yellow-400' : 'text-muted-foreground/40'"
+                                            class="text-lg transition-colors"
+                                            :class="i <= editScore ? 'text-black dark:text-white' : 'text-zinc-300 dark:text-zinc-700'"
                                         >
                                             ★
                                         </span>
@@ -368,8 +368,8 @@ onMounted(() => {
                                     <span
                                         v-for="(filled, i) in starsArray(rating.score)"
                                         :key="i"
-                                        class="text-lg"
-                                        :class="filled ? 'text-yellow-400' : 'text-muted-foreground/40'"
+                                        class="text-lg transition-colors"
+                                        :class="filled ? 'text-black dark:text-white' : 'text-zinc-300 dark:text-zinc-700'"
                                     >
                                         ★
                                     </span>
@@ -403,7 +403,7 @@ onMounted(() => {
 
                     <div class="mt-3 flex items-center justify-between gap-2">
                         <span
-                            class="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+                            class="rounded-full bg-zinc-100 dark:bg-zinc-900 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800"
                         >
                             {{ rating.is_public ? 'Public' : 'Hidden' }}
                         </span>

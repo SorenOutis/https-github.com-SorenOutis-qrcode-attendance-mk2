@@ -69,8 +69,8 @@ onMounted(async () => {
             datasets: [
                 {
                     label: 'Daily Scans',
-                    backgroundColor: '#10b981',
-                    borderColor: '#10b981',
+                    backgroundColor: '#18181b', // zinc-900
+                    borderColor: '#18181b',
                     data: stats.value.daily.map((d: any) => d.count),
                     tension: 0.4,
                 },
@@ -82,7 +82,7 @@ onMounted(async () => {
             datasets: [
                 {
                     label: 'Scans by Section',
-                    backgroundColor: '#6366f1',
+                    backgroundColor: '#3f3f46', // zinc-700
                     data: Object.values(stats.value.sections),
                 },
             ],
@@ -92,7 +92,7 @@ onMounted(async () => {
             labels: stats.value.status.map((s: any) => s.status),
             datasets: [
                 {
-                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6366f1'],
+                    backgroundColor: ['#09090b', '#3f3f46', '#a1a1aa', '#e4e4e7'], // zinc palette
                     data: stats.value.status.map((s: any) => s.count),
                 },
             ],
@@ -135,9 +135,9 @@ function exportCsv() {
 
             <div v-else class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <!-- Trend Chart -->
-                <div class="report-card glass-card col-span-2 rounded-2xl p-6 shadow-sm">
+                <div class="report-card col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 shadow-xl text-zinc-900 dark:text-white">
                     <div class="mb-4 flex items-center gap-2">
-                        <TrendingUp class="h-5 w-5 text-emerald-500" />
+                        <TrendingUp class="h-5 w-5 text-zinc-900 dark:text-white" />
                         <h3 class="font-semibold text-lg">Attendance Trend (30 Days)</h3>
                     </div>
                     <div class="h-64">
@@ -146,9 +146,9 @@ function exportCsv() {
                 </div>
 
                 <!-- Status Distribution -->
-                <div class="report-card glass-card rounded-2xl p-6 shadow-sm">
+                <div class="report-card rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 shadow-xl text-zinc-900 dark:text-white">
                     <div class="mb-4 flex items-center gap-2">
-                        <Clock class="h-5 w-5 text-indigo-500" />
+                        <Clock class="h-5 w-5 text-zinc-900 dark:text-white" />
                         <h3 class="font-semibold text-lg">Status Distribution</h3>
                     </div>
                     <div class="h-64">
@@ -157,9 +157,9 @@ function exportCsv() {
                 </div>
 
                 <!-- Section Comparison -->
-                <div class="report-card glass-card col-span-2 rounded-2xl p-6 shadow-sm">
+                <div class="report-card col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 shadow-xl text-zinc-900 dark:text-white">
                     <div class="mb-4 flex items-center gap-2">
-                        <Users class="h-5 w-5 text-blue-500" />
+                        <Users class="h-5 w-5 text-zinc-900 dark:text-white" />
                         <h3 class="font-semibold text-lg">Activity by Section</h3>
                     </div>
                     <div class="h-64">
@@ -167,8 +167,8 @@ function exportCsv() {
                     </div>
                 </div>
                 
-                <div class="report-card glass-card rounded-2xl p-6 shadow-sm flex flex-col justify-center items-center text-center">
-                    <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
+                <div class="report-card rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 shadow-xl text-zinc-900 dark:text-white flex flex-col justify-center items-center text-center">
+                    <div class="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mb-4 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-800">
                         <TrendingUp class="h-6 w-6" />
                     </div>
                     <h3 class="text-lg font-bold mb-2">Need detailed logs?</h3>

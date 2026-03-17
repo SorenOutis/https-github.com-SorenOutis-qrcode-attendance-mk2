@@ -1011,116 +1011,124 @@ onMounted(() => {
 
             <div
                 ref="cardsRef"
-                class="grid gap-4 grid-cols-2 lg:grid-cols-4"
+                class="grid gap-6 grid-cols-2 lg:grid-cols-4"
             >
+                <!-- Total Students Card -->
                 <div
                     data-card
-                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+                    class="group relative overflow-hidden rounded-3xl p-6 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-xl"
                 >
-                    <div class="flex items-center justify-between">
+                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
+                    <div class="relative z-10 flex items-center justify-between">
                         <div>
-                            <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
+                            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                                 Total Students
                             </p>
-                            <p class="mt-1 text-4xl font-bold tracking-tight">
+                            <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
                                 {{ searchQuery ? filteredStudents.length : stats.total }}
                             </p>
                         </div>
-                        <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Users class="h-5 w-5 text-primary" />
+                        <div class="h-14 w-14 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 backdrop-blur-md shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                            <Users class="h-7 w-7 text-zinc-900 dark:text-white" />
                         </div>
                     </div>
                 </div>
 
+                <!-- Present Today Card -->
                 <div
                     data-card
-                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+                    class="group relative overflow-hidden rounded-3xl p-6 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-xl"
                 >
-                    <div class="flex items-center justify-between">
+                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
+                    <div class="relative z-10 flex items-center justify-between">
                         <div>
-                            <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
+                            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                                 Present Today
                             </p>
-                            <p class="mt-1 text-4xl font-bold tracking-tight text-emerald-400">
+                            <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
                                 {{ stats.present }}
                             </p>
                         </div>
-                        <div class="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                            <CheckCircle2 class="h-5 w-5 text-emerald-400" />
+                        <div class="h-14 w-14 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 backdrop-blur-md shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                            <CheckCircle2 class="h-7 w-7 text-zinc-900 dark:text-white" />
                         </div>
                     </div>
                 </div>
 
+                <!-- Late Today Card -->
                 <div
                     data-card
-                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+                    class="group relative overflow-hidden rounded-3xl p-6 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-xl"
                 >
-                    <div class="flex items-center justify-between">
+                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
+                    <div class="relative z-10 flex items-center justify-between">
                         <div>
-                            <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
+                            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                                 Late Today
                             </p>
-                            <p class="mt-1 text-4xl font-bold tracking-tight text-amber-400">
+                            <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
                                 {{ stats.late }}
                             </p>
                         </div>
-                        <div class="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                            <Clock class="h-5 w-5 text-amber-400" />
+                        <div class="h-14 w-14 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 backdrop-blur-md shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                            <Clock class="h-7 w-7 text-zinc-900 dark:text-white" />
                         </div>
                     </div>
                 </div>
 
+                <!-- Absent Today Card -->
                 <div
                     data-card
-                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+                    class="group relative overflow-hidden rounded-3xl p-6 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-xl"
                 >
-                    <div class="flex items-center justify-between">
+                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
+                    <div class="relative z-10 flex items-center justify-between">
                         <div>
-                            <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                                 Absent Today
                             </p>
-                            <p class="mt-1 text-4xl font-bold tracking-tight text-destructive">
+                            <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
                                 {{ stats.absent }}
                             </p>
                         </div>
-                        <div class="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
-                            <XCircle class="h-5 w-5 text-destructive" />
+                        <div class="h-14 w-14 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 backdrop-blur-md shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                            <XCircle class="h-7 w-7 text-zinc-900 dark:text-white" />
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
-                <div class="xl:col-span-1 flex flex-col gap-6">
+                <div class="xl:col-span-1 flex flex-col gap-6 order-last">
                     <!-- Recent Activity Feed -->
-                    <div class="glass-card overflow-hidden rounded-2xl shadow-sm">
-                        <div class="border-b p-4 flex items-center justify-between bg-muted/30">
-                            <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-muted-foreground">
+                    <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
+                        <div class="border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                                 <Scan class="h-3.5 w-3.5" />
                                 Live Scan Feed
                             </h2>
-                            <span class="text-[10px] text-muted-foreground/60 italic">Last 5</span>
+                            <span class="text-[10px] text-zinc-400 dark:text-zinc-500 italic">Last 5</span>
                         </div>
                         <div class="p-0">
-                            <div v-if="recentActivity.length === 0" class="text-center py-8 text-sm text-muted-foreground italic">
+                            <div v-if="recentActivity.length === 0" class="text-center py-8 text-sm text-zinc-500 dark:text-zinc-400 italic">
                                 No activity today.
                             </div>
-                            <div v-else class="divide-y border-t bg-background/50">
-                                <div v-for="(act, i) in recentActivity" :key="i" class="flex items-center justify-between p-3.5 hover:bg-muted/30 transition-colors group">
+                            <div v-else class="divide-y divide-zinc-200 dark:divide-zinc-800">
+                                <div v-for="(act, i) in recentActivity" :key="i" class="flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors group">
                                     <div class="flex items-center gap-3">
-                                        <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                                            <span class="text-[10px] font-bold text-primary">{{ act.name.charAt(0) }}</span>
+                                        <div class="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors border border-zinc-200 dark:border-zinc-700">
+                                            <span class="text-[10px] font-bold text-zinc-900 dark:text-white">{{ act.name.charAt(0) }}</span>
                                         </div>
                                         <div class="flex flex-col overflow-hidden">
-                                            <span class="text-xs font-semibold group-hover:text-primary transition-colors text-foreground truncate">{{ act.name }}</span>
-                                            <div class="flex items-center gap-1.5">
+                                            <span class="text-xs font-semibold group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white truncate">{{ act.name }}</span>
+                                            <div class="flex items-center gap-1.5 mt-0.5">
                                                 <span 
-                                                    class="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                                                    class="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest"
                                                     :class="{
-                                                        'bg-green-500/10 text-green-500': act.status === 'Present',
-                                                        'bg-amber-500/10 text-amber-500': act.status === 'Late',
-                                                        'bg-blue-500/10 text-blue-500': act.status === 'Time Out',
-                                                        'bg-destructive/10 text-destructive': act.status === 'Absent'
+                                                        'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700': act.status === 'Present',
+                                                        'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-600': act.status === 'Late',
+                                                        'bg-zinc-300 dark:bg-zinc-600 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-500': act.status === 'Time Out',
+                                                        'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900': act.status === 'Absent'
                                                     }"
                                                 >
                                                     {{ act.status }}
@@ -1129,7 +1137,7 @@ onMounted(() => {
                                         </div>
                                     </div>
                                     <div class="flex flex-col items-end gap-1 shrink-0">
-                                        <span class="text-[10px] font-bold text-muted-foreground">{{ act.time }}</span>
+                                        <span class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400">{{ act.time }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1137,24 +1145,24 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <div class="xl:col-span-3">
+                <div class="xl:col-span-3 order-first">
                     <div
                         ref="tableRef"
-                        class="glass-card relative overflow-hidden rounded-2xl shadow-sm"
+                        class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl"
                     >
-                <div class="flex flex-col border-b p-4 gap-4">
+                <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-4 gap-4 bg-zinc-50 dark:bg-zinc-900/50">
                     <div class="flex items-center gap-4">
-                        <div class="flex rounded-lg bg-muted/50 p-1 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
+                        <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-hide border border-zinc-200 dark:border-zinc-800">
                             <button
                                 class="rounded-md px-3 py-1 text-xs font-medium transition-all"
-                                :class="activeTab === 'active' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                :class="activeTab === 'active' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                 @click="activeTab = 'active'"
                             >
                                 Active Students
                             </button>
                             <button
                                 class="rounded-md px-3 py-1 text-xs font-medium transition-all"
-                                :class="activeTab === 'deleted' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                :class="activeTab === 'deleted' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                 @click="activeTab = 'deleted'"
                             >
                                 Deleted Students ({{ props.trashedStudents.length }})
@@ -1164,20 +1172,20 @@ onMounted(() => {
 
                     <div class="flex items-center gap-2 w-full">
                         <div class="relative flex-1">
-                            <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                             <Input
                                 v-model="searchQuery"
                                 type="search"
                                 placeholder="Search students..."
-                                class="pl-9 h-9 text-xs rounded-full bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/50"
+                                class="pl-9 h-9 text-xs rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 shadow-sm"
                             />
                         </div>
 
                         <!-- View Switcher -->
-                        <div class="hidden md:flex rounded-full bg-muted/50 p-1 shrink-0">
+                        <div class="hidden md:flex rounded-full bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 border border-zinc-200 dark:border-zinc-800">
                             <button
                                 class="rounded-full p-1.5 transition-all outline-none"
-                                :class="viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                :class="viewMode === 'table' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                 title="Table View"
                                 @click="viewMode = 'table'"
                             >
@@ -1185,7 +1193,7 @@ onMounted(() => {
                             </button>
                             <button
                                 class="rounded-full p-1.5 transition-all outline-none"
-                                :class="viewMode === 'grid' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                :class="viewMode === 'grid' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                 title="Grid View"
                                 @click="viewMode = 'grid'"
                             >
@@ -1196,7 +1204,7 @@ onMounted(() => {
                         <Button 
                             v-if="activeTab === 'active'"
                             size="sm" 
-                            class="rounded-full shrink-0 gap-1.5" 
+                            class="rounded-full shrink-0 gap-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200" 
                             @click="openCreateModal"
                         >
                             <Plus class="h-4 w-4" />
@@ -1208,51 +1216,50 @@ onMounted(() => {
                 <div v-if="viewMode === 'table'" class="max-h-[520px] overflow-x-auto overflow-y-auto w-full">
                     <table class="min-w-full text-left text-sm whitespace-nowrap">
                         <thead
-                            class="sticky top-0 z-10 border-b bg-background/80 backdrop-blur"
+                            class="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-black/95 backdrop-blur text-zinc-500 dark:text-zinc-400"
                         >
                             <tr>
-                                <th class="px-4 py-2 text-xs font-medium">
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider">
                                     Name
                                 </th>
-                                <th class="px-4 py-2 text-xs font-medium">
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider">
                                     Student #
                                 </th>
                                 <!-- Status columns -->
-                                <th class="px-4 py-2 text-xs font-medium text-center text-emerald-600 dark:text-emerald-400">
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-center">
                                     Present
                                 </th>
-                                <th class="px-4 py-2 text-xs font-medium text-center text-amber-500 dark:text-amber-400">
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-center">
                                     Late
                                 </th>
-                                <th class="px-4 py-2 text-xs font-medium text-center text-blue-500 dark:text-blue-400">
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-center">
                                     Time Out
                                 </th>
-                                <th class="px-4 py-2 text-xs font-medium text-center text-rose-500 dark:text-rose-400">
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-center">
                                     Absent
                                 </th>
-                                <th class="px-4 py-2 text-xs font-medium">
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider">
                                     Section
                                 </th>
-                                <th class="px-4 py-2 text-xs font-medium">
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider">
                                     Email
                                 </th>
                             </tr>
                         </thead>
-                        <tbody ref="studentsTableBodyRef">
+                        <tbody ref="studentsTableBodyRef" class="divide-y divide-zinc-200 dark:divide-zinc-800">
                             <tr
                                 v-if="visibleStudents.length === 0"
-                                class="border-b last:border-b-0"
                             >
                                 <td
                                     colspan="9"
-                                    class="px-4 py-6 text-center text-xs text-muted-foreground"
+                                    class="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400"
                                 >
                                     <span v-if="searchQuery">
                                         No students matching "{{ searchQuery }}"
                                     </span>
                                     <span v-else>
                                         No students yet. Use the
-                                        <span class="font-semibold">
+                                        <span class="font-semibold text-zinc-900 dark:text-white">
                                             Add student
                                         </span>
                                         button to create one.
@@ -1262,74 +1269,74 @@ onMounted(() => {
                             <tr
                                 v-for="student in visibleStudents"
                                 :key="student.id"
-                                class="border-b transition-colors hover:bg-muted/40 last:border-b-0 cursor-pointer"
+                                class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer text-zinc-900 dark:text-zinc-100"
                                 @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                             >
-                                <td class="px-4 py-2 text-sm font-medium">
+                                <td class="px-4 py-3 text-sm font-medium">
                                     <span class="flex items-center gap-1.5">
                                         {{ student.name }}
                                         <div 
                                             v-if="activeTab === 'active'"
                                             class="h-1.5 w-1.5 rounded-full status-pulse"
                                             :class="[
-                                                student.latest_attendance?.status === 'Present'  ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' :
-                                                student.latest_attendance?.status === 'Late'     ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]' :
-                                                student.latest_attendance?.status === 'Time Out' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]' :
-                                                'bg-muted-foreground/30'
+                                                student.latest_attendance?.status === 'Present'  ? 'bg-zinc-900 dark:bg-white shadow-sm' :
+                                                student.latest_attendance?.status === 'Late'     ? 'bg-zinc-500 dark:bg-zinc-400' :
+                                                student.latest_attendance?.status === 'Time Out' ? 'bg-zinc-300 dark:bg-zinc-600' :
+                                                'bg-zinc-200 dark:bg-zinc-800'
                                             ]"
                                         ></div>
                                     </span>
                                 </td>
-                                <td class="px-4 py-2 text-xs text-muted-foreground">
+                                <td class="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">
                                     {{ student.student_number }}
                                 </td>
                                 <!-- Status indicator columns (active students) -->
                                 <template v-if="activeTab === 'active'">
                                     <!-- Present -->
-                                    <td class="px-4 py-2 text-center" @click.stop>
+                                    <td class="px-4 py-3 text-center" @click.stop>
                                         <div v-if="student.today_statuses?.some(s => s.status === 'Present')" class="flex flex-col items-center gap-1">
                                             <template v-for="s in student.today_statuses?.filter(st => st.status === 'Present')">
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full">
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700">
                                                     <CheckCircle2 class="w-3 h-3" />
                                                     {{ s.time }}
                                                 </span>
                                             </template>
                                         </div>
-                                        <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
+                                        <span v-else class="inline-block w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
                                     </td>
                                     <!-- Late -->
-                                    <td class="px-4 py-2 text-center" @click.stop>
+                                    <td class="px-4 py-3 text-center" @click.stop>
                                         <div v-if="student.today_statuses?.some(s => s.status === 'Late')" class="flex flex-col items-center gap-1">
                                             <template v-for="s in student.today_statuses?.filter(st => st.status === 'Late')">
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-zinc-900 dark:text-white bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded-full border border-zinc-300 dark:border-zinc-600">
                                                     <AlertCircle class="w-3 h-3" />
                                                     {{ s.time }}
                                                 </span>
                                             </template>
                                         </div>
-                                        <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
+                                        <span v-else class="inline-block w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
                                     </td>
                                     <!-- Time Out -->
-                                    <td class="px-4 py-2 text-center" @click.stop>
+                                    <td class="px-4 py-3 text-center" @click.stop>
                                         <div v-if="student.today_statuses?.some(s => s.status === 'Time Out')" class="flex flex-col items-center gap-1">
                                             <template v-for="s in student.today_statuses?.filter(st => st.status === 'Time Out')">
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-zinc-900 dark:text-white bg-zinc-300 dark:bg-zinc-600 px-2 py-0.5 rounded-full border border-zinc-400 dark:border-zinc-500">
                                                     <CheckCircle2 class="w-3 h-3" />
                                                     {{ s.time }}
                                                 </span>
                                             </template>
                                         </div>
-                                        <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
+                                        <span v-else class="inline-block w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
                                     </td>
-                                    <!-- Absent: show when scheduled today and no scans today, or explicitly marked Absent -->
-                                    <td class="px-4 py-2 text-center" @click.stop v-if="activeTab === 'active'">
+                                    <!-- Absent -->
+                                    <td class="px-4 py-3 text-center" @click.stop v-if="activeTab === 'active'">
                                         <span v-if="(isScheduledForToday(student) && (!student.today_statuses || student.today_statuses.length === 0)) || student.today_statuses?.some(s => s.status === 'Absent')"
-                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-900/40"
+                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border border-zinc-900 dark:border-zinc-100"
                                             title="Absent"
                                         >
-                                            <svg class="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                                         </span>
-                                        <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
+                                        <span v-else class="inline-block w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
                                     </td>
                                 </template>
                                 <!-- Deleted students: span across 4 status cols + show restore/delete buttons -->
@@ -1733,7 +1740,7 @@ onMounted(() => {
                                                 {{ new Date(record.scanned_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) }}
                                             </span>
                                             <span v-if="record.slot_start" class="text-[10px] text-muted-foreground">
-                                                {{ formatTimeTo12h(record.slot_start) }} – {{ formatTimeTo12h(record.slot_end) }}
+                                                {{ formatTimeTo12h(record.slot_start || undefined) }} – {{ formatTimeTo12h(record.slot_end || undefined) }}
                                             </span>
                                         </div>
                                         <div class="flex items-center gap-1">

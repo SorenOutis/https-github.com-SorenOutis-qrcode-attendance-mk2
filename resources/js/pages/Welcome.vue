@@ -343,45 +343,53 @@ onUnmounted(() => {
             </nav>
         </header>
 
-        <main class="relative z-10 flex flex-col lg:flex-row min-h-[calc(100vh-100px)] w-full gap-8 lg:gap-0 lg:py-0 pb-16">
+        <main class="relative z-10 flex flex-col lg:flex-row min-h-[calc(100vh-100px)] lg:min-h-screen w-full gap-4 lg:gap-0 lg:py-0 pb-12 lg:pb-0">
             <!-- Left Side Content -->
-            <div class="w-full lg:w-5/12 flex flex-col justify-center px-8 lg:px-16 z-20">
-                <div ref="titleRef" class="space-y-4 mb-8">
+            <div class="w-full lg:w-5/12 flex flex-col justify-center px-6 lg:px-16 z-20">
+                <div ref="titleRef" class="space-y-3 lg:space-y-4 mb-6 lg:mb-8">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-sidebar-border/70 bg-background/50 backdrop-blur-md text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">
                         <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                         Live System Active
                     </div>
-                    <h1 class="text-6xl sm:text-7xl font-serif font-bold text-foreground leading-[1.1] tracking-tight">
-                        Elevate<br/>
-                        <span class="italic text-muted-foreground">Attendance.</span>
-                    </h1>
+                    
+                    <div class="flex items-center justify-between lg:block gap-4">
+                        <h1 class="text-4xl xs:text-5xl sm:text-6xl lg:text-7xl font-serif font-bold text-foreground leading-[1.1] tracking-tight flex-1">
+                            Elevate<br/>
+                            <span class="italic text-muted-foreground">Attendance.</span>
+                        </h1>
+                        
+                        <!-- Small Scanning Visual for Mobile -->
+                        <div class="lg:hidden w-32 h-32 shrink-0">
+                            <ScanningVisual small />
+                        </div>
+                    </div>
                 </div>
                 
-                <p ref="textRef" class="text-base sm:text-lg text-muted-foreground/90 font-light leading-relaxed mb-10 max-w-sm">
+                <p ref="textRef" class="text-sm sm:text-base lg:text-lg text-muted-foreground/90 font-light leading-relaxed mb-8 lg:mb-10 max-w-sm">
                     Experience a seamless, contactless, and elegant approach to tracking presence in real-time.
                 </p>
                 
-                <div ref="btnRef" class="flex flex-col sm:flex-row gap-4">
+                <div ref="btnRef" class="flex flex-col sm:flex-row gap-3 lg:gap-4">
                     <template v-if="$page.props.auth.user">
                         <Link
                             :href="dashboard.url()"
-                            class="inline-flex items-center justify-center h-14 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-sm font-semibold tracking-wide transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                            class="inline-flex items-center justify-center h-12 lg:h-14 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-sm font-semibold tracking-wide transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
                         >
                             Go to Dashboard
                         </Link>
                     </template>
                     <template v-else>
-                        <Button @click="ratingModalOpen = true" class="h-14 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-sm font-semibold tracking-wide transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1">
+                        <Button @click="ratingModalOpen = true" class="h-12 lg:h-14 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 text-sm font-semibold tracking-wide transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1">
                             Rate System
                         </Button>
-                        <Button @click="commentModalOpen = true" variant="outline" class="h-14 px-8 rounded-full border-sidebar-border hover:bg-sidebar-border/20 text-foreground text-sm font-semibold tracking-wide transition-all backdrop-blur-sm">
+                        <Button @click="commentModalOpen = true" variant="outline" class="h-12 lg:h-14 px-8 rounded-full border-sidebar-border hover:bg-sidebar-border/20 text-foreground text-sm font-semibold tracking-wide transition-all backdrop-blur-sm">
                             Leave Feedback
                         </Button>
                     </template>
                 </div>
 
                 <!-- Live Quick-Stats Widget -->
-                <div class="mt-16 flex items-center gap-6 p-6 rounded-3xl border border-sidebar-border/50 bg-background/30 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500 max-w-[400px]">
+                <div class="mt-10 lg:mt-16 flex items-center gap-6 p-5 lg:p-6 rounded-3xl border border-sidebar-border/50 bg-background/30 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500 max-w-[400px]">
                     <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
                     <div class="relative z-10">
                         <div class="text-3xl font-serif font-bold text-foreground">
@@ -399,8 +407,8 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Right Visuals/Mockup -->
-            <div class="w-full lg:w-7/12 relative h-auto min-h-[500px] lg:h-auto flex items-center justify-center lg:justify-end px-4 lg:pr-[10%] overflow-hidden">
+            <!-- Right Visuals (Desktop Only) -->
+            <div class="hidden lg:flex w-full lg:w-7/12 relative h-auto min-h-[350px] lg:min-h-[500px] items-center justify-center lg:justify-end px-4 lg:pr-[10%] overflow-hidden">
                 <div class="relative w-full max-w-[500px] aspect-square">
                     <div class="absolute inset-0 bg-gradient-to-tr from-zinc-200/20 to-zinc-50/5 dark:from-zinc-800/20 dark:to-zinc-900/5 rounded-full blur-3xl animate-pulse" style="animation-duration: 4s;"></div>
                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full border border-sidebar-border/40 animate-[spin_60s_linear_infinite]"></div>

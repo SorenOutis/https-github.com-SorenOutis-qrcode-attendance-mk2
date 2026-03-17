@@ -2,6 +2,10 @@
 import { onMounted, ref } from 'vue';
 import gsap from 'gsap';
 
+const props = defineProps<{
+    small?: boolean;
+}>();
+
 const qrRef = ref<HTMLElement | null>(null);
 const lineRef = ref<HTMLElement | null>(null);
 const meshRef = ref<HTMLElement | null>(null);
@@ -42,7 +46,7 @@ onMounted(() => {
     });
 
     // Floating particles
-    const particles = 15;
+    const particles = props.small ? 5 : 15;
     for (let i = 0; i < particles; i++) {
         const p = document.createElement('div');
         p.className = 'absolute w-1 h-1 bg-emerald-500/40 rounded-full blur-[1px] pointer-events-none';
@@ -54,8 +58,8 @@ onMounted(() => {
         gsap.set(p, { left: `${startX}%`, top: `${startY}%` });
         
         gsap.to(p, {
-            x: 'random(-50, 50)',
-            y: 'random(-50, 50)',
+            x: 'random(-30, 30)',
+            y: 'random(-30, 30)',
             opacity: 0,
             duration: 'random(3, 6)',
             repeat: -1,
@@ -67,14 +71,19 @@ onMounted(() => {
 </script>
 
 <template>
-    <div ref="containerRef" class="relative w-full h-full flex items-center justify-center p-8 overflow-hidden rounded-3xl">
-        <!-- Technical Mesh Grid -->
-        <div ref="meshRef" class="absolute inset-0 grid grid-cols-10 grid-rows-10 gap-x-8 gap-y-8 p-4 opacity-10">
+    <div ref="containerRef" class="relative w-full h-full flex items-center justify-center p-4 lg:p-8 overflow-hidden rounded-3xl">
+        <!-- Technical Mesh Grid (Hidden on very small) -->
+        <div v-if="!small" ref="meshRef" class="absolute inset-0 grid grid-cols-10 grid-rows-10 gap-x-8 gap-y-8 p-4 opacity-10">
             <div v-for="i in 100" :key="i" class="mesh-dot w-1 h-1 bg-foreground/50 rounded-full"></div>
         </div>
 
         <!-- Scanning Card -->
-        <div class="relative w-full max-w-[280px] aspect-[3/4] bg-background/40 backdrop-blur-2xl rounded-3xl border border-white/20 dark:border-white/10 shadow-2xl flex flex-col items-center justify-center gap-8 overflow-hidden group">
+        <div 
+            class="relative w-full bg-background/40 backdrop-blur-2xl rounded-3xl border border-white/20 dark:border-white/10 shadow-2xl flex flex-col items-center justify-center overflow-hidden group transition-all duration-500"
+            :class="[
+                small ? 'max-w-[120px] aspect-square gap-3 rounded-2xl' : 'max-w-[280px] aspect-[3/4] gap-8',
+            ]"
+        >
             
             <!-- Scanning Line -->
             <div ref="lineRef" class="absolute w-full h-[2px] top-0 left-0 z-20 overflow-visible">
@@ -84,28 +93,32 @@ onMounted(() => {
             </div>
 
             <!-- Stylized QR Code -->
-            <div ref="qrRef" class="relative z-10 w-32 h-32 p-3 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center shadow-inner group-hover:border-emerald-500/30 transition-colors duration-500">
-                <div class="grid grid-cols-3 grid-rows-3 gap-2 w-full h-full opacity-80">
-                    <div class="border-2 border-foreground/40 rounded-sm m-1"></div>
-                    <div class="border-2 border-foreground/40 rounded-sm m-1"></div>
-                    <div class="bg-foreground/20 rounded-sm m-1"></div>
-                    <div class="bg-emerald-500/20 rounded-sm m-1 group-hover:bg-emerald-500/40 transition-colors"></div>
-                    <div class="border-2 border-foreground/40 rounded-sm m-1"></div>
-                    <div class="bg-foreground/20 rounded-sm m-1"></div>
-                    <div class="bg-foreground/20 rounded-sm m-1"></div>
-                    <div class="bg-foreground/20 rounded-sm m-1"></div>
-                    <div class="border-2 border-foreground/40 rounded-sm m-1"></div>
+            <div 
+                ref="qrRef" 
+                class="relative z-10 p-2 lg:p-3 bg-white/5 rounded-xl lg:rounded-2xl border border-white/10 flex items-center justify-center shadow-inner group-hover:border-emerald-500/30 transition-colors duration-500"
+                :class="small ? 'w-16 h-16' : 'w-32 h-32'"
+            >
+                <div class="grid grid-cols-3 grid-rows-3 gap-1 lg:gap-2 w-full h-full opacity-80">
+                    <div class="border lg:border-2 border-foreground/40 rounded-sm m-0.5"></div>
+                    <div class="border lg:border-2 border-foreground/40 rounded-sm m-0.5"></div>
+                    <div class="bg-foreground/20 rounded-sm m-0.5"></div>
+                    <div class="bg-emerald-500/20 rounded-sm m-0.5 group-hover:bg-emerald-500/40 transition-colors"></div>
+                    <div class="border lg:border-2 border-foreground/40 rounded-sm m-0.5"></div>
+                    <div class="bg-foreground/20 rounded-sm m-0.5"></div>
+                    <div class="bg-foreground/20 rounded-sm m-0.5"></div>
+                    <div class="bg-foreground/20 rounded-sm m-0.5"></div>
+                    <div class="border lg:border-2 border-foreground/40 rounded-sm m-0.5"></div>
                 </div>
                 
                 <!-- Corner Decorations -->
-                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-emerald-500"></div>
-                <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-emerald-500"></div>
-                <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-emerald-500"></div>
-                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-emerald-500"></div>
+                <div class="absolute -top-1 -left-1 w-2 lg:w-4 h-2 lg:h-4 border-t lg:border-t-2 border-l lg:border-l-2 border-emerald-500"></div>
+                <div class="absolute -top-1 -right-1 w-2 lg:w-4 h-2 lg:h-4 border-t lg:border-t-2 border-r lg:border-r-2 border-emerald-500"></div>
+                <div class="absolute -bottom-1 -left-1 w-2 lg:w-4 h-2 lg:h-4 border-b lg:border-b-2 border-l lg:border-l-2 border-emerald-500"></div>
+                <div class="absolute -bottom-1 -right-1 w-2 lg:w-4 h-2 lg:h-4 border-b lg:border-b-2 border-r lg:border-r-2 border-emerald-500"></div>
             </div>
 
-            <!-- Data HUD elements -->
-            <div class="w-full space-y-3 px-8 z-10">
+            <!-- Data HUD elements (Hidden on small) -->
+            <div v-if="!small" class="w-full space-y-3 px-8 z-10">
                 <div class="flex items-center justify-between">
                     <div class="h-1 w-20 bg-foreground/20 rounded-full overflow-hidden">
                         <div class="h-full bg-emerald-500 w-1/2 animate-[pulse_2s_infinite]"></div>
@@ -126,8 +139,8 @@ onMounted(() => {
         </div>
         
         <!-- Background Orbs -->
-        <div class="absolute top-1/4 -right-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px] animate-pulse"></div>
-        <div class="absolute bottom-1/4 -left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-[100px] animate-pulse" style="animation-delay: 1s"></div>
+        <div class="absolute top-1/4 -right-1/4 w-32 h-32 lg:w-64 lg:h-64 bg-emerald-500/10 rounded-full blur-[50px] lg:blur-[100px] animate-pulse"></div>
+        <div class="absolute bottom-1/4 -left-1/4 w-32 h-32 lg:w-64 lg:h-64 bg-primary/5 rounded-full blur-[50px] lg:blur-[100px] animate-pulse" style="animation-delay: 1s"></div>
     </div>
 </template>
 

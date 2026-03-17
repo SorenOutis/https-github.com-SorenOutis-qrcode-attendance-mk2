@@ -1019,18 +1019,16 @@ onMounted(() => {
                     class="group relative overflow-hidden rounded-3xl p-6 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-xl"
                 >
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="relative z-10 flex items-center justify-between">
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                                Total Students
-                            </p>
-                            <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
-                                {{ searchQuery ? filteredStudents.length : stats.total }}
-                            </p>
-                        </div>
-                        <div class="h-14 w-14 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 backdrop-blur-md shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                            <Users class="h-7 w-7 text-zinc-900 dark:text-white" />
-                        </div>
+                    <div class="absolute right-6 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
+                        <Users class="h-24 w-24" />
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                            Total Students
+                        </p>
+                        <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
+                            {{ searchQuery ? filteredStudents.length : stats.total }}
+                        </p>
                     </div>
                 </div>
 
@@ -1040,18 +1038,16 @@ onMounted(() => {
                     class="group relative overflow-hidden rounded-3xl p-6 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-xl"
                 >
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="relative z-10 flex items-center justify-between">
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                                Present Today
-                            </p>
-                            <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
-                                {{ stats.present }}
-                            </p>
-                        </div>
-                        <div class="h-14 w-14 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 backdrop-blur-md shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                            <CheckCircle2 class="h-7 w-7 text-zinc-900 dark:text-white" />
-                        </div>
+                    <div class="absolute right-6 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
+                        <CheckCircle2 class="h-24 w-24" />
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                            Present Today
+                        </p>
+                        <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
+                            {{ stats.present }}
+                        </p>
                     </div>
                 </div>
 
@@ -1061,18 +1057,16 @@ onMounted(() => {
                     class="group relative overflow-hidden rounded-3xl p-6 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-xl"
                 >
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="relative z-10 flex items-center justify-between">
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                                Late Today
-                            </p>
-                            <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
-                                {{ stats.late }}
-                            </p>
-                        </div>
-                        <div class="h-14 w-14 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 backdrop-blur-md shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                            <Clock class="h-7 w-7 text-zinc-900 dark:text-white" />
-                        </div>
+                    <div class="absolute right-6 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
+                        <Clock class="h-24 w-24" />
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                            Late Today
+                        </p>
+                        <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
+                            {{ stats.late }}
+                        </p>
                     </div>
                 </div>
 
@@ -1082,18 +1076,16 @@ onMounted(() => {
                     class="group relative overflow-hidden rounded-3xl p-6 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-xl"
                 >
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="relative z-10 flex items-center justify-between">
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                                Absent Today
-                            </p>
-                            <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
-                                {{ stats.absent }}
-                            </p>
-                        </div>
-                        <div class="h-14 w-14 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 backdrop-blur-md shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                            <XCircle class="h-7 w-7 text-zinc-900 dark:text-white" />
-                        </div>
+                    <div class="absolute right-6 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
+                        <XCircle class="h-24 w-24" />
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                            Absent Today
+                        </p>
+                        <p class="mt-2 text-5xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
+                            {{ stats.absent }}
+                        </p>
                     </div>
                 </div>
             </div>

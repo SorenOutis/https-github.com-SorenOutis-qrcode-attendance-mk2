@@ -53,14 +53,6 @@ const btnRef = ref<HTMLElement | null>(null);
 const carouselContainerRef = ref<HTMLElement | null>(null);
 const carouselRef = ref<HTMLElement | null>(null);
 
-const defaultCards = [
-    { id: 'd1', title: 'Real-time Tracking', desc: 'Says "Monitor attendance as it happens with zero delay."', color: 'from-primary/10 via-background to-background' },
-    { id: 'd2', title: 'Smart Schedules', desc: 'Says "Automated class scheduling and easy management."', color: 'from-emerald-500/10 via-background to-background' },
-    { id: 'd3', title: 'Quick Reports', desc: 'Says "Export detailed attendance analytics in seconds."', color: 'from-indigo-500/10 via-background to-background' },
-    { id: 'd4', title: 'Secure Access', desc: 'Says "Role-based permissions and secure data storage."', color: 'from-rose-500/10 via-background to-background' },
-    { id: 'd5', title: 'Easy Integration', desc: 'Says "Works seamlessly with your existing campus tools."', color: 'from-amber-500/10 via-background to-background' },
-];
-
 const cards = computed(() => {
     let items = [];
     if (props.ratings && props.ratings.length > 0) {
@@ -80,9 +72,6 @@ const cards = computed(() => {
         })));
     }
     
-    if (items.length === 0) {
-        return defaultCards;
-    }
     return items;
 });
 
@@ -110,6 +99,7 @@ const stopAutoSlide = () => {
 };
 
 const nextCard = () => {
+    if (cards.value.length === 0) return;
     if (activeIndex.value < cards.value.length - 1) {
         activeIndex.value++;
     } else {
@@ -119,6 +109,7 @@ const nextCard = () => {
 };
 
 const prevCard = () => {
+    if (cards.value.length === 0) return;
     if (activeIndex.value > 0) {
         activeIndex.value--;
     } else {
@@ -400,6 +391,7 @@ onUnmounted(() => {
 
             <!-- Right Side Carousel -->
             <div ref="carouselContainerRef" 
+                 v-if="cards.length > 0"
                  class="w-full lg:w-7/12 mt-12 lg:mt-0 relative h-[380px] lg:h-[450px] flex flex-col justify-end"
                  @mouseenter="isHovering = true"
                  @mouseleave="isHovering = false"
@@ -471,6 +463,21 @@ onUnmounted(() => {
                         <div class="w-12 h-[1px] bg-sidebar-border/70 shrink-0"></div>
                         <span>{{ String(cards.length).padStart(2, '0') }}</span>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Empty State for Carousel -->
+            <div v-else class="w-full lg:w-7/12 mt-12 lg:mt-0 relative h-[380px] lg:h-[450px] flex items-center justify-center lg:justify-end px-4 lg:pr-[10%]">
+                <div class="w-full max-w-[320px] text-center space-y-5 rounded-3xl border border-dashed border-sidebar-border bg-background/30 backdrop-blur-sm p-10 shadow-sm relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500">
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
+                    <div class="w-16 h-16 rounded-full bg-background/50 mx-auto flex items-center justify-center text-muted-foreground/50 border border-sidebar-border/50 shadow-inner relative z-10">
+                        <svg class="w-8 h-8 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                        </svg>
+                    </div>
+                    <p class="text-foreground/80 font-['Playfair_Display'] italic text-[16px] relative z-10">
+                        Be the first to tell us what you think!
+                    </p>
                 </div>
             </div>
         </main>

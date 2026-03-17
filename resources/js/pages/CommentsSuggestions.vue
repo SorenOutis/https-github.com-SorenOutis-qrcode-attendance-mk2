@@ -151,48 +151,7 @@ onMounted(() => {
         ease: 'back.out(1.2)',
     });
 
-    // 3. 3D Hover Interactions
-    cards.forEach((card) => {
-        gsap.set(card, { transformStyle: "preserve-3d" });
-
-        card.addEventListener('mousemove', (e: MouseEvent) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            
-            const rotateX = ((y - centerY) / centerY) * -8;
-            const rotateY = ((x - centerX) / centerX) * 8;
-            
-            gsap.to(card, {
-                rotationX: rotateX,
-                rotationY: rotateY,
-                scale: 1.03,
-                z: 20,
-                zIndex: 50,
-                boxShadow: '0 25px 30px -10px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
-                borderColor: 'var(--border-hover)',
-                duration: 0.4,
-                ease: 'power3.out'
-            });
-        });
-
-        card.addEventListener('mouseleave', () => {
-            gsap.to(card, {
-                rotationX: 0,
-                rotationY: 0,
-                scale: 1,
-                z: 0,
-                zIndex: 0,
-                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                borderColor: 'inherit',
-                duration: 0.6,
-                ease: 'elastic.out(1, 0.4)'
-            });
-        });
-    });
+    // Hover interactions removed as per request
 
     // 4. Button Press Micro-interactions with 3D Depth
     const buttons = document.querySelectorAll('button');
@@ -308,23 +267,25 @@ onMounted(() => {
             <div
                 v-else
                 ref="listRef"
-                class="columns-1 md:columns-2 xl:columns-3 gap-4 space-y-4"
+                class="columns-2 xl:columns-3 gap-2 sm:gap-4 space-y-2 sm:space-y-4"
             >
 
                 <article
                     v-for="comment in comments"
                     :key="comment.id"
                     data-comment-card
-                    class="break-inside-avoid mb-4 flex flex-col justify-between rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 text-sm shadow-xl transition-colors hover:border-zinc-400 dark:hover:border-zinc-600 text-zinc-900 dark:text-white"
+                    class="group relative overflow-hidden break-inside-avoid mb-4 flex flex-col justify-between rounded-2xl md:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4 md:p-6 text-[10px] md:text-sm shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 text-zinc-900 dark:text-white"
                 >
-                    <div class="space-y-2">
+                    <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800 pointer-events-none z-0"></div>
+                    
+                    <div class="relative z-10 space-y-2">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <p class="text-[10px] md:text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis max-w-[12ch] sm:max-w-none">
                                 {{ comment.name || 'Anonymous' }}
                             </p>
                             <p
                                 v-if="comment.email"
-                                class="text-[11px] text-muted-foreground/80"
+                                class="text-[9px] md:text-[11px] text-muted-foreground/80 whitespace-nowrap overflow-hidden text-ellipsis max-w-[15ch] sm:max-w-none"
                             >
                                 {{ comment.email }}
                             </p>
@@ -356,18 +317,19 @@ onMounted(() => {
                         </p>
                     </div>
 
-                    <div class="mt-3 flex items-center justify-between gap-2">
+                    <div class="relative z-10 mt-3 flex items-center justify-between gap-2">
                         <span
-                            class="rounded-full bg-zinc-100 dark:bg-zinc-900 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800"
+                            class="rounded-full bg-zinc-100 dark:bg-zinc-900 px-2 py-0.5 md:px-3 md:py-1 text-[8px] md:text-[11px] font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800"
                         >
                             {{ comment.is_public ? 'Public' : 'Hidden' }}
                         </span>
 
-                        <div class="flex gap-2">
+                        <div class="flex gap-1 md:gap-2">
                             <Button
                                 v-if="editingId === comment.id"
                                 size="sm"
                                 variant="outline"
+                                class="h-6 px-2 text-[9px] md:h-9 md:px-3 md:text-sm"
                                 :disabled="saving"
                                 @click="saveEdit(comment)"
                             >
@@ -377,6 +339,7 @@ onMounted(() => {
                                 v-if="editingId === comment.id"
                                 size="sm"
                                 variant="ghost"
+                                class="h-6 px-2 text-[9px] md:h-9 md:px-3 md:text-sm"
                                 @click="cancelEdit"
                             >
                                 Cancel
@@ -385,6 +348,7 @@ onMounted(() => {
                                 v-else
                                 size="sm"
                                 variant="outline"
+                                class="h-6 px-2 text-[9px] md:h-9 md:px-3 md:text-sm"
                                 @click="startEdit(comment)"
                             >
                                 Edit
@@ -392,7 +356,7 @@ onMounted(() => {
                             <Button
                                 size="sm"
                                 variant="ghost"
-                                class="text-destructive hover:bg-destructive/10"
+                                class="h-6 px-2 text-[9px] md:h-9 md:px-3 md:text-sm text-destructive hover:bg-destructive/10"
                                 @click="remove(comment)"
                             >
                                 Delete

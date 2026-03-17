@@ -305,22 +305,22 @@ onUnmounted(() => {
             <!-- Vignette to draw attention to center -->
             <div class="absolute inset-0 shadow-[inset_0_0_150px_60px_hsl(var(--background))] backdrop-blur-sm bg-background/50"></div>
         </div>
-        <header class="relative z-20 w-full px-8 lg:px-16 py-8 flex justify-between items-center bg-background/50 backdrop-blur-md border-b border-sidebar-border/50 sticky top-0">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-foreground text-background flex items-center justify-center font-bold text-xl drop-shadow-lg shadow-black/20 dark:shadow-white/20">
+        <header class="relative z-50 w-full px-6 lg:px-16 py-4 lg:py-6 flex justify-between items-center bg-background/80 backdrop-blur-xl border-b border-sidebar-border/30 sticky top-0 transition-all">
+            <div class="flex items-center gap-2 lg:gap-3">
+                <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-foreground text-background flex items-center justify-center font-bold text-lg lg:text-xl drop-shadow-lg shadow-black/20 dark:shadow-white/20">
                     Q
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-serif font-bold text-lg leading-none tracking-wide text-foreground">QR Attendance</span>
-                    <span class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-0.5">System</span>
+                    <span class="font-serif font-bold text-base lg:text-lg leading-none tracking-tight lg:tracking-wide text-foreground">QR Attendance</span>
+                    <span class="text-[8px] lg:text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-0.5 opacity-80">System</span>
                 </div>
             </div>
-            <nav class="flex items-center gap-6 text-sm font-medium">
+            <nav class="flex items-center gap-2 lg:gap-6 text-sm font-medium">
                 <ThemeToggle />
                 <template v-if="$page.props.auth.user">
                     <Link
                         :href="dashboard.url()"
-                        class="text-muted-foreground hover:text-foreground transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-foreground after:origin-right hover:after:origin-left after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300"
+                        class="text-xs lg:text-sm text-foreground hover:opacity-80 transition-all font-semibold whitespace-nowrap"
                     >
                         Dashboard
                     </Link>
@@ -328,14 +328,14 @@ onUnmounted(() => {
                 <template v-else>
                     <Link
                         :href="login.url()"
-                        class="text-muted-foreground hover:text-foreground transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-foreground after:origin-right hover:after:origin-left after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300"
+                        class="text-xs lg:text-sm text-muted-foreground hover:text-foreground transition-colors px-2 lg:px-3 py-1.5 rounded-full hover:bg-sidebar-border/20 whitespace-nowrap"
                     >
                         Log in
                     </Link>
                     <Link
                         v-if="canRegister"
                         :href="register.url()"
-                        class="text-muted-foreground hover:text-foreground transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-foreground after:origin-right hover:after:origin-left after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300"
+                        class="text-xs lg:text-sm px-3 lg:px-4 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 transition-all font-semibold shadow-sm whitespace-nowrap"
                     >
                         Register
                     </Link>
@@ -343,7 +343,7 @@ onUnmounted(() => {
             </nav>
         </header>
 
-        <main class="relative z-10 flex flex-col lg:flex-row min-h-[calc(100vh-100px)] lg:min-h-screen w-full gap-4 lg:gap-0 lg:py-0 pb-12 lg:pb-0">
+        <main class="relative z-10 flex flex-col lg:flex-row min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-100px)] w-full gap-4 lg:gap-0 lg:py-0 pb-8 lg:pb-0">
             <!-- Left Side Content -->
             <div class="w-full lg:w-5/12 flex flex-col justify-center px-6 lg:px-16 z-20">
                 <div ref="titleRef" class="space-y-3 lg:space-y-4 mb-6 lg:mb-8">
@@ -389,7 +389,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Live Quick-Stats Widget -->
-                <div class="mt-10 lg:mt-16 flex items-center gap-6 p-5 lg:p-6 rounded-3xl border border-sidebar-border/50 bg-background/30 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500 max-w-[400px]">
+                <div class="mt-8 lg:mt-16 flex items-center gap-4 lg:gap-6 p-4 lg:p-6 rounded-3xl border border-sidebar-border/50 bg-background/30 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500 max-w-[400px]">
                     <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
                     <div class="relative z-10">
                         <div class="text-3xl font-serif font-bold text-foreground">
@@ -422,11 +422,11 @@ onUnmounted(() => {
         </main>
 
         <!-- Feedback Section -->
-        <section class="relative z-10 w-full px-8 lg:px-16 py-16 bg-background/40 backdrop-blur-md border-t border-sidebar-border/30">
-            <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
+        <section class="relative z-10 w-full px-6 lg:px-16 py-12 lg:py-16 bg-background/40 backdrop-blur-md border-t border-sidebar-border/30">
+            <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
                 <div class="w-full lg:w-4/12 flex flex-col justify-center">
-                    <h2 class="text-3xl font-serif font-bold text-foreground mb-4">What Our Users Say</h2>
-                    <p class="text-muted-foreground/90 font-light mb-8">
+                    <h2 class="text-2xl lg:text-3xl font-serif font-bold text-foreground mb-3 lg:mb-4">What Our Users Say</h2>
+                    <p class="text-sm lg:text-base text-muted-foreground/90 font-light mb-6 lg:mb-8">
                         Real feedback from students and faculty experiencing the streamlined attendance process.
                     </p>
                 </div>

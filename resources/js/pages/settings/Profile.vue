@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Form, Head, Link, usePage } from '@inertiajs/vue3';
+import { Form, Head, Link, usePage, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
+import UserInfo from '@/components/UserInfo.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { edit } from '@/routes/profile';
+import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
 
@@ -30,6 +32,10 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+
+const handleLogout = () => {
+    router.flushAll();
+};
 </script>
 
 <template>
@@ -39,14 +45,28 @@ const user = computed(() => page.props.auth.user);
         <h1 class="sr-only">Profile settings</h1>
 
         <SettingsLayout>
-            <div class="flex flex-col space-y-6">
-                <Heading
-                    variant="small"
-                    title="Profile information"
-                    description="Update your name and email address"
-                />
+            <div class="flex flex-col space-y-8">
+                <!-- Friendly Welcome Header -->
+                <div class="flex items-center gap-4 bg-white dark:bg-black rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8">
+                    <div class="flex items-center gap-4">
+                        <UserInfo :user="user" :show-email="true" />
+                    </div>
+                    <div class="ml-auto flex items-center gap-2">
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
+                            Active
+                        </span>
+                    </div>
+                </div>
 
-                <Form
+                <!-- Profile Information Card -->
+                <div class="bg-white dark:bg-black rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 space-y-6">
+                    <Heading
+                        variant="small"
+                        title="Profile information"
+                        description="Update your name and email address"
+                    />
+
+                    <Form
                     v-bind="ProfileController.update.form()"
                     class="space-y-6"
                     v-slot="{ errors, processing, recentlySuccessful }"
@@ -122,10 +142,34 @@ const user = computed(() => page.props.auth.user);
                             </p>
                         </Transition>
                     </div>
-                </Form>
-            </div>
+                    </Form>
+                </div>
 
-            <DeleteUser />
+                <!-- Sign Out Card -->
+                <div class="bg-white dark:bg-black rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 space-y-6">
+                    <Heading
+                        variant="small"
+                        title="Sign out"
+                        description="Disconnect your account from this device"
+                    />
+                    
+                    <div class="flex items-center gap-4">
+                        <Link
+                            :href="logout()"
+                            @click="handleLogout"
+                            as="button"
+                            data-test="logout-button"
+                        >
+                            <Button variant="outline" type="button" class="border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900">
+                                Sign out
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- Delete Account Card -->
+                <DeleteUser />
+            </div>
         </SettingsLayout>
     </AppLayout>
 </template>

@@ -24,6 +24,11 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
+        title: 'Subjects',
+        href: '/subjects',
+        icon: BookOpen,
+    },
+    {
         title: 'Comments & suggestions',
         href: '/comments',
         icon: MessagesSquare,

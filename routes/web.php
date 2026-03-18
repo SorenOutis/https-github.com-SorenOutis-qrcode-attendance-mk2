@@ -8,6 +8,7 @@ use App\Http\Controllers\StudentController;
 use App\Models\Attendance;
 use App\Models\Comment;
 use App\Models\Rating;
+use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -29,6 +30,7 @@ Route::post('ratings', [RatingController::class, 'store'])->name('ratings.store'
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [StudentController::class, 'index'])->name('dashboard');
+    Route::resource('subjects', SubjectController::class)->except(['create', 'show', 'edit']);
 
     Route::post('students', [StudentController::class, 'store'])->name('students.store');
     Route::put('students/{student}', [StudentController::class, 'update'])->name('students.update');

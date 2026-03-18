@@ -90,12 +90,15 @@ class AttendanceController extends Controller
 
         $attendance = Attendance::create([
             'student_id' => $student->id,
+            'subject_id' => $slot['subject_id'] ?? null,
             'scanned_at' => $now,
             'status' => $status,
             'slot_index' => $slotIndex,
             'slot_start' => $slot['start'],
             'slot_end' => $slot['end'],
         ]);
+
+        $attendance->load('subject');
 
         return response()->json([
             'student' => [
@@ -111,6 +114,10 @@ class AttendanceController extends Controller
                 'status' => $attendance->status,
                 'slot_start' => $attendance->slot_start->format('H:i'),
                 'slot_end' => $attendance->slot_end->format('H:i'),
+                'subject' => $attendance->subject ? [
+                    'id' => $attendance->subject->id,
+                    'name' => $attendance->subject->name,
+                ] : null,
             ],
         ]);
     }

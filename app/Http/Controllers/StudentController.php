@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Student;
+use App\Models\Subject;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class StudentController extends Controller
     public function index(): Response
     {
         $date = CarbonImmutable::now()->toDateString();
+        $subjects = Subject::orderBy('name')->get(['id', 'name']);
 
         $students = Student::query()
             ->orderBy('name')
@@ -48,7 +50,7 @@ class StudentController extends Controller
         $latestByStudent = Attendance::query()
             ->whereDate('scanned_at', $date)
             ->orderByDesc('scanned_at')
-            ->get(['id', 'student_id', 'status', 'scanned_at'])
+            ->get(['id', 'student_id', 'status', 'scanned_at', 'subject_id'])
             ->groupBy('student_id')
             ->map(fn ($items) => $items->first());
 
@@ -56,11 +58,12 @@ class StudentController extends Controller
         $statusesByStudent = Attendance::query()
             ->whereDate('scanned_at', $date)
             ->orderBy('scanned_at')
-            ->get(['student_id', 'status', 'scanned_at'])
+            ->get(['student_id', 'status', 'scanned_at', 'subject_id'])
             ->groupBy('student_id')
             ->map(fn ($items) => $items->map(fn ($item) => [
                 'status' => $item->status,
                 'time' => $item->scanned_at->format('h:i A'),
+                'subject_id' => $item->subject_id,
             ])->values()->all());
 
         $mapStudent = function ($student) use ($latestByStudent, $statusesByStudent) {
@@ -82,12 +85,14 @@ class StudentController extends Controller
                         'id' => $latest->id,
                         'status' => $latest->status,
                         'scanned_at' => $latest->scanned_at,
+                        'subject_id' => $latest->subject_id,
                     ]
                     : null,
             ];
         };
 
         return Inertia::render('Dashboard', [
+            'subjects' => $subjects,
             'students' => $students->map($mapStudent),
             'trashedStudents' => $trashedStudents->map($mapStudent),
         ]);
@@ -137,16 +142,18 @@ class StudentController extends Controller
             'section' => ['nullable', 'string', 'max:255'],
             'schedule' => ['required', 'array', 'min:1'],
             'schedule.*.day' => ['required', 'string', 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'],
+            'schedule.*.subject_id' => ['required', 'exists:subjects,id'],
             'schedule.*.start' => ['required', 'date_format:H:i'],
             'schedule.*.end' => ['required', 'date_format:H:i'],
         ]);
 
         // Ensure each slot has start < end
         $data['schedule'] = collect($data['schedule'])
-            ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end']))
+            ->filter(fn ($slot) => isset($slot['day'], $slot['subject_id'], $slot['start'], $slot['end']))
             ->map(function ($slot) {
                 return [
                     'day' => $slot['day'],
+                    'subject_id' => (int) $slot['subject_id'],
                     'start' => $slot['start'],
                     'end' => $slot['end'],
                 ];
@@ -180,15 +187,17 @@ class StudentController extends Controller
             'section' => ['nullable', 'string', 'max:255'],
             'schedule' => ['required', 'array', 'min:1'],
             'schedule.*.day' => ['required', 'string', 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'],
+            'schedule.*.subject_id' => ['required', 'exists:subjects,id'],
             'schedule.*.start' => ['required', 'date_format:H:i'],
             'schedule.*.end' => ['required', 'date_format:H:i'],
         ]);
 
         $data['schedule'] = collect($data['schedule'])
-            ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end']))
+            ->filter(fn ($slot) => isset($slot['day'], $slot['subject_id'], $slot['start'], $slot['end']))
             ->map(function ($slot) {
                 return [
                     'day' => $slot['day'],
+                    'subject_id' => (int) $slot['subject_id'],
                     'start' => $slot['start'],
                     'end' => $slot['end'],
                 ];

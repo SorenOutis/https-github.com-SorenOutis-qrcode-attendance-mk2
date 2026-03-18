@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Student;
+use App\Models\Subject;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
@@ -52,14 +53,17 @@ test('handles multiple slots correctly', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
+    $subject1 = Subject::create(['name' => 'Math']);
+    $subject2 = Subject::create(['name' => 'Science']);
+
     $student = Student::create([
         'name' => 'Multi Slot Student',
         'student_number' => '2021-0002',
         'email' => 'multi@example.com',
         'qr_token' => 'multi-token',
         'schedule' => [
-            ['day' => 'Monday', 'start' => '09:00', 'end' => '10:00'],
-            ['day' => 'Monday', 'start' => '13:00', 'end' => '14:00'],
+            ['day' => 'Monday', 'start' => '09:00', 'end' => '10:00', 'subject_id' => $subject1->id],
+            ['day' => 'Monday', 'start' => '13:00', 'end' => '14:00', 'subject_id' => $subject2->id],
         ],
     ]);
 
@@ -70,12 +74,14 @@ test('handles multiple slots correctly', function () {
     $response = $this->post(route('attendance.scan'), ['token' => 'multi-token']);
     $response->assertJsonPath('attendance.status', 'Present');
     $response->assertJsonPath('attendance.slot_start', '09:00');
+    $response->assertJsonPath('attendance.subject.id', $subject1->id);
 
     // 2. Second scan at 9:10 AM -> Now counts for the 2nd slot (Early Check-in)
     CarbonImmutable::setTestNow(CarbonImmutable::parse("{$baseDate} 09:10:00"));
     $response = $this->post(route('attendance.scan'), ['token' => 'multi-token']);
     $response->assertJsonPath('attendance.status', 'Present');
     $response->assertJsonPath('attendance.slot_start', '13:00');
+    $response->assertJsonPath('attendance.subject.id', $subject2->id);
 
     // 3. Final scan (2:05 PM) -> Time Out
     CarbonImmutable::setTestNow(CarbonImmutable::parse("{$baseDate} 14:05:00"));

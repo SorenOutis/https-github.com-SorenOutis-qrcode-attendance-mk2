@@ -46,12 +46,13 @@ type Student = {
     email?: string | null;
     section?: string | null;
     qr_token: string;
-    schedule?: { day: string; start: string; end: string }[];
-    today_statuses?: { status: string; time: string }[];
+    schedule?: { day: string; start: string; end: string; subject_id?: string | null }[];
+    today_statuses?: { status: string; time: string; subject_id?: string | number }[];
     latest_attendance?: {
         id: number;
         status: string;
         scanned_at: string;
+        subject_id?: string | number;
     } | null;
     deleted_at?: string | null;
 };
@@ -63,6 +64,7 @@ const daysOfWeek = [
 type PageProps = {
     students: Student[];
     trashedStudents: Student[];
+    subjects: { id: number; name: string }[];
 };
 
 const props = defineProps<PageProps>();
@@ -134,7 +136,7 @@ const stats = computed(() => {
 });
 
 const recentActivity = computed(() => {
-    const activity: { name: string; status: string; time: string; sortTime: number }[] = [];
+    const activity: { name: string; status: string; time: string; subject_id?: string | number; sortTime: number }[] = [];
     
     students.value.forEach(s => {
         s.today_statuses?.forEach(ts => {
@@ -148,6 +150,7 @@ const recentActivity = computed(() => {
                 name: s.name,
                 status: ts.status,
                 time: ts.time,
+                subject_id: ts.subject_id,
                 sortTime: sortTime
             });
         });
@@ -257,16 +260,16 @@ const name = ref('');
 const studentNumber = ref('');
 const email = ref('');
 const section = ref('');
-const schedules = ref<{ day: string; start: string; end: string }[]>([
-    { day: 'Monday', start: '', end: '' },
+const schedules = ref<{ day: string; start: string; end: string; subject_id: string }[]>([
+    { day: 'Monday', start: '', end: '', subject_id: '' },
 ]);
 
 const editName = ref('');
 const editStudentNumber = ref('');
 const editEmail = ref('');
 const editSection = ref('');
-const editSchedules = ref<{ day: string; start: string; end: string }[]>([
-    { day: 'Monday', start: '', end: '' },
+const editSchedules = ref<{ day: string; start: string; end: string; subject_id: string }[]>([
+    { day: 'Monday', start: '', end: '', subject_id: '' },
 ]);
 const editingStudentId = ref<number | null>(null);
 
@@ -366,7 +369,7 @@ function resetForm() {
     studentNumber.value = '';
     email.value = '';
     section.value = '';
-    schedules.value = [{ day: 'Monday', start: '', end: '' }];
+    schedules.value = [{ day: 'Monday', start: '', end: '', subject_id: '' }];
     formErrors.value = {};
 }
 
@@ -408,7 +411,7 @@ async function submitStudent() {
 }
 
 function addScheduleSlot() {
-    schedules.value.push({ day: 'Monday', start: '', end: '' });
+    schedules.value.push({ day: 'Monday', start: '', end: '', subject_id: '' });
 }
 
 function removeScheduleSlot(index: number) {
@@ -507,8 +510,8 @@ function openEditModal(student: Student) {
     editSection.value = student.section || '';
     editSchedules.value =
         student.schedule && student.schedule.length > 0
-            ? student.schedule.map((s) => ({ day: s.day || 'Monday', start: s.start, end: s.end }))
-            : [{ day: 'Monday', start: '', end: '' }];
+            ? student.schedule.map((s) => ({ day: s.day || 'Monday', start: s.start, end: s.end, subject_id: s.subject_id?.toString() || '' }))
+            : [{ day: 'Monday', start: '', end: '', subject_id: '' }];
     formErrors.value = {};
     editModalOpen.value = true;
 }
@@ -517,6 +520,12 @@ function formatDateTime(iso: string) {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
     return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+}
+
+function getSubjectName(subjectId: string | number | null | undefined): string {
+    if (!subjectId) return 'N/A';
+    const subject = props.subjects?.find(s => s.id.toString() === subjectId.toString());
+    return subject ? subject.name : 'Unknown';
 }
 
 function formatTimeTo12h(timeStr?: string) {
@@ -578,7 +587,7 @@ function closeEditModal() {
 }
 
 function addEditScheduleSlot() {
-    editSchedules.value.push({ day: 'Monday', start: '', end: '' });
+    editSchedules.value.push({ day: 'Monday', start: '', end: '', subject_id: '' });
 }
 
 function removeEditScheduleSlot(index: number) {
@@ -1130,6 +1139,9 @@ onMounted(() => {
                                     </div>
                                     <div class="flex flex-col items-end gap-1 shrink-0">
                                         <span class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400">{{ act.time }}</span>
+                                        <span v-if="act.subject_id" class="text-[9px] text-zinc-400 dark:text-zinc-500 line-clamp-1 max-w-[80px] text-right" :title="getSubjectName(act.subject_id)">
+                                            {{ getSubjectName(act.subject_id) }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -1214,29 +1226,28 @@ onMounted(() => {
                             class="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-black/95 backdrop-blur text-zinc-500 dark:text-zinc-400"
                         >
                             <tr>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider">
+                                <th class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider">
                                     Name
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider">
+                                <th class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider">
                                     Student #
                                 </th>
-                                <!-- Status columns -->
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-center">
+                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
                                     Present
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-center">
+                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
                                     Late
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-center">
+                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
                                     Time Out
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-center">
+                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
                                     Absent
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider">
+                                <th class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider">
                                     Section
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider">
+                                <th class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider">
                                     Email
                                 </th>
                             </tr>
@@ -1247,7 +1258,7 @@ onMounted(() => {
                             >
                                 <td
                                     colspan="9"
-                                    class="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400"
+                                    class="px-3 lg:px-4 py-6 lg:py-8 text-center text-sm text-zinc-500 dark:text-zinc-400"
                                 >
                                     <span v-if="searchQuery">
                                         No students matching "{{ searchQuery }}"
@@ -1267,12 +1278,12 @@ onMounted(() => {
                                 class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer text-zinc-900 dark:text-zinc-100"
                                 @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                             >
-                                <td class="px-4 py-3 text-sm font-medium">
-                                    <span class="flex items-center gap-1.5">
-                                        {{ student.name }}
+                                <td class="px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium">
+                                    <span class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="truncate max-w-[120px] lg:max-w-none">{{ student.name }}</span>
                                         <div 
                                             v-if="activeTab === 'active'"
-                                            class="h-1.5 w-1.5 rounded-full status-pulse"
+                                            class="h-1 w-1 lg:h-1.5 lg:w-1.5 rounded-full status-pulse shrink-0"
                                             :class="[
                                                 student.latest_attendance?.status === 'Present'  ? 'bg-zinc-900 dark:bg-white shadow-sm' :
                                                 student.latest_attendance?.status === 'Late'     ? 'bg-zinc-500 dark:bg-zinc-400' :
@@ -1282,56 +1293,56 @@ onMounted(() => {
                                         ></div>
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                                <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400">
                                     {{ student.student_number }}
                                 </td>
                                 <!-- Status indicator columns (active students) -->
                                 <template v-if="activeTab === 'active'">
                                     <!-- Present -->
-                                    <td class="px-4 py-3 text-center" @click.stop>
+                                    <td class="px-1 lg:px-2 py-2 text-center" @click.stop>
                                         <div v-if="student.today_statuses?.some(s => s.status === 'Present')" class="flex flex-col items-center gap-1">
                                             <template v-for="s in student.today_statuses?.filter(st => st.status === 'Present')">
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700">
-                                                    <CheckCircle2 class="w-3 h-3" />
+                                                <span class="inline-flex items-center gap-0.5 lg:gap-1 text-[9px] lg:text-[10px] font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-1.5 lg:px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700 whitespace-nowrap">
+                                                    <CheckCircle2 class="w-2.5 h-2.5 lg:w-3 lg:h-3 shrink-0" />
                                                     {{ s.time }}
                                                 </span>
                                             </template>
                                         </div>
-                                        <span v-else class="inline-block w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
+                                        <span v-else class="inline-block w-3 lg:w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
                                     </td>
                                     <!-- Late -->
-                                    <td class="px-4 py-3 text-center" @click.stop>
+                                    <td class="px-1 lg:px-2 py-2 text-center" @click.stop>
                                         <div v-if="student.today_statuses?.some(s => s.status === 'Late')" class="flex flex-col items-center gap-1">
                                             <template v-for="s in student.today_statuses?.filter(st => st.status === 'Late')">
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-zinc-900 dark:text-white bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded-full border border-zinc-300 dark:border-zinc-600">
-                                                    <AlertCircle class="w-3 h-3" />
+                                                <span class="inline-flex items-center gap-0.5 lg:gap-1 text-[9px] lg:text-[10px] font-bold text-zinc-900 dark:text-white bg-zinc-200 dark:bg-zinc-700 px-1.5 lg:px-2 py-0.5 rounded-full border border-zinc-300 dark:border-zinc-600 whitespace-nowrap">
+                                                    <AlertCircle class="w-2.5 h-2.5 lg:w-3 lg:h-3 shrink-0" />
                                                     {{ s.time }}
                                                 </span>
                                             </template>
                                         </div>
-                                        <span v-else class="inline-block w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
+                                        <span v-else class="inline-block w-3 lg:w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
                                     </td>
                                     <!-- Time Out -->
-                                    <td class="px-4 py-3 text-center" @click.stop>
+                                    <td class="px-1 lg:px-2 py-2 text-center" @click.stop>
                                         <div v-if="student.today_statuses?.some(s => s.status === 'Time Out')" class="flex flex-col items-center gap-1">
                                             <template v-for="s in student.today_statuses?.filter(st => st.status === 'Time Out')">
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-zinc-900 dark:text-white bg-zinc-300 dark:bg-zinc-600 px-2 py-0.5 rounded-full border border-zinc-400 dark:border-zinc-500">
-                                                    <CheckCircle2 class="w-3 h-3" />
+                                                <span class="inline-flex items-center gap-0.5 lg:gap-1 text-[9px] lg:text-[10px] font-bold text-zinc-900 dark:text-white bg-zinc-300 dark:bg-zinc-600 px-1.5 lg:px-2 py-0.5 rounded-full border border-zinc-400 dark:border-zinc-500 whitespace-nowrap">
+                                                    <CheckCircle2 class="w-2.5 h-2.5 lg:w-3 lg:h-3 shrink-0" />
                                                     {{ s.time }}
                                                 </span>
                                             </template>
                                         </div>
-                                        <span v-else class="inline-block w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
+                                        <span v-else class="inline-block w-3 lg:w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
                                     </td>
                                     <!-- Absent -->
-                                    <td class="px-4 py-3 text-center" @click.stop v-if="activeTab === 'active'">
+                                    <td class="px-1 lg:px-2 py-2 text-center" @click.stop v-if="activeTab === 'active'">
                                         <span v-if="(isScheduledForToday(student) && (!student.today_statuses || student.today_statuses.length === 0)) || student.today_statuses?.some(s => s.status === 'Absent')"
-                                            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border border-zinc-900 dark:border-zinc-100"
+                                            class="inline-flex items-center justify-center w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border border-zinc-900 dark:border-zinc-100"
                                             title="Absent"
                                         >
-                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            <svg class="w-3 h-3 lg:w-3.5 lg:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                                         </span>
-                                        <span v-else class="inline-block w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
+                                        <span v-else class="inline-block w-3 lg:w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
                                     </td>
                                 </template>
                                 <!-- Deleted students: span across 4 status cols + show restore/delete buttons -->
@@ -1347,13 +1358,13 @@ onMounted(() => {
                                         </div>
                                     </td>
                                 </template>
-                                <td class="px-4 py-2 text-xs text-muted-foreground">
+                                <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-muted-foreground">
                                     {{ student.section || '—' }}
                                 </td>
-                                <td class="px-4 py-2 text-xs text-muted-foreground" v-if="activeTab === 'active'">
+                                <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-muted-foreground" v-if="activeTab === 'active'">
                                     {{ student.email || '—' }}
                                 </td>
-                                <td class="px-4 py-2 text-xs text-rose-500 font-medium" v-else>
+                                <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-rose-500 font-medium" v-else>
                                     Deleted {{ formatDateTime(student.deleted_at!) }}
                                 </td>
                                 <!-- <td class="px-4 py-2 text-right text-xs text-muted-foreground" @click.stop>
@@ -1549,39 +1560,54 @@ onMounted(() => {
                                 <div
                                     v-for="(slot, index) in schedules"
                                     :key="index"
-                                    class="flex items-center gap-2"
+                                    class="relative flex flex-col gap-2.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-2.5"
                                 >
-                                    <Select v-model="slot.day">
-                                        <SelectTrigger class="w-full text-xs">
-                                            <SelectValue :placeholder="slot.day" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem v-for="d in daysOfWeek" :key="d" :value="d">
-                                                {{ d }}
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Input
-                                        v-model="slot.start"
-                                        type="time"
-                                        class="text-xs"
-                                    />
-                                    <span class="text-xs text-muted-foreground px-1">
-                                        to
-                                    </span>
-                                    <Input
-                                        v-model="slot.end"
-                                        type="time"
-                                        class="text-xs"
-                                    />
+                                    <div class="flex items-center gap-2 pr-6">
+                                        <Select v-model="slot.day">
+                                            <SelectTrigger class="h-8 flex-1 text-left text-xs">
+                                                <SelectValue :placeholder="slot.day" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem v-for="d in daysOfWeek" :key="d" :value="d">
+                                                    {{ d }}
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select v-model="slot.subject_id">
+                                            <SelectTrigger class="h-8 flex-1 text-left text-xs">
+                                                <SelectValue placeholder="Subject" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem v-for="subj in props.subjects" :key="subj.id" :value="subj.id.toString()">
+                                                    {{ subj.name }}
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <Input
+                                            v-model="slot.start"
+                                            type="time"
+                                            class="h-8 w-full flex-1 text-xs"
+                                        />
+                                        <span class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                                            to
+                                        </span>
+                                        <Input
+                                            v-model="slot.end"
+                                            type="time"
+                                            class="h-8 w-full flex-1 text-xs"
+                                        />
+                                    </div>
                                     <Button
                                         v-if="schedules.length > 1"
                                         type="button"
                                         size="icon-sm"
                                         variant="ghost"
+                                        class="absolute right-1 top-1 h-6 w-6 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                         @click="removeScheduleSlot(index)"
                                     >
-                                        ×
+                                        <Trash2 class="h-3 w-3" />
                                     </Button>
                                 </div>
                             </div>
@@ -1662,7 +1688,7 @@ onMounted(() => {
                                         :key="i"
                                         class="rounded-md border px-2 py-0.5 text-[11px] font-mono"
                                     >
-                                        {{ slot.day }}: {{ slot.start }} – {{ slot.end }}
+                                        {{ slot.day }}: {{ slot.start }} – {{ slot.end }} ({{ getSubjectName(slot.subject_id) }})
                                     </span>
                                 </div>
                             </div>
@@ -1741,7 +1767,7 @@ onMounted(() => {
                                         <div class="flex items-center gap-1">
                                             <Select 
                                                 :model-value="record.status" 
-                                                @update:model-value="(val) => updateHistoryStatus(record.id, val)"
+                                                @update:model-value="(val) => updateHistoryStatus(record.id, String(val))"
                                                 :disabled="updatingRecordId === record.id"
                                             >
                                                 <SelectTrigger class="h-6 min-w-[80px] border-none bg-transparent p-0 hover:bg-muted/50 focus:ring-0">
@@ -1819,7 +1845,7 @@ onMounted(() => {
             </Dialog>
 
             <Dialog v-model:open="editModalOpen">
-                <DialogContent class="max-w-sm">
+                <DialogContent class="max-w-md">
                     <DialogHeader>
                         <DialogTitle>
                             Edit student
@@ -1917,39 +1943,54 @@ onMounted(() => {
                                 <div
                                     v-for="(slot, index) in editSchedules"
                                     :key="index"
-                                    class="flex items-center gap-2"
+                                    class="relative flex flex-col gap-2.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-2.5"
                                 >
-                                    <Select v-model="slot.day">
-                                        <SelectTrigger class="w-full text-xs">
-                                            <SelectValue :placeholder="slot.day" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem v-for="d in daysOfWeek" :key="d" :value="d">
-                                                {{ d }}
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Input
-                                        v-model="slot.start"
-                                        type="time"
-                                        class="text-xs"
-                                    />
-                                    <span class="text-xs text-muted-foreground px-1">
-                                        to
-                                    </span>
-                                    <Input
-                                        v-model="slot.end"
-                                        type="time"
-                                        class="text-xs"
-                                    />
+                                    <div class="flex items-center gap-2 pr-6">
+                                        <Select v-model="slot.day">
+                                            <SelectTrigger class="h-8 flex-1 text-left text-xs">
+                                                <SelectValue :placeholder="slot.day" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem v-for="d in daysOfWeek" :key="d" :value="d">
+                                                    {{ d }}
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select v-model="slot.subject_id">
+                                            <SelectTrigger class="h-8 flex-1 text-left text-xs">
+                                                <SelectValue placeholder="Subject" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem v-for="subj in props.subjects" :key="subj.id" :value="subj.id.toString()">
+                                                    {{ subj.name }}
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <Input
+                                            v-model="slot.start"
+                                            type="time"
+                                            class="h-8 w-full flex-1 text-xs"
+                                        />
+                                        <span class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                                            to
+                                        </span>
+                                        <Input
+                                            v-model="slot.end"
+                                            type="time"
+                                            class="h-8 w-full flex-1 text-xs"
+                                        />
+                                    </div>
                                     <Button
                                         v-if="editSchedules.length > 1"
                                         type="button"
                                         size="icon-sm"
                                         variant="ghost"
+                                        class="absolute right-1 top-1 h-6 w-6 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                         @click="removeEditScheduleSlot(index)"
                                     >
-                                        ×
+                                        <Trash2 class="h-3 w-3" />
                                     </Button>
                                 </div>
                             </div>

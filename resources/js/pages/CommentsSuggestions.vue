@@ -265,7 +265,7 @@ onMounted(() => {
             <div
                 v-else
                 ref="listRef"
-                class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
             >
 
                 <article
@@ -278,9 +278,9 @@ onMounted(() => {
                     <div class="absolute -right-6 -top-6 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
                     
                     <div class="relative z-10 flex-1 flex flex-col gap-4">
-                        <div class="flex items-start justify-between gap-3">
+                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 overflow-hidden">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors shrink-0">
                                     <span class="text-xs font-bold text-primary">{{ (comment.name || 'A').charAt(0).toUpperCase() }}</span>
                                 </div>
                                 <div class="min-w-0">
@@ -292,7 +292,7 @@ onMounted(() => {
                                     </p>
                                 </div>
                             </div>
-                            <time class="text-[10px] text-muted-foreground/60 font-mono">
+                            <time class="text-[9px] text-muted-foreground/60 font-mono shrink-0 pt-1">
                                 {{ new Date(comment.created_at).toLocaleDateString() }}
                             </time>
                         </div>
@@ -330,7 +330,7 @@ onMounted(() => {
                             </span>
                         </div>
 
-                        <div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="flex items-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                             <template v-if="editingId === comment.id">
                                 <Button
                                     size="sm"

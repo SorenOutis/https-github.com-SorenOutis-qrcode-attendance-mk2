@@ -1467,14 +1467,15 @@ onMounted(() => {
     </div>
 
     <Dialog v-model:open="createModalOpen">
-                <DialogContent class="max-w-sm">
+                <DialogContent class="max-w-sm flex flex-col max-h-[80dvh]">
                     <DialogHeader>
                         <DialogTitle>
                             Add student
                         </DialogTitle>
                     </DialogHeader>
 
-                    <form class="space-y-3" @submit.prevent="submitStudent">
+                    <form class="flex flex-col flex-1 min-h-0" @submit.prevent="submitStudent">
+                        <div class="flex-1 overflow-y-auto space-y-3 pr-0.5">
                         <div class="space-y-1.5">
                             <label class="text-xs font-medium">
                                 Full name
@@ -1621,6 +1622,7 @@ onMounted(() => {
                             </div>
                         </div>
 
+                        </div>
                         <DialogFooter class="mt-4 flex justify-end gap-2">
                             <DialogClose as-child>
                                 <Button type="button" variant="outline">
@@ -1845,14 +1847,15 @@ onMounted(() => {
             </Dialog>
 
             <Dialog v-model:open="editModalOpen">
-                <DialogContent class="max-w-md">
+                <DialogContent class="max-w-md flex flex-col max-h-[80dvh]">
                     <DialogHeader>
                         <DialogTitle>
                             Edit student
                         </DialogTitle>
                     </DialogHeader>
 
-                    <form class="space-y-3" @submit.prevent="submitEditStudent">
+                    <form class="flex flex-col flex-1 min-h-0" @submit.prevent="submitEditStudent">
+                        <div class="flex-1 overflow-y-auto space-y-3 pr-0.5">
                         <div class="space-y-1.5">
                             <label class="text-xs font-medium">
                                 Full name
@@ -2002,6 +2005,7 @@ onMounted(() => {
                                     • {{ Array.isArray(err) ? err[0] : err }}
                                 </p>
                             </div>
+                        </div>
                         </div>
 
                         <DialogFooter class="mt-4 flex justify-end gap-2">

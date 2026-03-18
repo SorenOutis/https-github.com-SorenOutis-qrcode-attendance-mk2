@@ -286,33 +286,33 @@ onMounted(() => {
                             </div>
                         </div>
                         
-                        <div class="relative z-10 mt-4 pt-4 border-t border-sidebar-border/30 flex items-center justify-end gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="relative z-10 mt-4 pt-4 border-t border-sidebar-border/30 flex flex-wrap items-center justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                             <Button 
                                 size="sm" 
                                 variant="secondary" 
-                                class="h-8 px-4 rounded-full transition-all text-xs font-semibold" 
+                                class="h-8 px-3 rounded-full transition-all text-xs font-semibold shrink-0" 
                                 @click="openStudentsModal(subject)"
                             >
-                                <Users class="h-3.5 w-3.5 md:mr-1" />
-                                <span class="hidden md:inline">View Students</span>
+                                <Users class="h-3.5 w-3.5 xl:mr-1.5" />
+                                <span class="hidden xl:inline">Students</span>
                             </Button>
                             <Button 
                                 size="sm" 
                                 variant="outline" 
-                                class="h-8 px-4 rounded-full border-sidebar-border hover:bg-muted transition-all text-xs font-semibold" 
+                                class="h-8 px-3 rounded-full border-sidebar-border hover:bg-muted transition-all text-xs font-semibold shrink-0" 
                                 @click="openEditModal(subject)"
                             >
-                                <Edit2 class="h-3.5 w-3.5 md:mr-1" />
-                                <span class="hidden md:inline">Edit</span>
+                                <Edit2 class="h-3.5 w-3.5 xl:mr-1.5" />
+                                <span class="hidden xl:inline">Edit</span>
                             </Button>
                             <Button 
                                 size="sm" 
                                 variant="ghost" 
-                                class="h-8 px-4 rounded-full text-destructive hover:bg-destructive/10 transition-all text-xs font-semibold" 
+                                class="h-8 px-3 rounded-full text-destructive hover:bg-destructive/10 transition-all text-xs font-semibold shrink-0" 
                                 @click="deleteSubject(subject.id)"
                             >
-                                <Trash2 class="h-3.5 w-3.5 md:mr-1" />
-                                <span class="hidden md:inline">Remove</span>
+                                <Trash2 class="h-3.5 w-3.5 xl:mr-1.5" />
+                                <span class="hidden xl:inline">Remove</span>
                             </Button>
                         </div>
                     </article>
@@ -401,12 +401,23 @@ onMounted(() => {
                 <DialogHeader>
                     <DialogTitle>Students enrolled in {{ selectedSubjectForStudents?.name }}</DialogTitle>
                 </DialogHeader>
-                <div class="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                    <div v-if="selectedSubjectForStudents?.students?.length" class="space-y-2">
-                        <div v-for="student in selectedSubjectForStudents.students" :key="student.id" class="flex items-center justify-between p-3 rounded-xl border border-sidebar-border bg-muted/40 backdrop-blur-sm">
-                            <div class="flex flex-col">
-                                <span class="font-medium text-sm text-foreground">{{ student.name }}</span>
-                                <span class="text-xs text-muted-foreground">{{ student.student_number }}</span>
+                <div class="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <div v-if="selectedSubjectForStudents?.students?.length" class="space-y-3">
+                        <div v-for="student in selectedSubjectForStudents.students" :key="student.id" class="group flex items-center justify-between p-4 rounded-2xl border border-sidebar-border/50 bg-background/50 backdrop-blur-xl shadow-sm hover:shadow-md hover:border-sidebar-border/80 transition-all duration-300">
+                            <div class="flex items-center gap-4">
+                                <!-- Avatar Initial -->
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 group-hover:bg-primary/20 transition-colors shadow-inner">
+                                    <span class="text-sm font-bold text-primary">
+                                        {{ student.name.charAt(0).toUpperCase() }}
+                                    </span>
+                                </div>
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="font-bold text-sm text-foreground tracking-tight">{{ student.name }}</span>
+                                    <span class="text-xs font-medium text-muted-foreground/80 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500/80"></span>
+                                        ID: {{ student.student_number }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>

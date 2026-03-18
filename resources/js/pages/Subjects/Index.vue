@@ -7,7 +7,7 @@ import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, BookOpen, Trash2, Edit2 } from 'lucide-vue-next';
+import { Plus, BookOpen, Trash2, Edit2, Users } from 'lucide-vue-next';
 import {
     Dialog,
     DialogClose,
@@ -17,9 +17,16 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 
+type Student = {
+    id: number;
+    name: string;
+    student_number: string;
+};
+
 type Subject = {
     id: number;
     name: string;
+    students?: Student[];
 };
 
 type PageProps = {
@@ -43,6 +50,21 @@ const editingSubjectId = ref<number | null>(null);
 const submitting = ref(false);
 const formErrors = ref<Record<string, string[]>>({});
 const listRef = ref<HTMLDivElement | null>(null);
+
+const studentsModalOpen = ref(false);
+const selectedSubjectForStudents = ref<Subject | null>(null);
+
+function openStudentsModal(subject: Subject) {
+    selectedSubjectForStudents.value = subject;
+    studentsModalOpen.value = true;
+}
+
+function closeStudentsModal() {
+    studentsModalOpen.value = false;
+    setTimeout(() => {
+        selectedSubjectForStudents.value = null;
+    }, 300);
+}
 
 const confirmModalOpen = ref(false);
 const confirmTitle = ref('');
@@ -255,11 +277,8 @@ onMounted(() => {
                         <div class="relative z-10 flex-1 flex flex-col gap-5">
                             <div class="flex items-start justify-between gap-2 overflow-hidden">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors shrink-0">
-                                        <BookOpen class="h-4 w-4 text-primary" />
-                                    </div>
                                     <div class="min-w-0 flex items-center min-h-[40px]">
-                                        <h3 class="text-base font-serif font-bold text-foreground leading-tight line-clamp-2" :title="subject.name">
+                                        <h3 class="text-xl font-serif font-bold text-foreground leading-tight line-clamp-2" :title="subject.name">
                                             {{ subject.name }}
                                         </h3>
                                     </div>
@@ -268,6 +287,15 @@ onMounted(() => {
                         </div>
                         
                         <div class="relative z-10 mt-4 pt-4 border-t border-sidebar-border/30 flex items-center justify-end gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+                            <Button 
+                                size="sm" 
+                                variant="secondary" 
+                                class="h-8 px-4 rounded-full transition-all text-xs font-semibold" 
+                                @click="openStudentsModal(subject)"
+                            >
+                                <Users class="h-3.5 w-3.5 md:mr-1" />
+                                <span class="hidden md:inline">View Students</span>
+                            </Button>
                             <Button 
                                 size="sm" 
                                 variant="outline" 
@@ -364,6 +392,31 @@ onMounted(() => {
                     <Button type="button" variant="destructive" @click="handleConfirm">
                         Delete
                     </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        <!-- Students Modal -->
+        <Dialog v-model:open="studentsModalOpen">
+            <DialogContent class="max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Students enrolled in {{ selectedSubjectForStudents?.name }}</DialogTitle>
+                </DialogHeader>
+                <div class="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <div v-if="selectedSubjectForStudents?.students?.length" class="space-y-2">
+                        <div v-for="student in selectedSubjectForStudents.students" :key="student.id" class="flex items-center justify-between p-3 rounded-xl border border-sidebar-border bg-muted/40 backdrop-blur-sm">
+                            <div class="flex flex-col">
+                                <span class="font-medium text-sm text-foreground">{{ student.name }}</span>
+                                <span class="text-xs text-muted-foreground">{{ student.student_number }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-8 text-muted-foreground flex flex-col items-center justify-center gap-2">
+                        <Users class="w-8 h-8 opacity-20" />
+                        <p class="text-sm">No students enrolled.</p>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" @click="closeStudentsModal">Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

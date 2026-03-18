@@ -16,8 +16,32 @@ class SubjectController extends Controller
      */
     public function index(): Response
     {
+        $subjects = Subject::orderBy('name')->get();
+        $students = \App\Models\Student::get(['id', 'name', 'student_number', 'schedule']);
+
+        $subjects->transform(function ($subject) use ($students) {
+            $enrolledStudents = $students->filter(function ($student) use ($subject) {
+                if (!is_array($student->schedule)) return false;
+                foreach ($student->schedule as $slot) {
+                    if (isset($slot['subject_id']) && $slot['subject_id'] == $subject->id) {
+                        return true;
+                    }
+                }
+                return false;
+            })->map(function ($s) {
+                return [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'student_number' => $s->student_number,
+                ];
+            })->values();
+
+            $subject->students = $enrolledStudents;
+            return $subject;
+        });
+
         return Inertia::render('Subjects/Index', [
-            'subjects' => Subject::orderBy('name')->get(),
+            'subjects' => $subjects,
         ]);
     }
 

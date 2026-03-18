@@ -1143,7 +1143,7 @@ onMounted(() => {
                         class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl"
                     >
                         <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-6 gap-6 bg-zinc-50 dark:bg-zinc-900/50">
-                            <div class="flex items-center justify-between">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <h2 class="text-2xl font-serif font-bold tracking-tight text-foreground">
                                     Student Records
                                 </h2>
@@ -1382,7 +1382,7 @@ onMounted(() => {
                     <div 
                         v-else
                         ref="studentsGridRef"
-                        class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
                     >
                         <div 
                             v-for="student in visibleStudents"

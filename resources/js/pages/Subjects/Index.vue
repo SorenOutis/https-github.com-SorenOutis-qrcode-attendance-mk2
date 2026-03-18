@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
+import gsap from 'gsap';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -41,6 +42,7 @@ const editName = ref('');
 const editingSubjectId = ref<number | null>(null);
 const submitting = ref(false);
 const formErrors = ref<Record<string, string[]>>({});
+const listRef = ref<HTMLDivElement | null>(null);
 
 const confirmModalOpen = ref(false);
 const confirmTitle = ref('');
@@ -145,67 +147,147 @@ function deleteSubject(id: number) {
         }
     );
 }
+
+onMounted(() => {
+    const header = document.querySelector('.bg-background\\/50.backdrop-blur-xl');
+    if (header) {
+        gsap.set(header.parentElement, { perspective: 1000 });
+        gsap.from(header, {
+            opacity: 0,
+            y: -30,
+            rotationX: 20,
+            z: -50,
+            duration: 1,
+            ease: 'power3.out'
+        });
+    }
+
+    if (!listRef.value) return;
+    const cards = listRef.value.querySelectorAll<HTMLElement>('[data-subject-card]');
+    
+    gsap.set(listRef.value, { perspective: 1000 });
+    
+    gsap.from(cards, {
+        opacity: 0,
+        y: 50,
+        rotationX: -30,
+        z: -100,
+        duration: 1,
+        stagger: 0.1,
+        ease: 'back.out(1.2)',
+    });
+
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach((btn) => {
+        gsap.set(btn, { transformStyle: "preserve-3d" });
+        btn.addEventListener('mousedown', () => {
+            gsap.to(btn, { scale: 0.95, z: -5, duration: 0.1, ease: 'power1.out' });
+        });
+        btn.addEventListener('mouseup', () => {
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'bounce.out' });
+        });
+        btn.addEventListener('mouseleave', () => {
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
+        });
+    });
+});
 </script>
 
 <template>
     <Head title="Subjects" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div class="flex flex-col gap-1">
-                    <h1 class="text-3xl font-serif font-bold tracking-tight text-foreground flex items-center gap-2">
-                        <BookOpen class="h-6 w-6 text-zinc-500" />
-                        Subjects
-                    </h1>
-                    <p class="text-sm text-muted-foreground">
-                        Manage subjects available for student schedules.
-                    </p>
+        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
+            <div class="rounded-[2rem] border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-8 shadow-2xl relative overflow-hidden group">
+                <div class="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors duration-700"></div>
+                <h1 class="text-2xl font-serif font-bold text-foreground tracking-tight">
+                    Subjects
+                </h1>
+                <p class="mt-2 text-sm text-muted-foreground/80 font-light max-w-2xl leading-relaxed">
+                    Manage subjects available for student schedules. Create and configure classes to accurately track attendance.
+                </p>
+                <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="h-10 px-5 rounded-full border-sidebar-border/50 bg-background/50 backdrop-blur-sm hover:bg-muted/50 transition-all gap-2 text-xs font-semibold tracking-wide"
+                            @click="openCreateModal"
+                        >
+                            <Plus class="h-3.5 w-3.5" />
+                            Add Subject
+                        </Button>
+                    </div>
                 </div>
-                <Button 
-                    class="rounded-full gap-1.5 shrink-0 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-sm"
-                    @click="openCreateModal"
-                >
-                    <Plus class="h-4 w-4" />
-                    Add Subject
-                </Button>
             </div>
 
-            <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
-                <div v-if="props.subjects.length === 0" class="p-12 text-center text-zinc-500 dark:text-zinc-400">
+            <div
+                v-if="props.subjects.length === 0"
+                class="flex w-full items-center justify-center rounded-2xl border border-dashed border-sidebar-border/70 bg-muted/30 p-12 text-center text-sm text-muted-foreground shadow-sm backdrop-blur-sm dark:border-sidebar-border"
+            >
+                <div class="max-w-[300px] space-y-2">
                     <BookOpen class="h-12 w-12 mx-auto opacity-20 mb-4" />
-                    <p class="text-sm">No subjects yet. Click "Add Subject" to create one.</p>
+                    <p class="font-medium text-foreground">No subjects yet</p>
+                    <p>Click "Add Subject" to create one.</p>
                 </div>
-                <div v-else class="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    <div 
-                        v-for="subject in props.subjects" 
-                        :key="subject.id"
-                        class="flex items-center justify-between p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors group"
+            </div>
+            
+            <div 
+                v-else 
+                ref="listRef" 
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 pb-12"
+            >
+                <div 
+                    v-for="subject in props.subjects" 
+                    :key="subject.id"
+                    data-subject-card
+                    class="h-full"
+                >
+                    <article 
+                        class="group relative flex flex-col h-full rounded-2xl border border-sidebar-border/40 bg-background/40 backdrop-blur-xl p-5 shadow-lg transition-all duration-500 hover:shadow-2xl md:hover:-translate-y-1.5 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden min-h-[140px]"
                     >
-                        <div class="flex flex-col">
-                            <span class="text-base font-semibold text-zinc-900 dark:text-zinc-100">{{ subject.name }}</span>
+                        <!-- Silhouette Background Icon -->
+                        <BookOpen class="absolute -right-6 -bottom-6 w-32 h-32 text-foreground/[0.03] dark:text-foreground/[0.05] group-hover:text-primary/10 transition-colors duration-500 z-0 pointer-events-none transform -rotate-12" stroke-width="1" />
+
+                        <!-- Visual Depth -->
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none z-0"></div>
+
+                        <div class="relative z-10 flex-1 flex flex-col gap-5">
+                            <div class="flex items-start justify-between gap-2 overflow-hidden">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors shrink-0">
+                                        <BookOpen class="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div class="min-w-0 flex items-center min-h-[40px]">
+                                        <h3 class="text-base font-serif font-bold text-foreground leading-tight line-clamp-2" :title="subject.name">
+                                            {{ subject.name }}
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        
+                        <div class="relative z-10 mt-4 pt-4 border-t border-sidebar-border/30 flex items-center justify-end gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                             <Button 
-                                size="icon-sm" 
-                                variant="ghost" 
-                                class="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-white" 
-                                title="Edit" 
+                                size="sm" 
+                                variant="outline" 
+                                class="h-8 px-4 rounded-full border-sidebar-border hover:bg-muted transition-all text-xs font-semibold" 
                                 @click="openEditModal(subject)"
                             >
-                                <Edit2 class="h-4 w-4" />
+                                <Edit2 class="h-3.5 w-3.5 md:mr-1" />
+                                <span class="hidden md:inline">Edit</span>
                             </Button>
                             <Button 
-                                size="icon-sm" 
+                                size="sm" 
                                 variant="ghost" 
-                                class="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30" 
-                                title="Delete" 
+                                class="h-8 px-4 rounded-full text-destructive hover:bg-destructive/10 transition-all text-xs font-semibold" 
                                 @click="deleteSubject(subject.id)"
                             >
-                                <Trash2 class="h-4 w-4" />
+                                <Trash2 class="h-3.5 w-3.5 md:mr-1" />
+                                <span class="hidden md:inline">Remove</span>
                             </Button>
                         </div>
-                    </div>
+                    </article>
                 </div>
             </div>
         </div>

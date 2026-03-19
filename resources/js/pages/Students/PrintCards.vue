@@ -210,7 +210,7 @@ watch([query, selected], async () => {
                                         <div class="text-[10px] text-zinc-500">
                                             Scan to open portal
                                         </div>
-                                        <div class="rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-700">
+                                        <div class="rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-700 print:hidden">
                                             {{ selected.has(student.id) ? 'Selected' : 'Tap to select' }}
                                         </div>
                                     </div>

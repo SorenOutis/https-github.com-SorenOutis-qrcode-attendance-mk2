@@ -5,10 +5,10 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\SubjectController;
 use App\Models\Attendance;
 use App\Models\Comment;
 use App\Models\Rating;
-use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -24,6 +24,11 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+// Student self-service portal (scan QR to open)
+Route::get('portal/{token}', [StudentController::class, 'portal'])
+    ->middleware(['throttle:60,1'])
+    ->name('student.portal');
+
 // Guest + authenticated users can submit comments
 Route::post('comments', [CommentController::class, 'store'])->name('comments.store');
 Route::post('ratings', [RatingController::class, 'store'])->name('ratings.store');
@@ -31,6 +36,8 @@ Route::post('ratings', [RatingController::class, 'store'])->name('ratings.store'
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [StudentController::class, 'index'])->name('dashboard');
     Route::resource('subjects', SubjectController::class)->except(['create', 'show', 'edit']);
+
+    Route::get('students/print-cards', [StudentController::class, 'printCards'])->name('students.print-cards');
 
     Route::post('students', [StudentController::class, 'store'])->name('students.store');
     Route::put('students/{student}', [StudentController::class, 'update'])->name('students.update');

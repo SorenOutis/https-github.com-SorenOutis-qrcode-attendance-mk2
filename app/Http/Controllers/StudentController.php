@@ -98,6 +98,107 @@ class StudentController extends Controller
         ]);
     }
 
+    public function printCards(Request $request): Response
+    {
+        $validated = $request->validate([
+            'ids' => ['nullable', 'string'],
+        ]);
+
+        $ids = collect(explode(',', (string) ($validated['ids'] ?? '')))
+            ->map(fn ($v) => trim($v))
+            ->filter(fn ($v) => $v !== '' && ctype_digit($v))
+            ->map(fn ($v) => (int) $v)
+            ->unique()
+            ->values();
+
+        $studentsQuery = Student::query()->orderBy('name');
+
+        if ($ids->isNotEmpty()) {
+            $studentsQuery->whereIn('id', $ids);
+        }
+
+        $students = $studentsQuery->get([
+            'id',
+            'name',
+            'student_number',
+            'section',
+            'qr_token',
+        ]);
+
+        return Inertia::render('Students/PrintCards', [
+            'students' => $students,
+            'preselectedIds' => $ids,
+        ]);
+    }
+
+    public function portal(string $token): Response
+    {
+        $student = Student::query()
+            ->where('qr_token', $token)
+            ->firstOrFail([
+                'id',
+                'name',
+                'student_number',
+                'email',
+                'section',
+                'qr_token',
+                'schedule',
+            ]);
+
+        $now = CarbonImmutable::now();
+        $dayOfWeek = $now->format('l');
+        $date = $now->toDateString();
+
+        $todayStatuses = Attendance::query()
+            ->where('student_id', $student->id)
+            ->whereDate('scanned_at', $date)
+            ->orderBy('scanned_at')
+            ->get(['id', 'status', 'scanned_at', 'subject_id'])
+            ->map(fn ($item) => [
+                'id' => $item->id,
+                'status' => $item->status,
+                'time' => $item->scanned_at->format('h:i A'),
+                'subject_id' => $item->subject_id,
+            ])
+            ->values();
+
+        $history = $student->attendances()
+            ->latest('scanned_at')
+            ->limit(30)
+            ->get(['id', 'status', 'scanned_at', 'slot_start', 'slot_end', 'subject_id'])
+            ->map(fn ($a) => [
+                'id' => $a->id,
+                'status' => $a->status,
+                'scanned_at' => $a->scanned_at->toISOString(),
+                'slot_start' => $a->slot_start?->format('H:i'),
+                'slot_end' => $a->slot_end?->format('H:i'),
+                'subject_id' => $a->subject_id,
+            ]);
+
+        $subjects = Subject::orderBy('name')->get(['id', 'name']);
+
+        $todaySchedule = collect($student->schedule ?? [])
+            ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end']))
+            ->filter(fn ($slot) => $slot['day'] === $dayOfWeek)
+            ->values()
+            ->all();
+
+        return Inertia::render('StudentPortal', [
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->name,
+                'student_number' => $student->student_number,
+                'email' => $student->email,
+                'section' => $student->section,
+                'qr_token' => $student->qr_token,
+            ],
+            'subjects' => $subjects,
+            'todaySchedule' => $todaySchedule,
+            'todayStatuses' => $todayStatuses,
+            'history' => $history,
+        ]);
+    }
+
     public function destroy(Student $student)
     {
         $student->delete();

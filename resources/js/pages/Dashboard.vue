@@ -502,6 +502,12 @@ function openQrFromInfo() {
     setTimeout(() => openQrModal(student), 80);
 }
 
+function openPrintCardsFromInfo() {
+    const student = infoStudent.value;
+    if (!student) return;
+    window.open(`/students/print-cards?ids=${student.id}`, '_blank', 'noopener,noreferrer');
+}
+
 function openEditModal(student: Student) {
     editingStudentId.value = student.id;
     editName.value = student.name;
@@ -700,6 +706,11 @@ function downloadQr() {
     link.href = canvas.toDataURL('image/png');
     link.download = `${selectedStudent.value.name}-qr.png`;
     link.click();
+}
+
+function openPrintCards() {
+    if (!selectedStudent.value) return;
+    window.open(`/students/print-cards?ids=${selectedStudent.value.id}`, '_blank', 'noopener,noreferrer');
 }
 
 async function openScanModal() {
@@ -1823,6 +1834,14 @@ onMounted(() => {
                             >
                                 View QR
                             </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                @click="openPrintCardsFromInfo"
+                            >
+                                Print Card
+                            </Button>
                                 <Button
                                     v-if="infoStudent"
                                     type="button"
@@ -2075,6 +2094,14 @@ onMounted(() => {
                                     @click="downloadQr"
                                 >
                                     Download
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    @click="openPrintCards"
+                                >
+                                    Print
                                 </Button>
                                 <Button
                                     type="button"

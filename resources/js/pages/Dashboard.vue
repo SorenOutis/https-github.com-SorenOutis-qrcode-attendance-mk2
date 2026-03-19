@@ -207,10 +207,15 @@ const atRiskStudents = computed(() => {
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
 const scanModalOpen = ref(false);
+const showOnlyScheduledToday = ref(true);
 const activeTab = ref<'active' | 'deleted'>('active');
-const visibleStudents = computed(() => 
-    activeTab.value === 'active' ? filteredStudents.value : filteredTrashedStudents.value
-);
+const visibleStudents = computed(() => {
+    let source = activeTab.value === 'active' ? filteredStudents.value : filteredTrashedStudents.value;
+    if (showOnlyScheduledToday.value && activeTab.value === 'active') {
+        return source.filter(s => isScheduledForToday(s));
+    }
+    return source;
+});
 const selectedStudent = ref<Student | null>(null);
 const qrModalOpen = ref(false);
 
@@ -1276,9 +1281,21 @@ onMounted(() => {
                         <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-6 gap-6 bg-zinc-50 dark:bg-zinc-900/50">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <h2 class="text-2xl font-serif font-bold tracking-tight text-foreground">
-                                    Student Records
+                                    Today's Attendance Status
                                 </h2>
-                                <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-hide border border-zinc-200 dark:border-zinc-800">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center space-x-2 mr-4 bg-muted/50 px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800">
+                                        <input 
+                                            type="checkbox" 
+                                            id="today-toggle" 
+                                            v-model="showOnlyScheduledToday" 
+                                            class="w-3.5 h-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                                        />
+                                        <label for="today-toggle" class="text-[10px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 cursor-pointer">
+                                            Only Scheduled Today
+                                        </label>
+                                    </div>
+                                    <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-hide border border-zinc-200 dark:border-zinc-800">
                             <button
                                 class="rounded-md px-3 py-1 text-xs font-medium transition-all"
                                 :class="activeTab === 'active' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
@@ -1295,6 +1312,7 @@ onMounted(() => {
                             </button>
                         </div>
                     </div>
+                </div>
 
                     <div class="flex items-center gap-2 w-full">
                         <div class="relative flex-1">
@@ -1803,14 +1821,30 @@ onMounted(() => {
                             <!-- Schedule -->
                             <div v-if="infoStudent.schedule && infoStudent.schedule.length > 0" class="pt-1">
                                 <p class="text-[11px] font-medium uppercase text-muted-foreground mb-1">Schedule</p>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <span
+                                <div class="space-y-2">
+                                    <div
                                         v-for="(slot, i) in infoStudent.schedule"
                                         :key="i"
-                                        class="rounded-md border px-2 py-0.5 text-[11px] font-mono"
+                                        class="flex items-center justify-between rounded-md border p-2 hover:bg-muted/50 transition-colors"
                                     >
-                                        {{ slot.day }}: {{ slot.start }} – {{ slot.end }} ({{ getSubjectName(slot.subject_id) }})
-                                    </span>
+                                        <div class="flex flex-col">
+                                            <span class="text-xs font-semibold">{{ getSubjectName(slot.subject_id) }}</span>
+                                            <span class="text-[10px] font-mono text-muted-foreground">{{ slot.day }}: {{ formatTimeTo12h(slot.start) }} – {{ formatTimeTo12h(slot.end) }}</span>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            class="h-7 text-[10px] px-2 gap-1"
+                                            @click="() => {
+                                                const today = new Date().toISOString().split('T')[0];
+                                                router.visit(`/manage-attendance/${slot.subject_id}/${today}`);
+                                            }"
+                                        >
+                                            <Clock class="h-3 w-3" />
+                                            Mark Manually
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

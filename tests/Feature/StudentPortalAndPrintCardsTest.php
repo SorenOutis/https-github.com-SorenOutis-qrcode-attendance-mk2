@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Student;
+use App\Models\StudentQrToken;
 use App\Models\User;
 
 test('student portal is publicly accessible by token', function () {
@@ -13,6 +14,11 @@ test('student portal is publicly accessible by token', function () {
         'schedule' => [
             ['day' => 'Monday', 'start' => '09:00', 'end' => '10:00'],
         ],
+    ]);
+
+    StudentQrToken::create([
+        'student_id' => $student->id,
+        'token' => $student->qr_token,
     ]);
 
     $response = $this->get(route('student.portal', ['token' => $student->qr_token]));

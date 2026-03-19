@@ -28,4 +28,9 @@ class Student extends Model
     {
         return $this->hasMany(Attendance::class);
     }
+
+    public function qrTokens(): HasMany
+    {
+        return $this->hasMany(StudentQrToken::class);
+    }
 }

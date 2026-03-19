@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Student;
+use App\Models\StudentQrToken;
 use App\Models\Subject;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -133,17 +134,19 @@ class StudentController extends Controller
 
     public function portal(string $token): Response
     {
-        $student = Student::query()
-            ->where('qr_token', $token)
-            ->firstOrFail([
-                'id',
-                'name',
-                'student_number',
-                'email',
-                'section',
-                'qr_token',
-                'schedule',
-            ]);
+        $studentId = StudentQrToken::query()
+            ->where('token', $token)
+            ->value('student_id');
+
+        $student = Student::query()->findOrFail($studentId, [
+            'id',
+            'name',
+            'student_number',
+            'email',
+            'section',
+            'qr_token',
+            'schedule',
+        ]);
 
         $now = CarbonImmutable::now();
         $dayOfWeek = $now->format('l');
@@ -266,6 +269,11 @@ class StudentController extends Controller
 
         $student = Student::create($data);
 
+        StudentQrToken::create([
+            'student_id' => $student->id,
+            'token' => $student->qr_token,
+        ]);
+
         return redirect()
             ->back()
             ->with('flash', [
@@ -318,8 +326,15 @@ class StudentController extends Controller
 
     public function regenerateQr(Student $student)
     {
+        $nextToken = Str::uuid()->toString();
+
         $student->update([
-            'qr_token' => Str::uuid()->toString(),
+            'qr_token' => $nextToken,
+        ]);
+
+        StudentQrToken::firstOrCreate([
+            'student_id' => $student->id,
+            'token' => $nextToken,
         ]);
 
         return redirect()

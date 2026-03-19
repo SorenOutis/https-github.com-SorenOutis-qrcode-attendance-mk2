@@ -708,6 +708,29 @@ function downloadQr() {
     link.click();
 }
 
+function studentPortalUrl(token: string) {
+    const base = window.location.origin;
+    return `${base}/portal/${encodeURIComponent(token)}`;
+}
+
+async function copyStudentPortalLink() {
+    const token = selectedStudent.value?.qr_token;
+    if (!token) return;
+    const url = studentPortalUrl(token);
+
+    try {
+        await navigator.clipboard.writeText(url);
+    } catch {
+        // Fallback for older browsers / blocked clipboard
+        const input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+    }
+}
+
 function openPrintCards() {
     if (!selectedStudent.value) return;
     window.open(`/students/print-cards?ids=${selectedStudent.value.id}`, '_blank', 'noopener,noreferrer');
@@ -2076,6 +2099,32 @@ onMounted(() => {
                             can print or share it, and regenerate it anytime to
                             invalidate older copies.
                         </p>
+
+                        <div class="rounded-lg border border-sidebar-border/50 bg-background/50 p-3">
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                Student portal link
+                            </p>
+                            <div class="mt-1 flex items-center gap-2">
+                                <a
+                                    :href="studentPortalUrl(selectedStudent.qr_token)"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="min-w-0 flex-1 truncate text-xs font-mono text-primary hover:underline"
+                                    :title="studentPortalUrl(selectedStudent.qr_token)"
+                                >
+                                    {{ studentPortalUrl(selectedStudent.qr_token) }}
+                                </a>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    class="shrink-0"
+                                    @click="copyStudentPortalLink"
+                                >
+                                    Copy
+                                </Button>
+                            </div>
+                        </div>
 
                         <div class="flex justify-between gap-2">
                             <Button

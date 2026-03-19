@@ -225,21 +225,21 @@ function updateAttendance(student: Student, newStatus: string) {
             </div>
 
             <!-- Mobile Card View -->
-            <div class="block md:hidden space-y-4">
-                <div v-for="student in students" :key="student.id + '-mobile'" class="border bg-card rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex justify-between items-start gap-4">
+            <div class="grid grid-cols-2 md:hidden gap-4">
+                <div v-for="student in students" :key="student.id + '-mobile'" class="border bg-card rounded-xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+                    <div class="flex flex-col gap-2">
                         <div>
-                            <div class="font-medium text-foreground text-base">{{ student.name }}</div>
-                            <div class="text-sm text-muted-foreground">{{ student.student_number }} &bull; {{ student.slot_start }}-{{ student.slot_end }}</div>
+                            <div class="font-medium text-foreground text-base leading-tight">{{ student.name }}</div>
+                            <div class="text-xs text-muted-foreground mt-1">{{ student.student_number }} &bull; {{ student.slot_start }}-{{ student.slot_end }}</div>
                         </div>
-                        <div class="text-right">
+                        <div>
                             <template v-if="student.attendance?.scanned_at && !student.attendance?.is_manual">
-                                <Badge variant="outline">
+                                <Badge variant="outline" class="text-[10px] px-1.5 py-0 h-5">
                                     {{ new Date(student.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
                                 </Badge>
                             </template>
                             <template v-else-if="student.attendance?.is_manual">
-                                <span class="text-xs text-muted-foreground italic">Manual</span>
+                                <span class="text-[10px] text-muted-foreground italic inline-block">Manual</span>
                             </template>
                         </div>
                     </div>
@@ -255,12 +255,12 @@ function updateAttendance(student: Student, newStatus: string) {
                                 </span>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="grid grid-cols-2 gap-1.5">
                             <button 
                                 type="button" 
                                 @click="updateAttendance(student, 'Present')"
                                 :class="[
-                                    'px-3 py-2 text-sm font-medium transition-colors border rounded-md text-center',
+                                    'px-1 py-2 text-[11px] sm:text-xs font-medium transition-colors border rounded-md text-center truncate',
                                     student.attendance?.status === 'Present' || student.attendance?.status === 'present' 
                                         ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90' 
                                         : 'bg-transparent text-muted-foreground border-border hover:bg-muted'
@@ -272,7 +272,7 @@ function updateAttendance(student: Student, newStatus: string) {
                                 type="button" 
                                 @click="updateAttendance(student, 'Late')"
                                 :class="[
-                                    'px-3 py-2 text-sm font-medium transition-colors border rounded-md text-center',
+                                    'px-1 py-2 text-[11px] sm:text-xs font-medium transition-colors border rounded-md text-center truncate',
                                     student.attendance?.status === 'Late' || student.attendance?.status === 'late'
                                         ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90' 
                                         : 'bg-transparent text-muted-foreground border-border hover:bg-muted'
@@ -284,7 +284,7 @@ function updateAttendance(student: Student, newStatus: string) {
                                 type="button" 
                                 @click="updateAttendance(student, 'Absent')"
                                 :class="[
-                                    'px-3 py-2 text-sm font-medium transition-colors border rounded-md text-center',
+                                    'px-1 py-2 text-[11px] sm:text-xs font-medium transition-colors border rounded-md text-center truncate',
                                     student.attendance?.status === 'Absent' || student.attendance?.status === 'absent'
                                         ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90' 
                                         : 'bg-transparent text-muted-foreground border-border hover:bg-muted'
@@ -296,7 +296,7 @@ function updateAttendance(student: Student, newStatus: string) {
                                 type="button" 
                                 @click="updateAttendance(student, 'Excused')"
                                 :class="[
-                                    'px-3 py-2 text-sm font-medium transition-colors border rounded-md text-center',
+                                    'px-1 py-2 text-[11px] sm:text-xs font-medium transition-colors border rounded-md text-center truncate',
                                     student.attendance?.status === 'Excused' || student.attendance?.status === 'excused'
                                         ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90' 
                                         : 'bg-transparent text-muted-foreground border-border hover:bg-muted'

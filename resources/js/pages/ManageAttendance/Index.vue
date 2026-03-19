@@ -22,6 +22,15 @@ onMounted(() => {
     if (cardsRef.value) {
         const cards = cardsRef.value.querySelectorAll('[data-card]');
         
+        // Entrance animation
+        gsap.from(cards, {
+            opacity: 0,
+            y: 30,
+            stagger: 0.1,
+            duration: 0.8,
+            ease: 'power2.out'
+        });
+
         cards.forEach((card: any) => {
             card.addEventListener('mousemove', (e: MouseEvent) => {
                 const rect = card.getBoundingClientRect();

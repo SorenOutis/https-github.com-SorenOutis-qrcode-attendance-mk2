@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import gsap from 'gsap';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -238,6 +239,141 @@ function markAllAbsent() {
         isMarkingAllAbsent.value = false;
     });
 }
+
+const cardsRef = ref<HTMLElement | null>(null);
+const tableRef = ref<HTMLElement | null>(null);
+const studentsTableBodyRef = ref<HTMLTableSectionElement | null>(null);
+
+function animateStudents() {
+    nextTick(() => {
+        const targets = studentsTableBodyRef.value?.querySelectorAll('tr');
+
+        if (!targets || targets.length === 0) return;
+
+        gsap.killTweensOf(targets);
+        
+        gsap.fromTo(targets,
+            { opacity: 0, x: -20, filter: 'blur(4px)' },
+            { 
+                opacity: 1, 
+                x: 0, 
+                filter: 'blur(0px)',
+                duration: 0.5, 
+                stagger: 0.03, 
+                ease: 'power2.out',
+                clearProps: 'all'
+            }
+        );
+    });
+}
+
+watch([searchQuery, statusFilter], () => {
+    animateStudents();
+});
+
+onMounted(() => {
+    // 1. Entrance and Hover Animations for Stats Cards
+    if (cardsRef.value) {
+        const cards = cardsRef.value.querySelectorAll<HTMLElement>('[data-card]');
+        
+        gsap.set(cardsRef.value, { perspective: 1000 });
+        gsap.set(cards, { opacity: 1, visibility: 'visible' });
+
+        gsap.from(cards, {
+            opacity: 0,
+            y: 30,
+            rotationX: -15,
+            z: -20,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: 'power2.out',
+            clearProps: 'all'
+        });
+        
+        cards.forEach((card) => {
+            gsap.set(card, { transformStyle: "preserve-3d" });
+
+            card.addEventListener('mousemove', (e: MouseEvent) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -10;
+                const rotateY = ((x - centerX) / centerX) * 10;
+                
+                gsap.to(card, {
+                    rotationX: rotateX,
+                    rotationY: rotateY,
+                    scale: 1.05,
+                    z: 30,
+                    zIndex: 50,
+                    boxShadow: '0 30px 40px -10px rgba(0, 0, 0, 0.3), 0 15px 15px -10px rgba(0, 0, 0, 0.1)',
+                    duration: 0.4,
+                    ease: 'power3.out'
+                });
+            });
+
+            card.addEventListener('mouseleave', () => {
+                gsap.to(card, {
+                    rotationX: 0,
+                    rotationY: 0,
+                    scale: 1,
+                    z: 0,
+                    zIndex: 0,
+                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
+                    duration: 0.6,
+                    ease: 'elastic.out(1, 0.3)'
+                });
+            });
+        });
+    }
+
+    // 2. Table and Row Entrance
+    if (tableRef.value) {
+        gsap.set(tableRef.value, { opacity: 1, visibility: 'visible', perspective: 1000 });
+
+        gsap.from(tableRef.value, {
+            opacity: 0,
+            y: 20,
+            rotationX: 10,
+            duration: 0.8,
+            delay: 0.2,
+            ease: 'power2.out',
+            clearProps: 'opacity,transform'
+        });
+        
+        const rows = tableRef.value.querySelectorAll('tbody tr');
+        rows.forEach(row => gsap.set(row, { transformStyle: "preserve-3d" }));
+
+        gsap.from(rows, {
+            opacity: 0,
+            x: -30,
+            filter: 'blur(10px)',
+            duration: 0.8,
+            stagger: 0.04,
+            delay: 0.3,
+            ease: 'expo.out',
+        });
+    }
+
+    // 3. Button Press Micro-interactions
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach((btn) => {
+        gsap.set(btn, { transformStyle: "preserve-3d" });
+        btn.addEventListener('mousedown', () => {
+            gsap.to(btn, { scale: 0.95, z: -10, duration: 0.1, ease: 'power1.out' });
+        });
+        btn.addEventListener('mouseup', () => {
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'bounce.out' });
+        });
+        btn.addEventListener('mouseleave', () => {
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
+        });
+    });
+});
 </script>
 
 <template>
@@ -279,9 +415,9 @@ function markAllAbsent() {
             </div>
 
             <!-- Stats Overview -->
-            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div ref="cardsRef" class="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 <!-- Total -->
-                <div class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
                         <Users class="h-16 w-16" />
@@ -293,7 +429,7 @@ function markAllAbsent() {
                 </div>
                 
                 <!-- Present -->
-                <div class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-50 dark:bg-emerald-950/20 blur-2xl transition-all duration-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500/10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
                         <CheckCircle class="h-16 w-16" />
@@ -305,7 +441,7 @@ function markAllAbsent() {
                 </div>
 
                 <!-- Late -->
-                <div class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-amber-50 dark:bg-amber-950/20 blur-2xl transition-all duration-500 group-hover:bg-amber-100 dark:group-hover:bg-amber-900/30"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-amber-500/10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
                         <Clock class="h-16 w-16" />
@@ -317,7 +453,7 @@ function markAllAbsent() {
                 </div>
 
                 <!-- Absent -->
-                <div class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-rose-50 dark:bg-rose-950/20 blur-2xl transition-all duration-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-rose-500/10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
                         <XCircle class="h-16 w-16" />
@@ -329,7 +465,7 @@ function markAllAbsent() {
                 </div>
 
                 <!-- Excused -->
-                <div class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
                         <Info class="h-16 w-16" />
@@ -389,10 +525,10 @@ function markAllAbsent() {
             <!-- Content Area -->
             <div class="space-y-4">
                 <!-- Desktop Table View -->
-                <div class="hidden md:block rounded-2xl border bg-white dark:bg-black shadow-xl overflow-hidden border-zinc-200 dark:border-zinc-800">
+                <div ref="tableRef" class="hidden md:block rounded-2xl border bg-white dark:bg-black shadow-xl overflow-hidden border-zinc-200 dark:border-zinc-800">
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
-                            <thead class="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase font-semibold bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800 tracking-wider">
+                            <thead class="sticky top-0 z-10 text-[10px] text-zinc-500 dark:text-zinc-400 uppercase font-semibold bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 tracking-wider">
                                 <tr>
                                     <th class="px-8 py-4">Student Information</th>
                                     <th class="px-8 py-4">Shift / Schedule</th>
@@ -400,7 +536,7 @@ function markAllAbsent() {
                                     <th class="px-8 py-4 text-right w-[400px]">Attendance Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-900">
+                            <tbody ref="studentsTableBodyRef" class="divide-y divide-zinc-100 dark:divide-zinc-900">
                                 <tr v-for="student in filteredStudents" :key="student.id" 
                                     class="group transition-all hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                                 >

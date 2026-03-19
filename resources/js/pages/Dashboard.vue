@@ -171,8 +171,8 @@ const chartData = computed(() => {
         labels: ['Present', 'Late', 'Absent', 'Excused'],
         datasets: [
             {
-                backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#3b82f6'],
-                borderColor: ['#059669', '#d97706', '#dc2626', '#2563eb'],
+                backgroundColor: ['#09090b', '#3f3f46', '#a1a1aa', '#e4e4e7'],
+                borderColor: ['#000000', '#27272a', '#71717a', '#d4d4d8'],
                 borderWidth: 1,
                 data: [
                     props.attendanceStats?.Present || 0,

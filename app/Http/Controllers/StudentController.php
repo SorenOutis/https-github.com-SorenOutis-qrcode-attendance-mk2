@@ -70,7 +70,6 @@ class StudentController extends Controller
         // Group total attendances by student for percentage calculation
         $allAttendancesByStudent = \Illuminate\Support\Facades\DB::table('attendances')
             ->select('student_id', 'status', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
-            ->whereNull('deleted_at')
             ->groupBy('student_id', 'status')
             ->get()
             ->groupBy('student_id');
@@ -115,7 +114,6 @@ class StudentController extends Controller
         // Overall stats for the Chart
         $attendanceStats = \Illuminate\Support\Facades\DB::table('attendances')
             ->select('status', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
-            ->whereNull('deleted_at')
             ->groupBy('status')
             ->get()
             ->pluck('count', 'status');

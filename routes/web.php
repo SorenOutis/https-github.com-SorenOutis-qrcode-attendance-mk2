@@ -65,6 +65,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('manage-attendance', [\App\Http\Controllers\ManualAttendanceController::class, 'index'])->name('manage-attendance.index');
     Route::get('manage-attendance/{subject}/{date}', [\App\Http\Controllers\ManualAttendanceController::class, 'show'])->name('manage-attendance.show');
     Route::post('manage-attendance/toggle', [\App\Http\Controllers\ManualAttendanceController::class, 'toggle'])->name('manage-attendance.toggle');
+    Route::post('manage-attendance/mark-all-absent', [\App\Http\Controllers\ManualAttendanceController::class, 'markAllAbsent'])->name('manage-attendance.mark-all-absent');
 });
 
 require __DIR__.'/settings.php';

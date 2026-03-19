@@ -93,6 +93,60 @@ function updateAttendance(student: Student, newStatus: string) {
         savingStatus.value[student.id] = false;
     });
 }
+
+const isMarkingAllAbsent = ref(false);
+
+function markAllAbsent() {
+    const unscannedStudents = props.students.filter(s => !s.attendance);
+    if (unscannedStudents.length === 0) {
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to mark ${unscannedStudents.length} remaining student(s) as Absent?`)) {
+        return;
+    }
+
+    isMarkingAllAbsent.value = true;
+
+    window.fetch('/manage-attendance/mark-all-absent', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
+        },
+        body: JSON.stringify({
+            subject_id: props.subject.id,
+            date: props.date,
+            students: unscannedStudents.map(s => ({
+                id: s.id,
+                slot_start: s.slot_start,
+                slot_end: s.slot_end,
+            }))
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            unscannedStudents.forEach(s => {
+                s.attendance = {
+                    id: 0,
+                    status: 'Absent',
+                    is_manual: true,
+                    remarks: null,
+                    scanned_at: new Date().toISOString()
+                };
+            });
+        }
+    })
+    .catch(err => {
+        console.error('Failed to mark all as absent', err);
+        alert('An error occurred.');
+    })
+    .finally(() => {
+        isMarkingAllAbsent.value = false;
+    });
+}
 </script>
 
 <template>
@@ -115,6 +169,14 @@ function updateAttendance(student: Student, newStatus: string) {
                         Attendance for {{ new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
                     </p>
                 </div>
+                <Button 
+                    variant="outline"
+                    class="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 dark:bg-rose-950/20 dark:border-rose-900/50 dark:hover:bg-rose-900/40"
+                    @click="markAllAbsent"
+                    :disabled="isMarkingAllAbsent || students.every(s => s.attendance)"
+                >
+                    {{ isMarkingAllAbsent ? 'Marking...' : 'Mark Remaining as Absent' }}
+                </Button>
             </div>
 
             <!-- Desktop Table View -->

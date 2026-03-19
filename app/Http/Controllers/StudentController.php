@@ -67,8 +67,26 @@ class StudentController extends Controller
                 'subject_id' => $item->subject_id,
             ])->values()->all());
 
-        $mapStudent = function ($student) use ($latestByStudent, $statusesByStudent) {
+        // Group total attendances by student for percentage calculation
+        $allAttendancesByStudent = \Illuminate\Support\Facades\DB::table('attendances')
+            ->select('student_id', 'status', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->whereNull('deleted_at')
+            ->groupBy('student_id', 'status')
+            ->get()
+            ->groupBy('student_id');
+
+        $mapStudent = function ($student) use ($latestByStudent, $statusesByStudent, $allAttendancesByStudent) {
             $latest = $latestByStudent->get($student->id);
+            
+            $historyStats = $allAttendancesByStudent->get($student->id, collect());
+            $totalRecords = $historyStats->sum('count');
+            $presentCount = $historyStats->whereIn('status', ['Present', 'present'])->sum('count');
+            $lateCount = $historyStats->whereIn('status', ['Late', 'late'])->sum('count');
+            $excusedCount = $historyStats->whereIn('status', ['Excused', 'excused'])->sum('count');
+            
+            // Calculate attendance percentage (Present + Late + Excused / Total)
+            $positiveRecords = $presentCount + $lateCount + $excusedCount;
+            $attendancePercentage = $totalRecords > 0 ? round(($positiveRecords / $totalRecords) * 100) : 100;
 
             return [
                 'id' => $student->id,
@@ -80,6 +98,8 @@ class StudentController extends Controller
                 'schedule' => $student->schedule,
                 'created_at' => $student->created_at,
                 'deleted_at' => $student->deleted_at,
+                'attendance_percentage' => $attendancePercentage,
+                'total_records' => $totalRecords,
                 'today_statuses' => $statusesByStudent->get($student->id, []),
                 'latest_attendance' => $latest
                     ? [
@@ -92,10 +112,24 @@ class StudentController extends Controller
             ];
         };
 
+        // Overall stats for the Chart
+        $attendanceStats = \Illuminate\Support\Facades\DB::table('attendances')
+            ->select('status', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->whereNull('deleted_at')
+            ->groupBy('status')
+            ->get()
+            ->pluck('count', 'status');
+
         return Inertia::render('Dashboard', [
             'subjects' => $subjects,
             'students' => $students->map($mapStudent),
             'trashedStudents' => $trashedStudents->map($mapStudent),
+            'attendanceStats' => [
+                'Present' => $attendanceStats->get('Present', 0) + $attendanceStats->get('present', 0),
+                'Late' => $attendanceStats->get('Late', 0) + $attendanceStats->get('late', 0),
+                'Absent' => $attendanceStats->get('Absent', 0) + $attendanceStats->get('absent', 0),
+                'Excused' => $attendanceStats->get('Excused', 0) + $attendanceStats->get('excused', 0),
+            ]
         ]);
     }
 

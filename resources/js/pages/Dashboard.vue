@@ -11,8 +11,12 @@ import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar } from 'lucide-vue-next';
+import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle } from 'lucide-vue-next';
 import confetti from 'canvas-confetti';
+import { Pie } from 'vue-chartjs';
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
+
+ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale);
 import {
     Dialog,
     DialogClose,
@@ -55,6 +59,8 @@ type Student = {
         subject_id?: string | number;
     } | null;
     deleted_at?: string | null;
+    attendance_percentage?: number;
+    total_records?: number;
 };
 
 const daysOfWeek = [
@@ -65,6 +71,7 @@ type PageProps = {
     students: Student[];
     trashedStudents: Student[];
     subjects: { id: number; name: string }[];
+    attendanceStats?: { Present: number; Late: number; Absent: number; Excused: number; };
 };
 
 const props = defineProps<PageProps>();
@@ -157,6 +164,44 @@ const recentActivity = computed(() => {
     });
     
     return activity.sort((a, b) => b.sortTime - a.sortTime).slice(0, 5);
+});
+
+const chartData = computed(() => {
+    return {
+        labels: ['Present', 'Late', 'Absent', 'Excused'],
+        datasets: [
+            {
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#3b82f6'],
+                borderColor: ['#059669', '#d97706', '#dc2626', '#2563eb'],
+                borderWidth: 1,
+                data: [
+                    props.attendanceStats?.Present || 0,
+                    props.attendanceStats?.Late || 0,
+                    props.attendanceStats?.Absent || 0,
+                    props.attendanceStats?.Excused || 0
+                ]
+            }
+        ]
+    };
+});
+
+const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { 
+            position: 'bottom' as const,
+            labels: {
+                color: '#8b8b8b'
+            }
+        }
+    }
+};
+
+const atRiskStudents = computed(() => {
+    return students.value
+        .filter(s => s.attendance_percentage !== undefined && s.attendance_percentage < 80)
+        .sort((a, b) => (a.attendance_percentage || 0) - (b.attendance_percentage || 0));
 });
 
 const createModalOpen = ref(false);
@@ -1135,6 +1180,46 @@ onMounted(() => {
 
             <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
                 <div class="xl:col-span-1 flex flex-col gap-6 order-last">
+                    
+                    <!-- Students at Risk -->
+                    <div v-if="atRiskStudents.length > 0" class="overflow-hidden rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-white dark:bg-black shadow-xl">
+                        <div class="border-b border-rose-100 dark:border-rose-900/30 p-4 flex items-center justify-between bg-rose-50 dark:bg-rose-950/20">
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-rose-600 dark:text-rose-400">
+                                <AlertTriangle class="h-3.5 w-3.5" />
+                                Students at Risk
+                            </h2>
+                            <span class="text-[10px] bg-rose-100 dark:bg-rose-900/50 text-rose-600 px-2 py-0.5 rounded-full font-bold">{{ atRiskStudents.length }}</span>
+                        </div>
+                        <div class="p-0">
+                            <div class="divide-y divide-zinc-200 dark:divide-zinc-800 max-h-64 overflow-y-auto">
+                                <div v-for="student in atRiskStudents" :key="'risk-' + student.id" class="flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer" @click="openStudentInfoModal(student)">
+                                    <div class="flex flex-col overflow-hidden">
+                                        <span class="text-xs font-semibold text-zinc-900 dark:text-white truncate" :title="student.name">{{ student.name }}</span>
+                                        <span class="text-[10px] text-zinc-500">{{ student.student_number }}</span>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1 shrink-0">
+                                        <span class="text-xs font-bold text-rose-600 dark:text-rose-400">{{ student.attendance_percentage }}%</span>
+                                        <span class="text-[9px] text-zinc-400">Attendance</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Overview Chart -->
+                    <div v-if="props.attendanceStats" class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
+                        <div class="border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
+                                <PieChart class="h-3.5 w-3.5" />
+                                Overall Attendance
+                            </h2>
+                        </div>
+                        <div class="p-4 h-64 flex items-center justify-center relative">
+                            <Pie v-if="(props.attendanceStats?.Present || props.attendanceStats?.Late || props.attendanceStats?.Absent || props.attendanceStats?.Excused)" :data="chartData" :options="chartOptions" />
+                            <div v-else class="text-xs text-muted-foreground italic absolute">No data yet</div>
+                        </div>
+                    </div>
+
                     <!-- Recent Activity Feed -->
                     <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
                         <div class="border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">

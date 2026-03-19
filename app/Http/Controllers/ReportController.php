@@ -64,11 +64,12 @@ class ReportController extends Controller
                 ->orderByDesc('scanned_at')
                 ->chunk(100, function ($attendances) use ($handle) {
                     foreach ($attendances as $attendance) {
+                        $student = $attendance->student;
                         fputcsv($handle, [
                             $attendance->scanned_at->toDateString(),
-                            $attendance->student->name,
-                            $attendance->student->student_number,
-                            $attendance->student->section,
+                            $student ? $student->name : 'Unknown/Deleted',
+                            $student ? $student->student_number : 'N/A',
+                            $student ? $student->section : 'N/A',
                             $attendance->status,
                             $attendance->scanned_at->toTimeString(),
                         ]);

@@ -15,7 +15,7 @@ class ManualAttendanceController extends Controller
 {
     public function index(): Response
     {
-        $subjects = Subject::orderBy('name')->get(['id', 'name']);
+        $subjects = Subject::query()->select('id', 'name')->orderBy('name', 'asc')->get();
         
         return Inertia::render('ManageAttendance/Index', [
             'subjects' => $subjects,
@@ -30,8 +30,9 @@ class ManualAttendanceController extends Controller
 
         // Get all students (we filter by subject in the collection to bypass SQLite JSON array bugs)
         $enrolledStudents = Student::query()
-            ->orderBy('name')
-            ->get(['id', 'name', 'student_number', 'schedule']);
+            ->select('id', 'name', 'student_number', 'schedule')
+            ->orderBy('name', 'asc')
+            ->get();
 
         // Filter students who actually have this subject on the specified day
         // And extract their schedule slot for this specific subject and day
@@ -55,10 +56,11 @@ class ManualAttendanceController extends Controller
 
             // Find existing attendance for this student on this day for this subject
             $attendance = Attendance::query()
-                ->where('student_id', $student->id)
-                ->where('subject_id', $subject->id)
-                ->whereDate('scanned_at', $parsedDate->toDateString())
-                ->first(['id', 'status', 'is_manual', 'remarks', 'scanned_at']);
+                ->select('id', 'status', 'is_manual', 'remarks', 'scanned_at')
+                ->where('student_id', '=', $student->id)
+                ->where('subject_id', '=', $subject->id)
+                ->whereDate('scanned_at', '=', $parsedDate->toDateString())
+                ->first();
 
             return [
                 'id' => $student->id,
@@ -93,9 +95,9 @@ class ManualAttendanceController extends Controller
 
         // Check if an attendance record already exists for this date and subject
         $attendance = Attendance::query()
-            ->where('student_id', $validated['student_id'])
-            ->where('subject_id', $validated['subject_id'])
-            ->whereDate('scanned_at', $parsedDate->toDateString())
+            ->where('student_id', '=', $validated['student_id'])
+            ->where('subject_id', '=', $validated['subject_id'])
+            ->whereDate('scanned_at', '=', $parsedDate->toDateString())
             ->first();
 
         // If 'scanned_at' shouldn't be overridden if they actually scanned.
@@ -126,6 +128,52 @@ class ManualAttendanceController extends Controller
         return response()->json([
             'success' => true,
             'attendance' => $attendance,
+        ]);
+    }
+
+    public function markAllAbsent(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'subject_id' => ['required', 'exists:subjects,id'],
+            'date' => ['required', 'date'],
+            'students' => ['required', 'array'],
+            'students.*.id' => ['required', 'exists:students,id'],
+            'students.*.slot_start' => ['nullable', 'date_format:H:i'],
+            'students.*.slot_end' => ['nullable', 'date_format:H:i'],
+        ]);
+
+        $subjectId = $validated['subject_id'];
+        $parsedDate = CarbonImmutable::parse($validated['date']);
+        $now = CarbonImmutable::now();
+
+        $absentRecordsCreated = 0;
+
+        foreach ($validated['students'] as $studentData) {
+            $studentId = $studentData['id'];
+
+            $exists = Attendance::query()
+                ->where('student_id', '=', $studentId)
+                ->where('subject_id', '=', $subjectId)
+                ->whereDate('scanned_at', '=', $parsedDate->toDateString())
+                ->exists();
+
+            if (! $exists) {
+                Attendance::create([
+                    'student_id' => $studentId,
+                    'subject_id' => $subjectId,
+                    'scanned_at' => $parsedDate->setTimeFrom($now),
+                    'status' => 'Absent',
+                    'is_manual' => true,
+                    'slot_start' => $studentData['slot_start'] ?? null,
+                    'slot_end' => $studentData['slot_end'] ?? null,
+                ]);
+                $absentRecordsCreated++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully marked {$absentRecordsCreated} remaining student(s) as Absent.",
         ]);
     }
 }

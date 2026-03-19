@@ -15,6 +15,8 @@ class Attendance extends Model
         'subject_id',
         'scanned_at',
         'status',
+        'is_manual',
+        'remarks',
         'slot_index',
         'slot_start',
         'slot_end',
@@ -22,6 +24,7 @@ class Attendance extends Model
 
     protected $casts = [
         'scanned_at' => 'datetime',
+        'is_manual' => 'boolean',
         'slot_start' => 'datetime:H:i',
         'slot_end' => 'datetime:H:i',
     ];

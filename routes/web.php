@@ -61,6 +61,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('api/reports/stats', [ReportController::class, 'stats'])->name('api.reports.stats');
     Route::get('reports/export', [ReportController::class, 'exportCsv'])->name('reports.export');
+
+    Route::get('manage-attendance', [\App\Http\Controllers\ManualAttendanceController::class, 'index'])->name('manage-attendance.index');
+    Route::get('manage-attendance/{subject}/{date}', [\App\Http\Controllers\ManualAttendanceController::class, 'show'])->name('manage-attendance.show');
+    Route::post('manage-attendance/toggle', [\App\Http\Controllers\ManualAttendanceController::class, 'toggle'])->name('manage-attendance.toggle');
 });
 
 require __DIR__.'/settings.php';

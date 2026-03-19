@@ -1,0 +1,28 @@
+﻿
+   FAIL  Tests\Feature\ManualAttendanceTest
+  Γ£ô can view maΓÇª 2.09s  
+  Γ¿» can view maΓÇª 0.25s  
+  Γ£ô can auto-saΓÇª 0.15s  
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaΓÇª   
+  Property [students] does not have the expected size.
+Failed asserting that actual size 0 matches expected size 1.
+
+  at tests\Feature\ManualAttendanceTest.php:50
+     46Γûò         ->assertInertia(fn ($page) => $page
+     47Γûò             ->component('ManageAttendance/Show')
+     48Γûò             ->has('subject')
+     49Γûò             ->has('date')
+  Γ₧£  50Γûò             ->has('students', 1)
+     51Γûò         );
+     52Γûò });
+     53Γûò 
+     54Γûò test('can auto-save toggle a manual attendance record', function () {
+
+  1   vendor\inertiajs\inertia-laravel\src\Testing\TestResponseMacros.php:26
+  2   vendor\laravel\framework\src\Illuminate\Macroable\Traits\Macroable.php:126
+
+
+  Tests:    1 failed, 2 passed (28 assertions)
+  Duration: 3.06s
+

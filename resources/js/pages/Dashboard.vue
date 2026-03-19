@@ -2065,14 +2065,14 @@ onMounted(() => {
             </Dialog>
 
             <Dialog v-model:open="qrModalOpen">
-                <DialogContent class="max-w-sm">
+                <DialogContent class="max-w-sm flex max-h-[85dvh] flex-col">
                     <DialogHeader>
                         <DialogTitle>
                             Student QR code
                         </DialogTitle>
                     </DialogHeader>
 
-                    <div v-if="selectedStudent" class="space-y-4">
+                    <div v-if="selectedStudent" class="min-h-0 flex-1 overflow-y-auto pr-1 space-y-4">
                         <div class="space-y-1">
                             <p class="text-sm font-semibold">
                                 {{ selectedStudent.name }}
@@ -2084,14 +2084,8 @@ onMounted(() => {
                             </p>
                         </div>
 
-                        <div
-                            class="flex items-center justify-center rounded-lg border bg-white p-4"
-                        >
-                            <canvas
-                                id="qr-canvas"
-                                ref="qrCanvas"
-                                class="h-48 w-48"
-                            ></canvas>
+                        <div class="flex items-center justify-center rounded-lg border bg-white p-4">
+                            <canvas id="qr-canvas" ref="qrCanvas" class="h-48 w-48"></canvas>
                         </div>
 
                         <p class="text-xs text-muted-foreground">
@@ -2104,12 +2098,12 @@ onMounted(() => {
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                                 Student portal link
                             </p>
-                            <div class="mt-1 flex items-center gap-2">
+                            <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
                                 <a
                                     :href="studentPortalUrl(selectedStudent.qr_token)"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="min-w-0 flex-1 truncate text-xs font-mono text-primary hover:underline"
+                                    class="min-w-0 flex-1 break-all text-xs font-mono text-primary hover:underline sm:truncate sm:break-normal"
                                     :title="studentPortalUrl(selectedStudent.qr_token)"
                                 >
                                     {{ studentPortalUrl(selectedStudent.qr_token) }}
@@ -2118,50 +2112,31 @@ onMounted(() => {
                                     type="button"
                                     size="sm"
                                     variant="outline"
-                                    class="shrink-0"
+                                    class="shrink-0 self-start sm:self-auto"
                                     @click="copyStudentPortalLink"
                                 >
                                     Copy
                                 </Button>
                             </div>
                         </div>
-
-                        <div class="flex justify-between gap-2">
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                @click="regenerateQr"
-                            >
-                                Regenerate
-                            </Button>
-                            <div class="flex gap-2">
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    @click="downloadQr"
-                                >
-                                    Download
-                                </Button>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    @click="openPrintCards"
-                                >
-                                    Print
-                                </Button>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    @click="closeQrModal"
-                                >
-                                    Close
-                                </Button>
-                            </div>
-                        </div>
                     </div>
+
+                    <DialogFooter v-if="selectedStudent" class="mt-3 flex flex-wrap items-center justify-between gap-2">
+                        <Button type="button" size="sm" variant="outline" @click="regenerateQr">
+                            Regenerate
+                        </Button>
+                        <div class="flex flex-wrap gap-2 justify-end">
+                            <Button type="button" size="sm" variant="outline" @click="downloadQr">
+                                Download
+                            </Button>
+                            <Button type="button" size="sm" variant="outline" @click="openPrintCards">
+                                Print
+                            </Button>
+                            <Button type="button" size="sm" @click="closeQrModal">
+                                Close
+                            </Button>
+                        </div>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

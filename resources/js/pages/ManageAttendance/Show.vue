@@ -345,7 +345,7 @@ function animateStudents() {
     });
 }
 
-watch([searchQuery, statusFilter], () => {
+watch([searchQuery, statusFilter, () => props.students], () => {
     animateStudents();
 });
 
@@ -415,26 +415,14 @@ onMounted(() => {
 
         gsap.from(tableRef.value, {
             opacity: 0,
-            y: 20,
-            rotationX: 10,
-            duration: 0.8,
-            delay: 0.2,
+            y: 10,
+            duration: 0.6,
             ease: 'power2.out',
-            clearProps: 'opacity,transform'
+            clearProps: 'all'
         });
         
-        const rows = tableRef.value.querySelectorAll('tbody tr');
-        rows.forEach(row => gsap.set(row, { transformStyle: "preserve-3d" }));
-
-        gsap.from(rows, {
-            opacity: 0,
-            x: -30,
-            filter: 'blur(10px)',
-            duration: 0.8,
-            stagger: 0.04,
-            delay: 0.3,
-            ease: 'expo.out',
-        });
+        // Initial row animation
+        animateStudents();
     }
 
     // 3. Button Press Micro-interactions
@@ -670,7 +658,8 @@ onMounted(() => {
                                     <td class="px-6 py-5">
                                         <div class="flex items-center gap-2 font-medium text-muted-foreground">
                                             <Clock class="w-3.5 h-3.5" />
-                                            <span>{{ student.slot_start }} - {{ student.slot_end }}</span>
+                                            <span v-if="student.slot_start">{{ student.slot_start }} - {{ student.slot_end }}</span>
+                                            <span v-else class="text-[10px] text-zinc-400 italic">Not Scheduled</span>
                                         </div>
                                     </td>
                                     <td class="px-6 py-5 border-l border-zinc-200 dark:border-zinc-800/50">
@@ -802,7 +791,8 @@ onMounted(() => {
                         <div class="flex items-center gap-3 text-[10px] font-black text-zinc-500 dark:text-zinc-400 mb-8 bg-zinc-50/80 dark:bg-zinc-900/80 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-inner group-hover:border-zinc-200 dark:group-hover:border-zinc-700 transition-colors">
                             <div class="flex items-center gap-2.5">
                                 <Clock class="w-4 h-4 text-zinc-400" />
-                                <span class="tracking-wide">{{ student.slot_start }} - {{ student.slot_end }}</span>
+                                <span v-if="student.slot_start" class="tracking-wide">{{ student.slot_start }} - {{ student.slot_end }}</span>
+                                <span v-else class="tracking-wide text-zinc-400 italic font-medium">Not Scheduled</span>
                             </div>
                             <div v-if="student.attendance?.scanned_at" class="flex items-center gap-2 ml-auto">
                                 <span class="h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-white animate-pulse"></span>

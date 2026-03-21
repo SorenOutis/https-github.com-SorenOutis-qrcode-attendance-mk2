@@ -38,21 +38,17 @@ class ManualAttendanceController extends Controller
         // Filter students who actually have this subject on the specified day
         // And extract their schedule slot for this specific subject and day
         $students = $enrolledStudents->map(function ($student) use ($subject, $dayOfWeek, $parsedDate) {
-            $slots = collect($student->schedule ?? [])
-                ->filter(fn ($s) => isset($s['subject_id'], $s['day']) &&
-                    $s['subject_id'] == $subject->id &&
-                    $s['day'] === $dayOfWeek
-                )
-                ->values();
+            $allSlots = collect($student->schedule ?? []);
+            
+            // Check if they have THIS subject anywhere in their schedule
+            $subjectSlots = $allSlots->filter(fn ($s) => isset($s['subject_id']) && $s['subject_id'] == $subject->id);
 
-            // If the student doesn't have a schedule for this subject on this day, we return null so we can filter them out
-            if ($slots->isEmpty()) {
+            if ($subjectSlots->isEmpty()) {
                 return null;
             }
 
-            // A student shouldn't have multiple slots for the same subject on the same day usually,
-            // but we'll take the first one.
-            $slot = $slots->first();
+            // Find slot for today if it exists
+            $todaySlot = $subjectSlots->firstWhere('day', $dayOfWeek);
 
             // Find existing attendance for this student on this day for this subject
             $attendance = Attendance::query()
@@ -66,8 +62,8 @@ class ManualAttendanceController extends Controller
                 'id' => $student->id,
                 'name' => $student->name,
                 'student_number' => $student->student_number,
-                'slot_start' => $slot['start'] ?? null,
-                'slot_end' => $slot['end'] ?? null,
+                'slot_start' => $todaySlot['start'] ?? null,
+                'slot_end' => $todaySlot['end'] ?? null,
                 'attendance' => $attendance,
             ];
         })->filter()->values();

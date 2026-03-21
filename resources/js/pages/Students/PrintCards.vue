@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { computed, onMounted, ref, watch } from 'vue';
+import { Printer, CheckSquare, Square } from 'lucide-vue-next';
 import QRCode from 'qrcode';
-import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
+import { computed, onMounted, ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { cn } from '@/lib/utils';
-import { Printer, CheckSquare, Square } from 'lucide-vue-next';
+import type { BreadcrumbItem } from '@/types';
 
 type Student = {
     id: number;

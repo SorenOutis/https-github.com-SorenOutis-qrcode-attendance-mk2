@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
 import gsap from 'gsap';
-import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
+import { Filter, Calendar, X } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     Dialog,
     DialogContent,
@@ -14,8 +12,10 @@ import {
     DialogFooter,
     DialogClose,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import AppLayout from '@/layouts/AppLayout.vue';
 import commentsRoutes from '@/routes/comments';
-import { Filter, Calendar, X } from 'lucide-vue-next';
+import type { BreadcrumbItem } from '@/types';
 
 type Comment = {
     id: number;

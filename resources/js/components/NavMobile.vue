@@ -4,9 +4,9 @@ import { ChartBar, LayoutGrid, MessagesSquare, Star, User } from 'lucide-vue-nex
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { dashboard } from '@/routes';
 import { index as commentsIndex } from '@/routes/comments';
+import { edit as profileEdit } from '@/routes/profile';
 import { index as ratingsIndex } from '@/routes/ratings';
 import { index as reportsIndex } from '@/routes/reports';
-import { edit as profileEdit } from '@/routes/profile';
 import type { NavItem } from '@/types';
 
 const { isCurrentUrl } = useCurrentUrl();
@@ -43,7 +43,7 @@ const navItems: NavItem[] = [
                 :key="item.title"
                 :href="item.href"
                 class="group flex flex-1 flex-col items-center gap-1 py-1 transition-all active:scale-95"
-                :class="isCurrentUrl(item.href) ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'"
+                :class="isCurrentUrl(item.href) ? 'text-zinc-900 dark:text-white font-bold' : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'"
             >
                 <div class="relative flex items-center justify-center">
                     <component 
@@ -61,7 +61,7 @@ const navItems: NavItem[] = [
             <Link
                 :href="profileEdit().url"
                 class="group flex flex-1 flex-col items-center gap-1 py-1 transition-all active:scale-95"
-                :class="isCurrentUrl(profileEdit().url) ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'"
+                :class="isCurrentUrl(profileEdit().url) ? 'text-zinc-900 dark:text-white font-bold' : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'"
             >
                 <div class="relative flex items-center justify-center">
                     <User class="size-6 transition-transform group-hover:scale-110" />

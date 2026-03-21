@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { Calendar, Clock, Printer, Shield, History } from 'lucide-vue-next';
 import QRCode from 'qrcode';
+import { computed, onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Calendar, Clock, Printer, Shield, History } from 'lucide-vue-next';
 
 type Subject = { id: number; name: string };
 
@@ -54,10 +54,10 @@ const latestStatus = computed(() => {
 });
 
 function badgeClass(status: string) {
-    if (status === 'Present') return 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20';
-    if (status === 'Late') return 'bg-amber-500/10 text-amber-700 ring-amber-500/20';
-    if (status === 'Time Out') return 'bg-indigo-500/10 text-indigo-700 ring-indigo-500/20';
-    if (status === 'Absent') return 'bg-rose-500/10 text-rose-700 ring-rose-500/20';
+    if (status === 'Present') return 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 ring-zinc-900/20';
+    if (status === 'Late') return 'bg-zinc-500 text-white ring-zinc-500/20';
+    if (status === 'Time Out') return 'bg-zinc-200 text-zinc-900 ring-zinc-300/20 border border-zinc-300 dark:bg-zinc-800 dark:text-zinc-200';
+    if (status === 'Absent') return 'bg-zinc-100 text-zinc-500 ring-zinc-200/50 border border-zinc-200 dark:bg-zinc-900/50 dark:text-zinc-500';
     return 'bg-zinc-500/10 text-zinc-700 ring-zinc-500/20';
 }
 

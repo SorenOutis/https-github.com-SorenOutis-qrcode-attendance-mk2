@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -15,8 +12,12 @@ import {
     Legend,
     ArcElement,
 } from 'chart.js';
-import { Line, Bar, Pie } from 'vue-chartjs';
+import gsap from 'gsap';
 import { Download, TrendingUp, Users, Clock } from 'lucide-vue-next';
+import { onMounted, ref } from 'vue';
+import { Line, Bar, Pie } from 'vue-chartjs';
+import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 ChartJS.register(
     CategoryScale,
@@ -59,7 +60,6 @@ const chartOptions = {
     maintainAspectRatio: false,
 };
 
-import gsap from 'gsap';
 
 onMounted(async () => {
     await fetchStats();

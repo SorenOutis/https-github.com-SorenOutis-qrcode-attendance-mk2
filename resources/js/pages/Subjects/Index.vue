@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
 import gsap from 'gsap';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { dashboard } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Plus, BookOpen, Trash2, Edit2, Users } from 'lucide-vue-next';
+import { onMounted, ref } from 'vue';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -16,6 +12,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { dashboard } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
 
 type Student = {
     id: number;

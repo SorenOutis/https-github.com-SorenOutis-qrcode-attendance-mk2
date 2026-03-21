@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { onMounted, onUnmounted, ref, computed } from 'vue';
 import gsap from 'gsap';
-import { dashboard, login, register } from '@/routes';
+import { 
+    ChevronLeft, 
+    ChevronRight, 
+    MessageSquare, 
+    QrCode, 
+    Camera, 
+    BarChart3 
+} from 'lucide-vue-next';
+import { onMounted, onUnmounted, ref, computed } from 'vue';
+import ScanningVisual from '@/components/ScanningVisual.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     Dialog,
     DialogContent,
@@ -14,10 +21,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { dashboard, login, register } from '@/routes';
 import commentsRoutes from '@/routes/comments';
 import ratingsRoutes from '@/routes/ratings';
-import ScanningVisual from '@/components/ScanningVisual.vue';
 
 type Comment = {
     id: number;
@@ -60,7 +68,7 @@ const carouselContainerRef = ref<HTMLElement | null>(null);
 const carouselRef = ref<HTMLElement | null>(null);
 
 const cards = computed(() => {
-    let items = [];
+    const items = [];
     if (props.ratings && props.ratings.length > 0) {
         items.push(...props.ratings.map(r => ({
             id: 'r' + r.id,
@@ -332,7 +340,7 @@ onUnmounted(() => {
             <div ref="mouseGlowRef" class="hidden lg:block fixed top-0 left-0 w-[600px] h-[600px] rounded-full bg-primary/10 blur-[140px] pointer-events-none z-0" style="will-change: transform;"></div>
 
             <div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[150px]"></div>
-            <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/10 blur-[170px]"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[170px]"></div>
             
             <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px]"></div>
             
@@ -382,7 +390,7 @@ onUnmounted(() => {
             <div class="w-full lg:w-5/12 flex flex-col justify-center px-6 lg:px-16 z-20">
                 <div ref="titleRef" class="space-y-3 lg:space-y-4 mb-6 lg:mb-8">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-sidebar-border/70 bg-background/50 backdrop-blur-md text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
                         Live System Active
                     </div>
                     
@@ -505,11 +513,11 @@ onUnmounted(() => {
                     <div class="absolute bottom-0 right-4 lg:right-[10%] flex items-center gap-10 text-sm">
                         <div class="flex items-center gap-3">
                             <button @click="prevCard" class="w-10 h-10 rounded-full border border-sidebar-border/70 flex items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+                                <ChevronLeft class="w-[18px] h-[18px]" stroke-width="1.5" />
                             </button>
                             <button @click="nextCard" class="w-10 h-10 rounded-full border border-sidebar-border/70 flex items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all relative overflow-hidden group">
                                 <div class="absolute top-0 bottom-0 left-0 bg-primary/10 transition-all pointer-events-none" :style="{ width: isHovering ? '0%' : '100%' }" style="transition: width 1s linear;" :key="activeIndex"></div>
-                                <svg class="relative z-10" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
+                                <ChevronRight class="relative z-10 w-[18px] h-[18px]" stroke-width="1.5" />
                             </button>
                         </div>
                         <div class="flex items-center gap-4 font-mono text-[10px] tracking-[0.2em] text-muted-foreground">
@@ -525,9 +533,7 @@ onUnmounted(() => {
                     <div class="w-full max-w-[320px] text-center space-y-5 rounded-3xl border border-dashed border-sidebar-border bg-background/30 backdrop-blur-sm p-10 shadow-sm relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500">
                         <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
                         <div class="w-16 h-16 rounded-full bg-background/50 mx-auto flex items-center justify-center text-muted-foreground/50 border border-sidebar-border/50 shadow-inner relative z-10">
-                            <svg class="w-8 h-8 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                            </svg>
+                            <MessageSquare class="w-8 h-8 opacity-75" stroke-width="1.5" />
                         </div>
                         <p class="text-foreground/80 font-serif italic text-[16px] relative z-10">
                             Be the first to tell us what you think!
@@ -543,7 +549,7 @@ onUnmounted(() => {
                 <!-- Section Header -->
                 <div class="text-center mb-12 lg:mb-20">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-sidebar-border/70 bg-background/50 backdrop-blur-md text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-6">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
                         Seamless Process
                     </div>
                     <h2 class="text-3xl lg:text-5xl font-serif font-bold text-foreground leading-tight mb-4">
@@ -566,13 +572,10 @@ onUnmounted(() => {
                         style="scrollbar-width: none; -ms-overflow-style: none;"
                     >
                     <!-- Step 1 -->
-                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
-                        <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                        <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-emerald-500/40 group-hover:bg-emerald-500/5 transition-all duration-500 shadow-inner">
-                            <svg class="w-9 h-9 text-emerald-500/80 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
-                            </svg>
+                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
+                        <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                        <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-foreground/40 group-hover:bg-foreground/5 transition-all duration-500 shadow-inner">
+                            <QrCode class="w-9 h-9 text-muted-foreground group-hover:text-foreground transition-colors" stroke-width="1.5" />
                         </div>
                         <div class="text-xs font-mono text-muted-foreground/50 uppercase tracking-widest mb-2">Step 01</div>
                         <h3 class="text-lg font-serif font-bold text-foreground mb-3">Admin Generates</h3>
@@ -580,26 +583,21 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 md:-translate-y-4 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
-                        <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                        <div class="relative z-10 w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-6 group-hover:border-emerald-500/60 group-hover:bg-emerald-500/20 transition-all duration-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-                            <svg class="w-9 h-9 text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                            </svg>
+                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 md:-translate-y-4 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
+                        <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                        <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/10 border border-sidebar-border/30 flex items-center justify-center mb-6 group-hover:border-foreground/60 group-hover:bg-foreground/20 transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.1)]">
+                            <Camera class="w-9 h-9 text-foreground transition-colors" stroke-width="1.5" />
                         </div>
-                        <div class="text-xs font-mono text-emerald-500/60 uppercase tracking-widest mb-2">Step 02</div>
+                        <div class="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">Step 02</div>
                         <h3 class="text-lg font-serif font-bold text-foreground mb-3">Student Scans</h3>
                         <p class="text-sm text-muted-foreground/80 font-light leading-relaxed">Students scan with any mobile device — contactless, instant, and seamless.</p>
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
-                        <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                        <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-emerald-500/40 group-hover:bg-emerald-500/5 transition-all duration-500 shadow-inner">
-                            <svg class="w-9 h-9 text-emerald-500/80 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                            </svg>
+                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
+                        <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                        <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-foreground/40 group-hover:bg-foreground/5 transition-all duration-500 shadow-inner">
+                            <BarChart3 class="w-9 h-9 text-muted-foreground group-hover:text-foreground transition-colors" stroke-width="1.5" />
                         </div>
                         <div class="text-xs font-mono text-muted-foreground/50 uppercase tracking-widest mb-2">Step 03</div>
                         <h3 class="text-lg font-serif font-bold text-foreground mb-3">Real-time Tracking</h3>
@@ -655,8 +653,8 @@ onUnmounted(() => {
                     </div>
                     <!-- GSAP -->
                     <div class="flex items-center gap-2 group cursor-default">
-                        <div class="h-5 w-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
-                            <span class="text-[8px] font-black text-emerald-500">G</span>
+                        <div class="h-5 w-5 rounded-full bg-foreground/10 border border-foreground/20 flex items-center justify-center">
+                            <span class="text-[8px] font-black text-foreground">G</span>
                         </div>
                         <span class="text-sm font-semibold tracking-wide" style="font-family: 'Inter', sans-serif;">GSAP</span>
                     </div>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref, onMounted } from 'vue';
 import gsap from 'gsap';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Input } from '@/components/ui/input';
 import { CalendarDays, BookOpen, ArrowRight, Calendar } from 'lucide-vue-next';
+import { ref, onMounted } from 'vue';
+import { Input } from '@/components/ui/input';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 type Subject = {
     id: number;

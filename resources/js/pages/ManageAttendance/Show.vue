@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import gsap from 'gsap';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { 
     ChevronLeft, 
     Save, 
@@ -20,6 +15,9 @@ import {
     MoreHorizontal,
     CalendarDays
 } from 'lucide-vue-next';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,6 +26,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 type Attendance = {
     id: number;
@@ -404,7 +404,7 @@ onMounted(() => {
                 <div class="flex items-center gap-3">
                     <Button 
                         variant="outline"
-                        class="h-10 px-6 rounded-full font-bold text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 dark:bg-rose-950/20 dark:border-rose-900/50 dark:hover:bg-rose-900/40 transition-all active:scale-95 shadow-sm"
+                        class="h-10 px-6 rounded-full font-bold text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-black hover:border-zinc-300 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm"
                         @click="markAllAbsent"
                         :disabled="isMarkingAllAbsent || students.every(s => s.attendance)"
                     >
@@ -430,37 +430,37 @@ onMounted(() => {
                 
                 <!-- Present -->
                 <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-50 dark:bg-emerald-950/20 blur-2xl transition-all duration-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500/10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
+                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-900/5 dark:bg-zinc-100/5 blur-2xl transition-all duration-500 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900/30"></div>
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
                         <CheckCircle class="h-16 w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">Present</p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-emerald-600 drop-shadow-sm">{{ stats.present }}</p>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Present</p>
+                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-900 dark:text-zinc-100 drop-shadow-sm">{{ stats.present }}</p>
                     </div>
                 </div>
 
                 <!-- Late -->
                 <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-amber-50 dark:bg-amber-950/20 blur-2xl transition-all duration-500 group-hover:bg-amber-100 dark:group-hover:bg-amber-900/30"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-amber-500/10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
+                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-400/5 dark:bg-zinc-500/5 blur-2xl transition-all duration-500 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900/30"></div>
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
                         <Clock class="h-16 w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Late</p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-amber-600 drop-shadow-sm">{{ stats.late }}</p>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Late</p>
+                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-700 dark:text-zinc-300 drop-shadow-sm">{{ stats.late }}</p>
                     </div>
                 </div>
 
                 <!-- Absent -->
                 <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-rose-50 dark:bg-rose-950/20 blur-2xl transition-all duration-500 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-rose-500/10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
+                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-200/5 dark:bg-zinc-800/5 blur-2xl transition-all duration-500 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900/30"></div>
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
                         <XCircle class="h-16 w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-600 dark:text-rose-400">Absent</p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-rose-600 drop-shadow-sm">{{ stats.absent }}</p>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Absent</p>
+                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-400 dark:text-zinc-500 drop-shadow-sm">{{ stats.absent }}</p>
                     </div>
                 </div>
 
@@ -503,19 +503,19 @@ onMounted(() => {
                     </button>
                     <button 
                         @click="statusFilter = 'present'"
-                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'present' ? 'bg-emerald-500 text-white shadow-sm' : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10']"
+                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'present' ? 'bg-zinc-900 text-white shadow-sm dark:bg-zinc-100 dark:text-zinc-900' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
                     >
                         Present
                     </button>
                     <button 
                         @click="statusFilter = 'late'"
-                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'late' ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-600 dark:text-amber-400 hover:bg-amber-500/10']"
+                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'late' ? 'bg-zinc-500 text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
                     >
                         Late
                     </button>
                     <button 
                         @click="statusFilter = 'absent'"
-                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'absent' ? 'bg-rose-500 text-white shadow-sm' : 'text-rose-600 dark:text-rose-400 hover:bg-rose-500/10']"
+                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'absent' ? 'bg-zinc-100 text-zinc-600 shadow-sm border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
                     >
                         Absent
                     </button>
@@ -559,7 +559,7 @@ onMounted(() => {
                                     </td>
                                     <td class="px-8 py-5">
                                         <div v-if="student.attendance?.scanned_at && !student.attendance?.is_manual" class="flex items-center gap-2">
-                                            <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20 px-2 py-1 rounded-full border border-emerald-100 dark:border-emerald-900/30">
+                                            <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-700 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-300 px-2 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
                                                 QR Scan @ {{ new Date(student.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
                                             </span>
                                         </div>
@@ -575,26 +575,26 @@ onMounted(() => {
                                             <div v-show="savingStatus[student.id]" class="flex items-center gap-1.5 text-[9px] font-bold uppercase text-zinc-500 animate-pulse mr-2">
                                                 <Save class="w-2.5 h-2.5" /> Updating
                                             </div>
-                                            <div v-show="successStatus[student.id]" class="flex items-center gap-1.5 text-[9px] font-bold uppercase text-emerald-600 mr-2">
+                                            <div v-show="successStatus[student.id]" class="flex items-center gap-1.5 text-[9px] font-bold uppercase text-zinc-900 dark:text-white mr-2">
                                                 <CheckCircle2 class="w-2.5 h-2.5" /> Saved
                                             </div>
                                             
                                             <div class="flex p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl gap-1 border border-zinc-200 dark:border-zinc-800 shadow-inner">
                                                 <button 
                                                     @click="updateAttendance(student, 'Present')"
-                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.attendance?.status?.toLowerCase() === 'present' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200']"
+                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.attendance?.status?.toLowerCase() === 'present' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200']"
                                                 >
                                                     P
                                                 </button>
                                                 <button 
                                                     @click="updateAttendance(student, 'Late')"
-                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.attendance?.status?.toLowerCase() === 'late' ? 'bg-white dark:bg-zinc-700 text-amber-600 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-amber-600']"
+                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.attendance?.status?.toLowerCase() === 'late' ? 'bg-zinc-500 text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200']"
                                                 >
                                                     L
                                                 </button>
                                                 <button 
                                                     @click="updateAttendance(student, 'Absent')"
-                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.attendance?.status?.toLowerCase() === 'absent' ? 'bg-white dark:bg-zinc-700 text-rose-600 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-rose-600']"
+                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.attendance?.status?.toLowerCase() === 'absent' ? 'bg-white dark:bg-zinc-800 text-zinc-500 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600 border border-zinc-200 dark:border-zinc-700' : 'text-zinc-400 hover:text-zinc-500']"
                                                 >
                                                     A
                                                 </button>
@@ -658,10 +658,10 @@ onMounted(() => {
                         <div v-if="student.attendance?.status" class="absolute top-6 right-6 animate-in fade-in zoom-in duration-500">
                             <span :class="[
                                 'inline-flex items-center rounded-full px-3 py-1 text-[10px] uppercase font-black tracking-widest shadow-lg border backdrop-blur-md',
-                                student.attendance?.status === 'Present' ? 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/20' :
-                                student.attendance?.status === 'Late' ? 'bg-amber-500 text-white border-amber-400 shadow-amber-500/20' :
-                                student.attendance?.status === 'Absent' ? 'bg-rose-500 text-white border-rose-400 shadow-rose-500/20' :
-                                'bg-zinc-500 text-white border-zinc-400'
+                                student.attendance?.status === 'Present' ? 'bg-zinc-900 text-white border-zinc-800 shadow-zinc-900/20' :
+                                student.attendance?.status === 'Late' ? 'bg-zinc-500 text-white border-zinc-400 shadow-zinc-500/20' :
+                                student.attendance?.status === 'Absent' ? 'bg-zinc-100 text-zinc-500 border-zinc-200' :
+                                'bg-zinc-300 text-zinc-800 border-zinc-200'
                             ]">
                                 {{ student.attendance.status }}
                             </span>
@@ -684,8 +684,8 @@ onMounted(() => {
                                 <span class="tracking-wide">{{ student.slot_start }} - {{ student.slot_end }}</span>
                             </div>
                             <div v-if="student.attendance?.scanned_at" class="flex items-center gap-2 ml-auto">
-                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-black italic tracking-tight">
+                                <span class="h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-white animate-pulse"></span>
+                                <span class="text-zinc-900 dark:text-white font-black italic tracking-tight">
                                     {{ !student.attendance.is_manual ? `Scan @ ${new Date(student.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Manual' }}
                                 </span>
                             </div>
@@ -696,14 +696,14 @@ onMounted(() => {
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="grid grid-cols-3 gap-3">
+                         <div class="grid grid-cols-3 gap-3">
                             <button 
                                 @click="updateAttendance(student, 'Present')"
                                 :class="[
                                     'py-4 rounded-2xl text-[10px] font-black tracking-[0.15em] transition-all duration-300 border-2',
                                     student.attendance?.status?.toLowerCase() === 'present' 
-                                        ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] scale-[1.03] z-10' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-emerald-500/10 text-emerald-600/60 dark:text-emerald-400/60 hover:border-emerald-500/30'
+                                        ? 'bg-zinc-900 border-zinc-800 text-white shadow-xl scale-[1.03] z-10 dark:bg-zinc-100 dark:text-zinc-900 dark:border-white' 
+                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/10 text-zinc-400 dark:text-zinc-500 hover:border-zinc-300'
                                 ]"
                             >
                                 PRESENT
@@ -713,8 +713,8 @@ onMounted(() => {
                                 :class="[
                                     'py-4 rounded-2xl text-[10px] font-black tracking-[0.15em] transition-all duration-300 border-2',
                                     student.attendance?.status?.toLowerCase() === 'late' 
-                                        ? 'bg-amber-500 border-amber-400 text-white shadow-[0_0_20px_rgba(245,158,11,0.3)] scale-[1.03] z-10' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-amber-500/10 text-amber-600/60 dark:text-amber-400/60 hover:border-amber-500/30'
+                                        ? 'bg-zinc-500 border-zinc-400 text-white shadow-xl scale-[1.03] z-10' 
+                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/10 text-zinc-400 dark:text-zinc-500 hover:border-zinc-300'
                                 ]"
                             >
                                 LATE
@@ -724,8 +724,8 @@ onMounted(() => {
                                 :class="[
                                     'py-4 rounded-2xl text-[10px] font-black tracking-[0.15em] transition-all duration-300 border-2',
                                     student.attendance?.status?.toLowerCase() === 'absent' 
-                                        ? 'bg-rose-500 border-rose-400 text-white shadow-[0_0_20px_rgba(244,63,94,0.3)] scale-[1.03] z-10' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-rose-500/10 text-rose-600/60 dark:text-rose-400/60 hover:border-rose-500/30'
+                                        ? 'bg-zinc-100 border-zinc-200 text-zinc-500 shadow-md scale-[1.03] z-10 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400' 
+                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/10 text-zinc-400 dark:text-zinc-500 hover:border-zinc-300'
                                 ]"
                             >
                                 ABSENT

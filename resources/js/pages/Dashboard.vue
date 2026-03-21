@@ -1,20 +1,17 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref, watch } from 'vue';
-import { nextTick } from 'vue';
 import { useDraggable, useWindowSize } from '@vueuse/core';
+import type { BreadcrumbItem } from '@/types';
+import confetti from 'canvas-confetti';
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
 import gsap from 'gsap';
 import jsQR from 'jsqr';
+import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check } from 'lucide-vue-next';
 import QRCode from 'qrcode';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { dashboard } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle } from 'lucide-vue-next';
-import confetti from 'canvas-confetti';
+import { nextTick } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { Pie } from 'vue-chartjs';
-import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
+import { Button } from '@/components/ui/button';
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale);
 import {
@@ -25,6 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
     Select,
     SelectContent,
@@ -32,6 +30,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { dashboard } from '@/routes';
 import commentsRoutes from '@/routes/comments';
 import ratingsRoutes from '@/routes/ratings';
 
@@ -207,10 +207,10 @@ const atRiskStudents = computed(() => {
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
 const scanModalOpen = ref(false);
-const showOnlyScheduledToday = ref(true);
+const showOnlyScheduledToday = ref(false);
 const activeTab = ref<'active' | 'deleted'>('active');
 const visibleStudents = computed(() => {
-    let source = activeTab.value === 'active' ? filteredStudents.value : filteredTrashedStudents.value;
+    const source = activeTab.value === 'active' ? filteredStudents.value : filteredTrashedStudents.value;
     if (showOnlyScheduledToday.value && activeTab.value === 'active') {
         return source.filter(s => isScheduledForToday(s));
     }
@@ -1400,6 +1400,15 @@ onMounted(() => {
                                     <span v-if="searchQuery">
                                         No students matching "{{ searchQuery }}"
                                     </span>
+                                    <span v-else-if="showOnlyScheduledToday && activeTab === 'active' && students.length > 0">
+                                        No students scheduled for <span class="text-zinc-900 dark:text-white font-medium">{{ todayDayName }}</span>.
+                                        <button @click="showOnlyScheduledToday = false" class="text-zinc-900 dark:text-white font-semibold underline underline-offset-4 ml-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">
+                                            Show all students
+                                        </button>
+                                    </span>
+                                    <span v-else-if="activeTab === 'deleted'">
+                                        No deleted students in the trash.
+                                    </span>
                                     <span v-else>
                                         No students yet. Use the
                                         <span class="font-semibold text-zinc-900 dark:text-white">
@@ -1477,7 +1486,7 @@ onMounted(() => {
                                             class="inline-flex items-center justify-center w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border border-zinc-900 dark:border-zinc-100"
                                             title="Absent"
                                         >
-                                            <svg class="w-3 h-3 lg:w-3.5 lg:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            <Check class="w-3 h-3 lg:w-3.5 lg:h-3.5" stroke-width="3" />
                                         </span>
                                         <span v-else class="inline-block w-3 lg:w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
                                     </td>
@@ -1486,11 +1495,11 @@ onMounted(() => {
                                 <template v-else>
                                     <td colspan="4" class="px-4 py-2" @click.stop>
                                         <div class="flex items-center gap-2">
-                                            <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" title="Restore" @click="restoreStudent(student.id)">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                                            <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800" title="Restore" @click="restoreStudent(student.id)">
+                                                <RefreshCw class="w-4 h-4" />
                                             </Button>
-                                            <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50" title="Delete Permanently" @click="forceDeleteStudent(student.id)">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                            <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete Permanently" @click="forceDeleteStudent(student.id)">
+                                                <Trash2 class="w-4 h-4" />
                                             </Button>
                                         </div>
                                     </td>
@@ -1589,10 +1598,10 @@ onMounted(() => {
                                 </span>
                                 <div v-else class="flex gap-1">
                                     <Button size="icon-sm" variant="ghost" class="h-6 w-6 text-emerald-600" title="Restore" @click.stop="restoreStudent(student.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                                        <RefreshCw class="w-3.5 h-3.5" />
                                     </Button>
                                     <Button size="icon-sm" variant="ghost" class="h-6 w-6 text-rose-600" title="Delete" @click.stop="forceDeleteStudent(student.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                        <Trash2 class="w-3.5 h-3.5" />
                                     </Button>
                                 </div>
                             </div>

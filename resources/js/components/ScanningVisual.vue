@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
 import gsap from 'gsap';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
     small?: boolean;
@@ -49,7 +49,7 @@ onMounted(() => {
     const particles = props.small ? 5 : 15;
     for (let i = 0; i < particles; i++) {
         const p = document.createElement('div');
-        p.className = 'absolute w-1 h-1 bg-emerald-500/40 rounded-full blur-[1px] pointer-events-none';
+        p.className = 'absolute w-1 h-1 bg-foreground/40 rounded-full blur-[1px] pointer-events-none';
         containerRef.value.appendChild(p);
         
         const startX = Math.random() * 100;
@@ -87,22 +87,22 @@ onMounted(() => {
             
             <!-- Scanning Line -->
             <div ref="lineRef" class="absolute w-full h-[2px] top-0 left-0 z-20 overflow-visible">
-                <div class="absolute inset-0 bg-emerald-500 shadow-[0_0_15px_2px_rgba(16,185,129,0.8)]"></div>
+                <div class="absolute inset-0 bg-foreground shadow-[0_0_15px_2px_rgba(255,255,255,0.3)] dark:shadow-[0_0_15px_2px_rgba(255,255,255,0.1)]"></div>
                 <!-- Line glow trail -->
-                <div class="absolute bottom-full left-0 w-full h-20 bg-gradient-to-t from-emerald-500/20 to-transparent"></div>
+                <div class="absolute bottom-full left-0 w-full h-20 bg-gradient-to-t from-foreground/10 to-transparent"></div>
             </div>
 
             <!-- Stylized QR Code -->
             <div 
                 ref="qrRef" 
-                class="relative z-10 p-2 lg:p-3 bg-white/5 rounded-xl lg:rounded-2xl border border-white/10 flex items-center justify-center shadow-inner group-hover:border-emerald-500/30 transition-colors duration-500"
+                class="relative z-10 p-2 lg:p-3 bg-white/5 rounded-xl lg:rounded-2xl border border-white/10 flex items-center justify-center shadow-inner group-hover:border-foreground/30 transition-colors duration-500"
                 :class="small ? 'w-16 h-16' : 'w-32 h-32'"
             >
                 <div class="grid grid-cols-3 grid-rows-3 gap-1 lg:gap-2 w-full h-full opacity-80">
                     <div class="border lg:border-2 border-foreground/40 rounded-sm m-0.5"></div>
                     <div class="border lg:border-2 border-foreground/40 rounded-sm m-0.5"></div>
                     <div class="bg-foreground/20 rounded-sm m-0.5"></div>
-                    <div class="bg-emerald-500/20 rounded-sm m-0.5 group-hover:bg-emerald-500/40 transition-colors"></div>
+                    <div class="bg-foreground/10 rounded-sm m-0.5 group-hover:bg-foreground/20 transition-colors"></div>
                     <div class="border lg:border-2 border-foreground/40 rounded-sm m-0.5"></div>
                     <div class="bg-foreground/20 rounded-sm m-0.5"></div>
                     <div class="bg-foreground/20 rounded-sm m-0.5"></div>
@@ -111,17 +111,17 @@ onMounted(() => {
                 </div>
                 
                 <!-- Corner Decorations -->
-                <div class="absolute -top-1 -left-1 w-2 lg:w-4 h-2 lg:h-4 border-t lg:border-t-2 border-l lg:border-l-2 border-emerald-500"></div>
-                <div class="absolute -top-1 -right-1 w-2 lg:w-4 h-2 lg:h-4 border-t lg:border-t-2 border-r lg:border-r-2 border-emerald-500"></div>
-                <div class="absolute -bottom-1 -left-1 w-2 lg:w-4 h-2 lg:h-4 border-b lg:border-b-2 border-l lg:border-l-2 border-emerald-500"></div>
-                <div class="absolute -bottom-1 -right-1 w-2 lg:w-4 h-2 lg:h-4 border-b lg:border-b-2 border-r lg:border-r-2 border-emerald-500"></div>
+                <div class="absolute -top-1 -left-1 w-2 lg:w-4 h-2 lg:h-4 border-t lg:border-t-2 border-l lg:border-l-2 border-primary"></div>
+                <div class="absolute -top-1 -right-1 w-2 lg:w-4 h-2 lg:h-4 border-t lg:border-t-2 border-r lg:border-r-2 border-primary"></div>
+                <div class="absolute -bottom-1 -left-1 w-2 lg:w-4 h-2 lg:h-4 border-b lg:border-b-2 border-l lg:border-l-2 border-primary"></div>
+                <div class="absolute -bottom-1 -right-1 w-2 lg:w-4 h-2 lg:h-4 border-b lg:border-b-2 border-r lg:border-r-2 border-primary"></div>
             </div>
 
             <!-- Data HUD elements (Hidden on small) -->
             <div v-if="!small" class="w-full space-y-3 px-8 z-10">
                 <div class="flex items-center justify-between">
                     <div class="h-1 w-20 bg-foreground/20 rounded-full overflow-hidden">
-                        <div class="h-full bg-emerald-500 w-1/2 animate-[pulse_2s_infinite]"></div>
+                        <div class="h-full bg-primary w-1/2 animate-[pulse_2s_infinite]"></div>
                     </div>
                     <span class="text-[8px] font-mono text-muted-foreground uppercase tracking-widest">Scanning...</span>
                 </div>
@@ -135,11 +135,11 @@ onMounted(() => {
             </div>
 
             <!-- Internal glow -->
-            <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
         </div>
         
         <!-- Background Orbs -->
-        <div class="absolute top-1/4 -right-1/4 w-32 h-32 lg:w-64 lg:h-64 bg-emerald-500/10 rounded-full blur-[50px] lg:blur-[100px] animate-pulse"></div>
+        <div class="absolute top-1/4 -right-1/4 w-32 h-32 lg:w-64 lg:h-64 bg-primary/5 rounded-full blur-[50px] lg:blur-[100px] animate-pulse"></div>
         <div class="absolute bottom-1/4 -left-1/4 w-32 h-32 lg:w-64 lg:h-64 bg-primary/5 rounded-full blur-[50px] lg:blur-[100px] animate-pulse" style="animation-delay: 1s"></div>
     </div>
 </template>

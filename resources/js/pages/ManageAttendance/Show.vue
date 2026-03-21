@@ -18,7 +18,8 @@ import {
     Check,
     X,
     ChevronRight,
-    QrCode
+    QrCode,
+    User
 } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
@@ -453,12 +454,11 @@ function openPrintCards() {
 }
 
 const cardsRef = ref<HTMLElement | null>(null);
-const tableRef = ref<HTMLElement | null>(null);
-const studentsTableBodyRef = ref<HTMLTableSectionElement | null>(null);
+const gridRef = ref<HTMLElement | null>(null);
 
 function animateStudents() {
     nextTick(() => {
-        const targets = studentsTableBodyRef.value?.querySelectorAll('tr');
+        const targets = gridRef.value?.querySelectorAll('[data-student-card]');
 
         if (!targets || targets.length === 0) return;
 
@@ -543,11 +543,11 @@ onMounted(() => {
         });
     }
 
-    // 2. Table and Row Entrance
-    if (tableRef.value) {
-        gsap.set(tableRef.value, { opacity: 1, visibility: 'visible', perspective: 1000 });
+    // 2. Grid and Card Entrance
+    if (gridRef.value) {
+        gsap.set(gridRef.value, { opacity: 1, visibility: 'visible', perspective: 1000 });
 
-        gsap.from(tableRef.value, {
+        gsap.from(gridRef.value, {
             opacity: 0,
             y: 10,
             duration: 0.6,
@@ -555,7 +555,7 @@ onMounted(() => {
             clearProps: 'all'
         });
         
-        // Initial row animation
+        // Initial student card animation
         animateStudents();
     }
 
@@ -740,12 +740,21 @@ onMounted(() => {
                     />
                 </div>
                 
-                <div class="flex items-center gap-1.5 bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full md:w-auto overflow-x-auto no-scrollbar">
+                <div class="flex items-center gap-3 bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full md:w-auto overflow-x-auto no-scrollbar">
+                    <div class="flex items-center px-3 border-r border-zinc-300 dark:border-zinc-700 mr-1 shrink-0">
+                        <input 
+                            type="checkbox" 
+                            :checked="allSelected" 
+                            @change="toggleSelectAll"
+                            class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:bg-zinc-900 dark:border-zinc-700 h-4 w-4 cursor-pointer"
+                        />
+                        <span class="ml-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 whitespace-nowrap hidden sm:block">Select All</span>
+                    </div>
                     <button 
                         @click="statusFilter = 'all'"
                         :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'all' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
                     >
-                        All Students
+                        All
                     </button>
                     <button 
                         @click="statusFilter = 'unmarked'"
@@ -776,293 +785,113 @@ onMounted(() => {
 
             <!-- Content Area -->
             <div class="space-y-4">
-                <!-- Desktop Table View -->
-                <div ref="tableRef" class="hidden md:block rounded-2xl border bg-white dark:bg-black shadow-xl overflow-hidden border-zinc-200 dark:border-zinc-800">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left">
-                            <thead class="sticky top-0 z-10 text-[10px] text-zinc-500 dark:text-zinc-400 uppercase font-semibold bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 tracking-wider">
-                                <tr>
-                                    <th class="px-6 py-4 w-10">
-                                        <input 
-                                            type="checkbox" 
-                                            :checked="allSelected" 
-                                            @change="toggleSelectAll"
-                                            class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:bg-zinc-900 dark:border-zinc-700 h-4 w-4"
-                                        />
-                                    </th>
-                                    <th class="px-6 py-4">Student Information</th>
-                                    <th class="px-6 py-4">Shift / Schedule</th>
-                                    <th class="px-6 py-4 border-l border-zinc-200 dark:border-zinc-800/50">Entry Source</th>
-                                    <th class="px-6 py-4">Actions</th>
-                                    <th class="px-8 py-4 text-right w-[350px]">Attendance Status</th>
-                                </tr>
-                            </thead>
-                            <tbody ref="studentsTableBodyRef" class="divide-y divide-zinc-100 dark:divide-zinc-900">
-                                <tr v-for="student in filteredStudents" :key="student.id" 
-                                    class="group transition-all hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
-                                    :class="{ 'bg-zinc-50 dark:bg-zinc-900/50': selectedStudents.includes(student.id) }"
-                                >
-                                    <td class="px-6 py-5">
-                                        <input 
-                                            type="checkbox" 
-                                            :value="student.id" 
-                                            v-model="selectedStudents"
-                                            class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:bg-zinc-900 dark:border-zinc-700 h-4 w-4"
-                                            @click.stop
-                                        />
-                                    </td>
-                                    <td class="px-6 py-5" @click="toggleStudentSelection(student.id)">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
-                                                {{ student.name.charAt(0) }}
-                                            </div>
-                                            <div>
-                                                <div class="font-bold text-foreground group-hover:text-primary transition-colors cursor-pointer">{{ student.name }}</div>
-                                                <div class="text-xs text-muted-foreground tracking-tight">{{ student.student_number }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-5">
-                                        <div class="flex items-center gap-2 font-medium text-muted-foreground">
-                                            <Clock class="w-3.5 h-3.5" />
-                                            <span v-if="student.slot_start">{{ student.slot_start }} - {{ student.slot_end }}</span>
-                                            <span v-else class="text-[10px] text-zinc-400 italic">Not Scheduled</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-5 border-l border-zinc-200 dark:border-zinc-800/50">
-                                        <div v-if="student.attendance?.scanned_at && !student.attendance?.is_manual" class="flex items-center gap-2">
-                                            <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-700 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-300 px-2 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
-                                                QR Scan @ {{ new Date(student.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
-                                            </span>
-                                        </div>
-                                        <div v-else-if="student.attendance?.is_manual" class="flex items-center gap-2">
-                                            <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
-                                                Manual Entry
-                                            </span>
-                                        </div>
-                                        <div v-else class="text-zinc-400 dark:text-zinc-600 italic text-[10px] font-medium ml-2">Waiting for scan...</div>
-                                    </td>
-                                    <td class="px-6 py-5">
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            class="h-8 text-[10px] font-bold uppercase tracking-wider rounded-xl gap-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all border-zinc-200 dark:border-zinc-800"
-                                            @click="openQrModal(student)"
-                                        >
-                                            <QrCode class="w-3 h-3" />
-                                            View QR
-                                        </Button>
-                                    </td>
-                                    <td class="px-8 py-5">
-                                        <div class="flex items-center justify-end gap-3">
-                                            <div v-show="savingStatus[student.id]" class="flex items-center gap-1.5 text-[9px] font-bold uppercase text-zinc-500 animate-pulse mr-2">
-                                                <Save class="w-2.5 h-2.5" /> Updating
-                                            </div>
-                                            
-                                            <div :class="['flex p-1 rounded-xl gap-1 border shadow-inner transition-opacity', student.slot_start ? 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800' : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-100 dark:border-zinc-900 opacity-50 cursor-not-allowed']">
-                                                <button 
-                                                    @click="updateAttendance(student, 'Present')"
-                                                    :disabled="!student.slot_start"
-                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.slot_start ? '' : 'cursor-not-allowed', student.attendance?.status?.toLowerCase() === 'present' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200']"
-                                                >
-                                                    P
-                                                </button>
-                                                <button 
-                                                    @click="updateAttendance(student, 'Late')"
-                                                    :disabled="!student.slot_start"
-                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.slot_start ? '' : 'cursor-not-allowed', student.attendance?.status?.toLowerCase() === 'late' ? 'bg-zinc-500 text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200']"
-                                                >
-                                                    L
-                                                </button>
-                                                <button 
-                                                    @click="updateAttendance(student, 'Absent')"
-                                                    :disabled="!student.slot_start"
-                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.slot_start ? '' : 'cursor-not-allowed', student.attendance?.status?.toLowerCase() === 'absent' ? 'bg-white dark:bg-zinc-800 text-zinc-500 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600 border border-zinc-200 dark:border-zinc-700' : 'text-zinc-400 hover:text-zinc-500']"
-                                                >
-                                                    A
-                                                </button>
-                                                
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <button class="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700 transition-all">
-                                                            <MoreHorizontal class="w-4 h-4" />
-                                                        </button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" class="w-56 rounded-xl shadow-2xl border-zinc-200 dark:border-zinc-800">
-                                                        <DropdownMenuLabel class="text-xs font-bold uppercase tracking-wider text-zinc-500">Other Actions</DropdownMenuLabel>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem @click="updateAttendance(student, 'Excused')" class="text-xs font-medium focus:bg-zinc-100 dark:focus:bg-zinc-800">
-                                                            <Info class="w-3.5 h-3.5 mr-2 text-zinc-400" /> Mark as Excused
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <div class="p-3 space-y-2">
-                                                            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Remarks</p>
-                                                            <Input 
-                                                                v-model="editingRemarks[student.id]" 
-                                                                placeholder="Add a remark..." 
-                                                                class="h-9 text-xs rounded-lg border-zinc-200 dark:border-zinc-800"
-                                                                @keydown.enter="updateRemarks(student)"
-                                                                @blur="student.attendance?.remarks !== editingRemarks[student.id] && updateRemarks(student)"
-                                                            />
-                                                        </div>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr v-if="filteredStudents.length === 0">
-                                    <td colspan="5" class="px-8 py-20 text-center">
-                                        <div class="flex flex-col items-center gap-5">
-                                            <div class="relative">
-                                                <div class="w-24 h-24 rounded-full bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
-                                                    <Search class="w-10 h-10 text-zinc-200 dark:text-zinc-800" stroke-width="1.5" />
-                                                </div>
-                                                <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800 flex items-center justify-center shadow-lg">
-                                                    <Filter class="w-4 h-4 text-zinc-400" />
-                                                </div>
-                                            </div>
-                                            <div class="space-y-1">
-                                                <h3 class="text-lg font-bold text-foreground">No students found</h3>
-                                                <p class="text-sm text-muted-foreground max-w-[250px] mx-auto">We couldn't find any students matching your current search or status filter.</p>
-                                            </div>
-                                            <Button variant="outline" size="sm" @click="searchQuery = ''; statusFilter = 'all'" class="rounded-full px-6">Clear all filters</Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Mobile Card View -->
-                <div class="grid grid-cols-1 gap-4 md:hidden">
-                    <div v-for="student in filteredStudents" :key="student.id + '-mobile'" 
+                <!-- Unified Responsive Grid View -->
+                <!-- Unified 3-Column Grid View -->
+                <div ref="gridRef" class="grid grid-cols-3 gap-2.5 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div v-for="student in filteredStudents" :key="student.id" 
+                        data-student-card
                         :class="[
-                            'relative overflow-hidden bg-white dark:bg-black rounded-3xl p-6 shadow-xl border-2 transition-all active:scale-[0.98] group',
-                            student.attendance?.status === 'Present' ? 'border-emerald-500/30 ring-1 ring-emerald-500/10' : 
-                            student.attendance?.status === 'Late' ? 'border-amber-500/30 ring-1 ring-amber-500/10' :
-                            student.attendance?.status === 'Absent' ? 'border-rose-500/30 ring-1 ring-rose-500/10' : 'border-zinc-100 dark:border-zinc-800'
+                            'relative overflow-hidden bg-white dark:bg-black rounded-[1.5rem] sm:rounded-[2rem] p-2.5 sm:p-5 shadow-lg border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer flex flex-col',
+                            student.attendance?.status === 'Present' ? 'border-emerald-500/20' : 
+                            student.attendance?.status === 'Late' ? 'border-amber-500/20' :
+                            student.attendance?.status === 'Absent' ? 'border-rose-500/20' : 'border-zinc-100 dark:border-zinc-800',
+                            selectedStudents.includes(student.id) ? 'ring-2 ring-zinc-900 dark:ring-zinc-100 border-zinc-900 dark:border-zinc-100' : ''
                         ]"
+                        @click="toggleStudentSelection(student.id)"
                     >
-                        <!-- Action Buttons (Top Right) -->
-                        <div class="absolute top-6 right-6 flex items-center gap-2 z-20">
-                            <!-- Status Badge -->
-                            <div v-if="student.attendance?.status" class="animate-in fade-in zoom-in duration-500">
-                                <span :class="[
-                                    'inline-flex items-center rounded-full px-3 py-1 text-[10px] uppercase font-black tracking-widest shadow-lg border backdrop-blur-md transition-all',
-                                    student.attendance?.status === 'Present' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-800 dark:border-zinc-200' :
-                                    student.attendance?.status === 'Late' ? 'bg-zinc-500 text-white border-zinc-400' :
-                                    student.attendance?.status === 'Absent' ? 'bg-zinc-100 text-zinc-500 border-zinc-200' :
-                                    'bg-zinc-300 text-zinc-800 border-zinc-200'
-                                ]">
-                                    {{ student.attendance.status }}
-                                </span>
-                            </div>
-
-                            <!-- View QR Button -->
-                            <Button 
-                                variant="outline" 
-                                size="icon-sm" 
-                                class="h-8 w-8 rounded-full border-2 border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-all active:scale-90 hover:bg-zinc-900 hover:text-white dark:hover:bg-zinc-100 dark:hover:text-zinc-900 group/qr"
-                                @click.stop="openQrModal(student)"
-                            >
-                                <QrCode class="w-4 h-4 transition-transform group-hover/qr:scale-110" />
-                            </Button>
+                        <!-- Silhouette background icon (Hidden on mobile grid for clarity) -->
+                        <div class="hidden sm:block absolute -right-4 top-1/2 -translate-y-1/2 text-zinc-400/5 transition-transform duration-700 group-hover:scale-110 group-hover:-rotate-12 pointer-events-none z-10">
+                            <User class="h-32 w-32" />
                         </div>
 
-                        <div class="flex items-center gap-4 mb-6">
-                            <div class="h-14 w-14 shrink-0 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 text-xl font-black shadow-inner group-hover:scale-110 transition-transform duration-500">
-                                {{ student.name.charAt(0) }}
+                        <!-- Checkbox Overlay -->
+                        <div class="absolute top-2 left-2 sm:top-4 sm:left-4 z-30" @click.stop>
+                            <input 
+                                type="checkbox" 
+                                :value="student.id" 
+                                v-model="selectedStudents"
+                                class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:bg-zinc-900 dark:border-zinc-700 h-4 w-4 sm:h-5 sm:w-5 cursor-pointer shadow-sm"
+                            />
+                        </div>
+
+                        <!-- Header Area: Stacked on mobile, side-by-side on desktop -->
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between mb-2 sm:mb-4 relative z-20 gap-2 sm:gap-0">
+                            <div class="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-4 text-center sm:text-left">
+                                <div class="h-8 w-8 sm:h-12 sm:w-12 shrink-0 border border-zinc-100 dark:border-zinc-800 rounded-xl sm:rounded-2xl flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 text-xs sm:text-lg font-black shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                    {{ student.name.charAt(0) }}
+                                </div>
+                                <div class="w-full max-w-[80px] sm:max-w-[140px]">
+                                    <h4 class="font-black text-[9px] sm:text-base tracking-tight truncate sm:line-clamp-1 text-zinc-900 dark:text-zinc-100 leading-tight">{{ student.name }}</h4>
+                                    <p class="hidden sm:block text-[10px] font-bold font-mono text-zinc-400 dark:text-zinc-500 mt-1 tracking-wider uppercase">{{ student.student_number || 'No ID' }}</p>
+                                </div>
                             </div>
-                            <div class="pr-20"> <!-- Space for status badge -->
-                                <h4 class="font-black text-lg tracking-tight line-clamp-1 text-zinc-900 dark:text-zinc-100 leading-tight">{{ student.name }}</h4>
-                                <p class="text-[11px] font-bold font-mono text-zinc-400 dark:text-zinc-500 mt-0.5 tracking-wider">{{ student.student_number || 'N/A' }}</p>
+
+                            <div class="flex items-center sm:flex-col sm:items-end gap-1.5 sm:gap-2">
+                                <!-- Status Badge (Minimized on mobile) -->
+                                <div v-if="student.attendance?.status" class="animate-in fade-in zoom-in duration-500">
+                                    <span :class="[
+                                        'inline-flex items-center rounded-full px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[7px] sm:text-[9px] uppercase font-black tracking-widest shadow-md border backdrop-blur-md transition-all',
+                                        student.attendance?.status.toLowerCase() === 'present' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                                        student.attendance?.status.toLowerCase() === 'late' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                        student.attendance?.status.toLowerCase() === 'absent' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+                                        'bg-zinc-100 text-zinc-500 border-zinc-200'
+                                    ]">
+                                        <span class="sm:hidden">{{ student.attendance.status.charAt(0) }}</span>
+                                        <span class="hidden sm:block">{{ student.attendance.status }}</span>
+                                    </span>
+                                </div>
+                                
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon-sm" 
+                                    class="h-6 w-6 sm:h-8 sm:w-8 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 group/qr"
+                                    @click.stop="openQrModal(student)"
+                                >
+                                    <QrCode class="w-3 h-3 sm:w-4 sm:h-4 text-zinc-400 group-hover/qr:text-zinc-900 dark:group-hover/qr:text-zinc-100" />
+                                </Button>
                             </div>
                         </div>
 
-                        <!-- Schedule Info Pill -->
-                        <div class="flex items-center gap-3 text-[10px] font-black text-zinc-500 dark:text-zinc-400 mb-8 bg-zinc-50/80 dark:bg-zinc-900/80 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-inner group-hover:border-zinc-200 dark:group-hover:border-zinc-700 transition-colors">
-                            <div class="flex items-center gap-2.5">
-                                <Clock class="w-4 h-4 text-zinc-400" />
-                                <span v-if="student.slot_start" class="tracking-wide">{{ student.slot_start }} - {{ student.slot_end }}</span>
-                                <span v-else class="tracking-wide text-zinc-400 italic font-medium">Not Scheduled</span>
+                        <!-- Info Pill (Desktop Only) -->
+                        <div class="hidden sm:flex items-center justify-between gap-3 text-[10px] font-black text-zinc-500 dark:text-zinc-400 mb-6 bg-zinc-50/80 dark:bg-zinc-900/80 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 relative z-20 shadow-inner">
+                            <div class="flex items-center gap-2">
+                                <Clock class="w-3.5 h-3.5" />
+                                <span v-if="student.slot_start" class="tracking-widest">{{ student.slot_start }} - {{ student.slot_end }}</span>
+                                <span v-else class="italic opacity-50 uppercase tracking-widest">No slot</span>
                             </div>
-                            <div v-if="student.attendance?.scanned_at" class="flex items-center gap-2 ml-auto">
-                                <span class="h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-white animate-pulse"></span>
-                                <span class="text-zinc-900 dark:text-white font-black italic tracking-tight">
-                                    {{ !student.attendance.is_manual ? `Scan @ ${new Date(student.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Manual' }}
-                                </span>
-                            </div>
-                            <div v-else class="ml-auto flex items-center gap-2 text-zinc-400 italic font-bold">
-                                <span class="h-1.5 w-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
-                                Waiting...
+                            <div v-if="student.attendance?.scanned_at" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800 shadow-sm transition-all group-hover:border-zinc-300 dark:group-hover:border-zinc-600">
+                                <span class="text-[8px] uppercase font-black opacity-40">Marked @</span>
+                                <span class="text-zinc-900 dark:text-zinc-100 font-bold whitespace-nowrap">{{ new Date(student.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</span>
                             </div>
                         </div>
 
-                        <!-- Action Buttons -->
-                         <div :class="['grid grid-cols-4 gap-2 transition-opacity', student.slot_start ? '' : 'opacity-40 grayscale-[0.5]']">
+                        <!-- Quick Actions Grid (Ultra-compact on mobile) -->
+                        <div :class="['grid grid-cols-4 gap-1 sm:gap-2 relative z-20 transition-opacity mt-auto', student.slot_start ? '' : 'opacity-40 grayscale-[0.5]']" @click.stop>
                             <button 
-                                @click="updateAttendance(student, 'Present')"
+                                v-for="status in ['Present', 'Late', 'Absent', 'Excused']"
+                                :key="status"
+                                @click="updateAttendance(student, status)"
                                 :disabled="!student.slot_start"
                                 :class="[
-                                    'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
-                                    !student.slot_start ? 'cursor-not-allowed opacity-50' : '',
-                                    student.attendance?.status?.toLowerCase() === 'present' 
-                                        ? 'bg-zinc-900 border-zinc-800 text-white shadow-lg dark:bg-white dark:text-zinc-900' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
+                                    'flex flex-col items-center justify-center py-1 sm:py-2.5 rounded-lg sm:rounded-2xl border transition-all active:scale-95 group/btn',
+                                    student.attendance?.status === status 
+                                        ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-900 shadow-lg' 
+                                        : 'bg-white dark:bg-zinc-900/40 border-zinc-100 dark:border-zinc-800 text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-900 dark:hover:text-white'
                                 ]"
                             >
-                                P
-                            </button>
-                            <button 
-                                @click="updateAttendance(student, 'Late')"
-                                :disabled="!student.slot_start"
-                                :class="[
-                                    'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
-                                    !student.slot_start ? 'cursor-not-allowed opacity-50' : '',
-                                    student.attendance?.status?.toLowerCase() === 'late' 
-                                        ? 'bg-zinc-500 border-zinc-400 text-white shadow-lg' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
-                                ]"
-                            >
-                                L
-                            </button>
-                            <button 
-                                @click="updateAttendance(student, 'Absent')"
-                                :disabled="!student.slot_start"
-                                :class="[
-                                    'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
-                                    !student.slot_start ? 'cursor-not-allowed opacity-50' : '',
-                                    student.attendance?.status?.toLowerCase() === 'absent' 
-                                        ? 'bg-white border-zinc-200 text-zinc-500 shadow-sm dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
-                                ]"
-                            >
-                                A
-                            </button>
-                            <button 
-                                @click="updateAttendance(student, 'Excused')"
-                                :disabled="!student.slot_start"
-                                :class="[
-                                    'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
-                                    !student.slot_start ? 'cursor-not-allowed opacity-50' : '',
-                                    student.attendance?.status?.toLowerCase() === 'excused' 
-                                        ? 'bg-zinc-200 border-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:border-zinc-600 dark:text-zinc-200' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
-                                ]"
-                            >
-                                E
+                                <span class="text-[8px] sm:text-[10px] font-black uppercase tracking-tighter">{{ status.charAt(0) }}</span>
                             </button>
                         </div>
                     </div>
-                    
-                    <div v-if="filteredStudents.length === 0" class="bg-white dark:bg-black rounded-[2.5rem] p-12 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800/50">
-                        <div class="w-20 h-20 rounded-full bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center mx-auto mb-6">
-                            <Users class="w-8 h-8 text-zinc-200 dark:text-zinc-800" stroke-width="1.5" />
+
+                    <!-- Empty State -->
+                    <div v-if="filteredStudents.length === 0" class="col-span-full bg-zinc-50/50 dark:bg-zinc-900/20 rounded-[3rem] p-20 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 animate-in fade-in zoom-in duration-700">
+                        <div class="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center mx-auto mb-8 shadow-inner">
+                            <Users class="w-10 h-10 text-zinc-300 dark:text-zinc-700" stroke-width="1.5" />
                         </div>
-                        <h3 class="font-black text-xl tracking-tight text-zinc-900 dark:text-zinc-100">No students found</h3>
-                        <p class="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium max-w-[200px] mx-auto">Try adjusting your filters or search terms.</p>
+                        <h3 class="font-black text-2xl tracking-tighter text-zinc-900 dark:text-zinc-100 leading-tight">No students found</h3>
+                        <p class="text-zinc-500 dark:text-zinc-400 text-sm mt-3 font-medium max-w-[240px] mx-auto leading-relaxed">Try adjusting your filters or search terms to find what you're looking for.</p>
+                        <Button variant="outline" size="sm" @click="searchQuery = ''; statusFilter = 'all'" class="mt-8 rounded-full px-8 h-12 font-black border-zinc-200 hover:bg-zinc-900 hover:text-white dark:hover:bg-zinc-100 dark:hover:text-zinc-900 transition-all">Clear Filters</Button>
                     </div>
                 </div>
             </div>

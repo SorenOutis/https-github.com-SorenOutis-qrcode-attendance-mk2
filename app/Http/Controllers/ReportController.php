@@ -15,7 +15,7 @@ class ReportController extends Controller
     public function index()
     {
         return Inertia::render('Reports', [
-            'subjects' => Subject::query()->orderBy('name', 'asc')->get(['id', 'name']),
+            'subjects' => Subject::query()->select('id', 'name')->orderBy('name', 'asc')->get(),
         ]);
     }
 
@@ -26,7 +26,7 @@ class ReportController extends Controller
         $startDate = $request->get('start') ? Carbon::parse($request->get('start')) : Carbon::now()->subDays($days);
         $endDate = $request->get('end') ? Carbon::parse($request->get('end'))->endOfDay() : Carbon::now()->endOfDay();
 
-        $query = Attendance::whereBetween('scanned_at', [$startDate->toDateTimeString(), $endDate->toDateTimeString()]);
+        $query = Attendance::query()->whereBetween('scanned_at', [$startDate->toDateTimeString(), $endDate->toDateTimeString()]);
 
         if ($subjectId) {
             $query->where('subject_id', $subjectId);

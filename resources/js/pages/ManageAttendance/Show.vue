@@ -16,7 +16,8 @@ import {
     CalendarDays,
     Download,
     Check,
-    X
+    X,
+    ChevronRight
 } from 'lucide-vue-next';
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
@@ -91,6 +92,22 @@ watch(selectedDate, (newDate) => {
         router.get(`/manage-attendance/${props.subject.id}/${newDate}`);
     }
 });
+
+function goToPrevDay() {
+    const d = new Date(selectedDate.value);
+    d.setDate(d.getDate() - 1);
+    selectedDate.value = d.toISOString().split('T')[0];
+}
+
+function goToNextDay() {
+    const d = new Date(selectedDate.value);
+    d.setDate(d.getDate() + 1);
+    selectedDate.value = d.toISOString().split('T')[0];
+}
+
+function goToToday() {
+    selectedDate.value = new Date().toISOString().split('T')[0];
+}
 const statusFilter = ref('all');
 
 const filteredStudents = computed(() => {
@@ -450,30 +467,62 @@ onMounted(() => {
         <Head :title="`Attendance: ${subject.name}`" />
 
         <div class="flex h-full flex-col gap-5 p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <!-- Header Section -->
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div class="space-y-1">
-                    <div class="flex items-center gap-3">
-                        <Button variant="ghost" size="icon" @click="goBack" class="-ml-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-full">
-                            <ChevronLeft class="h-5 w-5" />
+            <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between pb-4 border-b border-zinc-100 dark:border-zinc-900">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" @click="goBack" class="-ml-2 h-12 w-12 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 shadow-sm active:scale-90">
+                            <ChevronLeft class="h-6 w-6 text-zinc-600 dark:text-zinc-400" />
                         </Button>
-                        <h1 class="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-foreground">{{ subject.name }}</h1>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="h-1 w-1 rounded-full bg-zinc-400 animate-pulse"></span>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Attendance Roster</span>
+                            </div>
+                            <h1 class="text-3xl sm:text-4xl font-serif font-bold tracking-tighter text-foreground leading-none">{{ subject.name }}</h1>
+                        </div>
                     </div>
 
-                    <!-- Date Picker -->
-                    <div class="ml-10 inline-flex items-center gap-2 p-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all">
-                        <div class="pl-2 pr-1">
-                            <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block -mb-0.5">Date</span>
-                            <Input
-                                id="show-date"
-                                type="date"
-                                v-model="selectedDate"
-                                class="h-7 w-36 bg-transparent border-0 p-0 focus-visible:ring-0 font-bold text-xs text-zinc-900 dark:text-white"
-                            />
+                    <!-- Date Selector Revamp -->
+                    <div class="inline-flex items-center bg-white dark:bg-black rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden group/picker h-14 transition-all hover:shadow-2xl">
+                        <button 
+                            @click="goToPrevDay"
+                            class="h-full px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 transition-colors group/prev"
+                        >
+                            <ChevronLeft class="w-5 h-5 text-zinc-400 group-hover/prev:text-zinc-900 dark:group-hover/prev:text-white transition-colors" />
+                        </button>
+                        
+                        <div class="relative px-6 flex flex-col justify-center min-w-[200px]">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block">Selected Date</span>
+                                <button 
+                                    @click="goToToday"
+                                    class="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all hover:scale-105 active:scale-95 px-1.5 py-0.5 bg-zinc-50 dark:bg-zinc-900 rounded-md border border-zinc-100 dark:border-zinc-800"
+                                >
+                                    Today
+                                </button>
+                            </div>
+                            <div class="relative flex items-center group/input">
+                                <input
+                                    id="show-date"
+                                    type="date"
+                                    v-model="selectedDate"
+                                    class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
+                                />
+                                <div class="flex items-center gap-2 pointer-events-none group-hover/input:translate-x-1 transition-transform">
+                                    <span class="font-black text-sm text-zinc-900 dark:text-zinc-100 tracking-tight">
+                                        {{ new Date(props.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }}
+                                    </span>
+                                    <CalendarDays class="w-4 h-4 text-zinc-400" />
+                                </div>
+                            </div>
                         </div>
-                        <div class="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0">
-                            <CalendarDays class="w-4 h-4" />
-                        </div>
+
+                        <button 
+                            @click="goToNextDay"
+                            class="h-full px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-l border-zinc-100 dark:border-zinc-800 transition-colors group/next"
+                        >
+                            <ChevronRight class="w-5 h-5 text-zinc-400 group-hover/next:text-zinc-900 dark:group-hover/next:text-white transition-colors" />
+                        </button>
                     </div>
                 </div>
 

@@ -81,7 +81,7 @@ class ManualAttendanceController extends Controller
             'student_id' => ['required', 'exists:students,id'],
             'subject_id' => ['required', 'exists:subjects,id'],
             'date' => ['required', 'date'],
-            'status' => ['required', 'string', 'in:Present,Late,Absent,Excused'],
+            'status' => ['nullable', 'string', 'in:Present,Late,Absent,Excused'],
             'slot_start' => ['nullable', 'date_format:H:i'],
             'slot_end' => ['nullable', 'date_format:H:i'],
             'remarks' => ['nullable', 'string', 'max:500'],
@@ -96,9 +96,17 @@ class ManualAttendanceController extends Controller
             ->whereDate('scanned_at', '=', $parsedDate->toDateString())
             ->first();
 
-        // If 'scanned_at' shouldn't be overridden if they actually scanned.
-        // But since this is a manual override, perhaps we keep original `scanned_at` if it exists,
-        // otherwise we just use the date.
+        // If status is null, we want to REMOVE the attendance record
+        if (empty($validated['status'])) {
+            if ($attendance) {
+                $attendance->delete();
+            }
+            return response()->json([
+                'success' => true,
+                'attendance' => null,
+                'removed' => true,
+            ]);
+        }
 
         if ($attendance) {
             $attendance->update([
@@ -107,17 +115,16 @@ class ManualAttendanceController extends Controller
                 'remarks' => $validated['remarks'] ?? $attendance->remarks,
             ]);
         } else {
-            // Provide a base scanned_at matching the date they selected, maybe set to 00:00:00 or current time on that date
+            // Provide a base scanned_at matching the date they selected
             $attendance = Attendance::create([
                 'student_id' => $validated['student_id'],
                 'subject_id' => $validated['subject_id'],
-                'scanned_at' => $parsedDate->setTimeFrom(CarbonImmutable::now()), // keep current time but on that specific date
+                'scanned_at' => $parsedDate->setTimeFrom(CarbonImmutable::now()),
                 'status' => $validated['status'],
                 'is_manual' => true,
                 'remarks' => $validated['remarks'] ?? null,
                 'slot_start' => $validated['slot_start'] ?? null,
                 'slot_end' => $validated['slot_end'] ?? null,
-                // 'slot_index' could be added if needed, but we don't strictly require it here
             ]);
         }
 

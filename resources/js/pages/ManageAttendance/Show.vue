@@ -140,23 +140,27 @@ function goBack() {
 }
 
 function updateAttendance(student: Student, newStatus: string) {
-    // If it's already this status and we have an attendance record, do nothing
-    if (student.attendance?.status === newStatus) return;
+    const isRemoving = student.attendance?.status === newStatus;
+    const finalStatus = isRemoving ? null : newStatus;
 
     savingStatus.value[student.id] = true;
 
     // Optimistically update the UI
-    if (!student.attendance) {
-        student.attendance = {
-            id: 0,
-            status: newStatus,
-            is_manual: true,
-            remarks: null,
-            scanned_at: new Date().toISOString()
-        };
+    if (isRemoving) {
+        student.attendance = null;
     } else {
-        student.attendance.status = newStatus;
-        student.attendance.is_manual = true;
+        if (!student.attendance) {
+            student.attendance = {
+                id: 0,
+                status: newStatus,
+                is_manual: true,
+                remarks: null,
+                scanned_at: new Date().toISOString()
+            };
+        } else {
+            student.attendance.status = newStatus;
+            student.attendance.is_manual = true;
+        }
     }
 
     // Fire API request
@@ -171,7 +175,7 @@ function updateAttendance(student: Student, newStatus: string) {
             student_id: student.id,
             subject_id: props.subject.id,
             date: props.date,
-            status: newStatus,
+            status: finalStatus,
             slot_start: student.slot_start,
             slot_end: student.slot_end,
             remarks: student.attendance?.remarks || null

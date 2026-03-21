@@ -8,9 +8,9 @@ import gsap from 'gsap';
 import jsQR from 'jsqr';
 import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check } from 'lucide-vue-next';
 import QRCode from 'qrcode';
-import { nextTick } from 'vue';
-import { computed, onMounted, ref, watch } from 'vue';
-import { Pie } from 'vue-chartjs';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { useToast } from '@/composables/useToast';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale);
@@ -72,6 +72,7 @@ type PageProps = {
     trashedStudents: Student[];
     subjects: { id: number; name: string }[];
     attendanceStats?: { Present: number; Late: number; Absent: number; Excused: number; };
+    atRiskCount: number;
 };
 
 const props = defineProps<PageProps>();
@@ -87,6 +88,7 @@ const page = usePage();
 
 const students = computed(() => props.students ?? []);
 const searchQuery = ref('');
+const toast = useToast();
 
 const filteredStudents = computed(() => {
     if (!searchQuery.value) return students.value;
@@ -116,10 +118,20 @@ const userName = computed(() => {
 
 const greeting = computed(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    if (hour < 21) return 'Good evening';
-    return 'Good night';
+    let text = 'Good morning';
+    if (hour < 12) text = 'Good morning';
+    else if (hour < 17) text = 'Good afternoon';
+    else if (hour < 21) text = 'Good evening';
+    else text = 'Good night';
+    
+    return text;
+});
+
+const greetingSubtext = computed(() => {
+    if (props.atRiskCount > 0) {
+        return `You have ${props.atRiskCount} student(s) with low attendance.`;
+    }
+    return 'Everything looks good today!';
 });
 
 const formattedCurrentDate = computed(() => {
@@ -446,11 +458,13 @@ async function submitStudent() {
             schedule: schedules.value,
         },
         {
-            onError: (errors) => {
-                formErrors.value = errors as any;
-            },
             onSuccess: () => {
                 closeCreateModal();
+                toast.success('Student added successfully');
+            },
+            onError: (errors) => {
+                formErrors.value = errors as any;
+                toast.error('Failed to add student');
             },
             onFinish: () => {
                 submitting.value = false;
@@ -667,11 +681,13 @@ async function submitEditStudent() {
             schedule: editSchedules.value,
         },
         {
-            onError: (errors) => {
-                formErrors.value = errors as any;
-            },
             onSuccess: () => {
                 closeEditModal();
+                toast.success('Student updated');
+            },
+            onError: (errors) => {
+                formErrors.value = errors as any;
+                toast.error('Update failed');
             },
             onFinish: () => {
                 submitting.value = false;
@@ -942,6 +958,7 @@ function startScanningLoop() {
             scanError.value = null;
             scanFeedback.value = 'success';
             scanResultModalOpen.value = true;
+            toast.success(`Attendance recorded for ${data.student.name}`);
             
             // Trigger Confetti
             confetti({
@@ -960,6 +977,7 @@ function startScanningLoop() {
                     : 'Failed to record attendance.';
             scanFeedback.value = 'error';
             scanResultModalOpen.value = true;
+            toast.error(scanError.value);
             setTimeout(() => { scanFeedback.value = null; }, 1500);
         }
     }, 400);
@@ -1096,8 +1114,11 @@ onMounted(() => {
                 <h1 class="text-3xl font-serif font-bold tracking-tight">
                     {{ greeting }}, {{ userName }}!
                 </h1>
-                <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar class="h-4 w-4" />
+                <p class="text-sm text-muted-foreground font-medium">
+                    {{ greetingSubtext }}
+                </p>
+                <div class="flex items-center gap-2 text-[10px] text-muted-foreground mt-1">
+                    <Calendar class="h-3.5 w-3.5" />
                     <span>{{ formattedCurrentDate }}</span>
                 </div>
             </div>
@@ -1377,6 +1398,9 @@ onMounted(() => {
                                     Student #
                                 </th>
                                 <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
+                                    Rate
+                                </th>
+                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
                                     Present
                                 </th>
                                 <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
@@ -1401,28 +1425,44 @@ onMounted(() => {
                                 v-if="visibleStudents.length === 0"
                             >
                                 <td
-                                    colspan="9"
-                                    class="px-3 lg:px-4 py-6 lg:py-8 text-center text-sm text-zinc-500 dark:text-zinc-400"
+                                    colspan="10"
+                                    class="px-3 lg:px-4 py-8 lg:py-12 text-center"
                                 >
-                                    <span v-if="searchQuery">
-                                        No students matching "{{ searchQuery }}"
-                                    </span>
-                                    <span v-else-if="showOnlyScheduledToday && activeTab === 'active' && students.length > 0">
-                                        No students scheduled for <span class="text-zinc-900 dark:text-white font-medium">{{ todayDayName }}</span>.
-                                        <button @click="showOnlyScheduledToday = false" class="text-zinc-900 dark:text-white font-semibold underline underline-offset-4 ml-1 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">
-                                            Show all students
-                                        </button>
-                                    </span>
-                                    <span v-else-if="activeTab === 'deleted'">
-                                        No deleted students in the trash.
-                                    </span>
-                                    <span v-else>
-                                        No students yet. Use the
-                                        <span class="font-semibold text-zinc-900 dark:text-white">
-                                            Add student
-                                        </span>
-                                        button to create one.
-                                    </span>
+                                    <div class="flex flex-col items-center justify-center space-y-3">
+                                        <div class="rounded-full bg-zinc-50 dark:bg-zinc-900 p-4 border border-zinc-100 dark:border-zinc-800">
+                                            <Search v-if="searchQuery" class="h-6 w-6 text-zinc-400" />
+                                            <Users v-else class="h-6 w-6 text-zinc-400" />
+                                        </div>
+                                        <div class="max-w-[280px] mx-auto">
+                                            <p v-if="searchQuery" class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                                No matches for "{{ searchQuery }}"
+                                            </p>
+                                            <p v-else-if="showOnlyScheduledToday && activeTab === 'active' && students.length > 0" class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                                No students scheduled for {{ todayDayName }}
+                                            </p>
+                                            <p v-else-if="activeTab === 'deleted'" class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                                Trash is empty
+                                            </p>
+                                            <p v-else class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                                No students found
+                                            </p>
+                                            <p class="text-xs text-zinc-500 mt-1">
+                                                <span v-if="searchQuery">Try adjusting your search or filters to find what you're looking for.</span>
+                                                <span v-else-if="showOnlyScheduledToday && activeTab === 'active' && students.length > 0">
+                                                    Check another day or 
+                                                    <button @click="showOnlyScheduledToday = false" class="text-zinc-900 dark:text-white font-semibold underline underline-offset-4 hover:text-zinc-600 transition-colors">
+                                                        view all students
+                                                    </button>.
+                                                </span>
+                                                <span v-else-if="activeTab === 'deleted'">Students you delete will appear here for 30 days before being permanently removed.</span>
+                                                <span v-else>Get started by adding your first student to this subject's roster.</span>
+                                            </p>
+                                        </div>
+                                        <Button v-if="!searchQuery && !showOnlyScheduledToday && activeTab === 'active'" variant="outline" size="sm" class="rounded-full mt-2" @click="createModalOpen = true">
+                                            <Plus class="mr-2 h-3.5 w-3.5" />
+                                            Add Student
+                                        </Button>
+                                    </div>
                                 </td>
                             </tr>
                             <tr
@@ -1448,6 +1488,19 @@ onMounted(() => {
                                 </td>
                                 <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400">
                                     {{ student.student_number }}
+                                </td>
+                                <!-- Attendance Rate Badge -->
+                                <td class="px-1 lg:px-2 py-2 text-center" @click.stop>
+                                    <Badge 
+                                        variant="outline" 
+                                        class="text-[9px] lg:text-[10px] font-bold px-1.5 py-0"
+                                        :class="{
+                                            'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400': (student.attendance_percentage ?? 100) < 80,
+                                            'border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400': (student.attendance_percentage ?? 100) >= 80
+                                        }"
+                                    >
+                                        {{ student.attendance_percentage ?? 100 }}%
+                                    </Badge>
                                 </td>
                                 <!-- Status indicator columns (active students) -->
                                 <template v-if="activeTab === 'active'">
@@ -1538,10 +1591,22 @@ onMounted(() => {
                 <div v-else class="p-4 max-h-[520px] overflow-y-auto">
                     <div 
                         v-if="visibleStudents.length === 0"
-                        class="flex flex-col items-center justify-center py-12 text-muted-foreground"
+                        class="flex flex-col items-center justify-center py-16 text-center"
                     >
-                        <Search class="h-12 w-12 opacity-20 mb-4" />
-                        <p class="text-sm">No students found.</p>
+                        <div class="rounded-full bg-zinc-50 dark:bg-zinc-900 p-5 mb-4 border border-zinc-100 dark:border-zinc-800">
+                            <Search v-if="searchQuery" class="h-8 w-8 text-zinc-300" />
+                            <Users v-else class="h-8 w-8 text-zinc-300" />
+                        </div>
+                        <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                            {{ searchQuery ? `No matches for "${searchQuery}"` : 'No students found' }}
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-1 max-w-[240px]">
+                            {{ searchQuery ? 'Try a different search term or clear your filters.' : 'Your student roster will appear here once you add some students.' }}
+                        </p>
+                        <Button v-if="!searchQuery && activeTab === 'active'" variant="outline" size="sm" class="rounded-full mt-4" @click="createModalOpen = true">
+                            <Plus class="mr-2 h-3.5 w-3.5" />
+                            Add First Student
+                        </Button>
                     </div>
                     <div 
                         v-else
@@ -1563,6 +1628,18 @@ onMounted(() => {
                                     <p class="text-[10px] text-muted-foreground font-mono">
                                         {{ student.student_number }}
                                     </p>
+                                    <div class="mt-2">
+                                        <Badge 
+                                            variant="outline" 
+                                            class="text-[9px] font-bold px-1.5 py-0"
+                                            :class="{
+                                                'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400': (student.attendance_percentage ?? 100) < 80,
+                                                'border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400': (student.attendance_percentage ?? 100) >= 80
+                                            }"
+                                        >
+                                            {{ student.attendance_percentage ?? 100 }}% Rate
+                                        </Badge>
+                                    </div>
                                 </div>
                                 <div 
                                     v-if="activeTab === 'active'"
@@ -2439,14 +2516,17 @@ onMounted(() => {
         >
             <Button
                 size="lg"
-                class="group h-14 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] flex items-center gap-2 pr-6 pl-5 dark:shadow-[0_8px_30px_rgb(255,255,255,0.1)] dark:hover:shadow-[0_8px_30px_rgb(255,255,255,0.15)] bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0 transition-transform active:scale-95"
+                class="group h-14 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] flex items-center justify-center dark:shadow-[0_8px_30px_rgb(255,255,255,0.1)] dark:hover:shadow-[0_8px_30px_rgb(255,255,255,0.15)] bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0 transition-transform active:scale-95"
+                :class="{ 
+                    'w-14 p-0': windowWidth < 640,
+                    'pr-6 pl-5 gap-2': windowWidth >= 640 
+                }"
                 @click="handleScanClick"
             >
                 <div class="relative flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:scale-110"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
                 </div>
-                <span class="hidden sm:inline font-semibold">Scan</span>
-                <span class="sm:hidden font-semibold">Scan</span>
+                <span v-if="windowWidth >= 640" class="font-semibold text-sm">Scan</span>
             </Button>
         </div>
     </AppLayout>

@@ -266,11 +266,20 @@ onMounted(() => {
 
             <div
                 v-if="ratings.length === 0"
-                class="flex w-full items-center justify-center rounded-2xl border border-dashed border-sidebar-border/70 bg-muted/30 p-12 text-center text-sm text-muted-foreground shadow-sm backdrop-blur-sm dark:border-sidebar-border"
+                class="flex flex-col items-center justify-center p-12 sm:p-20 text-center rounded-[2rem] border border-dashed border-sidebar-border/70 bg-muted/20 backdrop-blur-sm"
             >
-                <div class="max-w-[300px] space-y-2">
-                    <p class="font-medium text-foreground">No ratings yet</p>
-                    <p>Once guests rate from the welcome page, they will appear here in detailed cards.</p>
+                <div class="rounded-full bg-zinc-50 dark:bg-zinc-900 p-6 mb-6 border border-zinc-100 dark:border-zinc-800 shadow-sm animate-in fade-in zoom-in duration-700">
+                    <TrendingUp class="h-10 w-10 text-zinc-300" />
+                </div>
+                <div class="max-w-[320px] space-y-2">
+                    <h3 class="text-lg font-serif font-bold text-foreground tracking-tight">No stars yet</h3>
+                    <p class="text-sm text-muted-foreground font-light leading-relaxed">
+                        Once guests rate their experience from the welcome page, their feedback will shine here. 
+                        {{ from || to ? 'Try clearing your date filters to see the full constellation of ratings.' : 'Keep providing a 5-star experience!' }}
+                    </p>
+                    <Button v-if="from || to" variant="outline" size="sm" class="rounded-full mt-4 h-9 px-6 border-sidebar-border/50" @click="clearFilters">
+                        Clear Date Range
+                    </Button>
                 </div>
             </div>
 

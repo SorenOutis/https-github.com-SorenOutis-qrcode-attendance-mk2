@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\ManualAttendanceController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StudentController;
@@ -62,10 +63,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('api/reports/stats', [ReportController::class, 'stats'])->name('api.reports.stats');
     Route::get('reports/export', [ReportController::class, 'exportCsv'])->name('reports.export');
 
-    Route::get('manage-attendance', [\App\Http\Controllers\ManualAttendanceController::class, 'index'])->name('manage-attendance.index');
-    Route::get('manage-attendance/{subject}/{date}', [\App\Http\Controllers\ManualAttendanceController::class, 'show'])->name('manage-attendance.show');
-    Route::post('manage-attendance/toggle', [\App\Http\Controllers\ManualAttendanceController::class, 'toggle'])->name('manage-attendance.toggle');
-    Route::post('manage-attendance/mark-all-absent', [\App\Http\Controllers\ManualAttendanceController::class, 'markAllAbsent'])->name('manage-attendance.mark-all-absent');
+    Route::get('manage-attendance', [ManualAttendanceController::class, 'index'])->name('manage-attendance.index');
+    Route::get('manage-attendance/{subject}/{date}', [ManualAttendanceController::class, 'show'])->name('manage-attendance.show');
+    Route::post('manage-attendance/toggle', [ManualAttendanceController::class, 'toggle'])->name('manage-attendance.toggle');
+    Route::post('manage-attendance/mark-all-absent', [ManualAttendanceController::class, 'markAllAbsent'])->name('manage-attendance.mark-all-absent');
+    Route::get('manage-attendance/{subject}/{date}/export', [ManualAttendanceController::class, 'exportCsv'])->name('manage-attendance.export');
 });
 
 require __DIR__.'/settings.php';

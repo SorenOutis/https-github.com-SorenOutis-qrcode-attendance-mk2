@@ -10,13 +10,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ManualAttendanceController extends Controller
 {
     public function index(): Response
     {
         $subjects = Subject::query()->select('id', 'name')->orderBy('name', 'asc')->get();
-        
+
         return Inertia::render('ManageAttendance/Index', [
             'subjects' => $subjects,
         ]);
@@ -38,9 +39,8 @@ class ManualAttendanceController extends Controller
         // And extract their schedule slot for this specific subject and day
         $students = $enrolledStudents->map(function ($student) use ($subject, $dayOfWeek, $parsedDate) {
             $slots = collect($student->schedule ?? [])
-                ->filter(fn ($s) => 
-                    isset($s['subject_id'], $s['day']) && 
-                    $s['subject_id'] == $subject->id && 
+                ->filter(fn ($s) => isset($s['subject_id'], $s['day']) &&
+                    $s['subject_id'] == $subject->id &&
                     $s['day'] === $dayOfWeek
                 )
                 ->values();
@@ -103,7 +103,7 @@ class ManualAttendanceController extends Controller
         // If 'scanned_at' shouldn't be overridden if they actually scanned.
         // But since this is a manual override, perhaps we keep original `scanned_at` if it exists,
         // otherwise we just use the date.
-        
+
         if ($attendance) {
             $attendance->update([
                 'status' => $validated['status'],
@@ -175,5 +175,41 @@ class ManualAttendanceController extends Controller
             'success' => true,
             'message' => "Successfully marked {$absentRecordsCreated} remaining student(s) as Absent.",
         ]);
+    }
+
+    public function exportCsv(Subject $subject, string $date): StreamedResponse
+    {
+        $parsedDate = CarbonImmutable::parse($date);
+        $filename = "{$subject->name}_Attendance_{$parsedDate->toDateString()}.csv";
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        return new StreamedResponse(function () use ($subject, $parsedDate) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Date', 'Student Name', 'Student Number', 'Section', 'Status', 'Time', 'Remarks']);
+
+            Attendance::with('student')
+                ->where('subject_id', $subject->id)
+                ->whereDate('scanned_at', $parsedDate->toDateString())
+                ->chunk(100, function ($attendances) use ($handle, $parsedDate) {
+                    foreach ($attendances as $attendance) {
+                        $student = $attendance->student;
+                        fputcsv($handle, [
+                            $parsedDate->toDateString(),
+                            $student ? $student->name : 'Unknown/Deleted',
+                            $student ? $student->student_number : 'N/A',
+                            $student ? $student->section : 'N/A',
+                            $attendance->status,
+                            $attendance->scanned_at->toTimeString(),
+                            $attendance->remarks,
+                        ]);
+                    }
+                });
+
+            fclose($handle);
+        }, 200, $headers);
     }
 }

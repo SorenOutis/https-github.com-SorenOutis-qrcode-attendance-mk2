@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Student;
+use App\Models\Subject;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,31 +14,44 @@ class ReportController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Reports');
+        return Inertia::render('Reports', [
+            'subjects' => Subject::query()->orderBy('name', 'asc')->get(['id', 'name']),
+        ]);
     }
 
     public function stats(Request $request)
     {
         $days = $request->get('days', 30);
-        $startDate = Carbon::now()->subDays($days);
+        $subjectId = $request->get('subject_id');
+        $startDate = $request->get('start') ? Carbon::parse($request->get('start')) : Carbon::now()->subDays($days);
+        $endDate = $request->get('end') ? Carbon::parse($request->get('end'))->endOfDay() : Carbon::now()->endOfDay();
+
+        $query = Attendance::whereBetween('scanned_at', [$startDate->toDateTimeString(), $endDate->toDateTimeString()]);
+
+        if ($subjectId) {
+            $query->where('subject_id', $subjectId);
+        }
 
         // 1. Attendance Rate over time
-        $dailystats = Attendance::where('scanned_at', '>=', $startDate)
+        $dailystats = (clone $query)
             ->selectRaw('DATE(scanned_at) as date, count(*) as count')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
         // 2. Section Comparison
-        $sectionStats = Student::withCount(['attendances' => function ($query) use ($startDate) {
-            $query->where('scanned_at', '>=', $startDate);
+        $sectionStats = Student::query()->withCount(['attendances' => function ($q) use ($startDate, $endDate, $subjectId) {
+            $q->whereBetween('scanned_at', [$startDate->toDateTimeString(), $endDate->toDateTimeString()]);
+            if ($subjectId) {
+                $q->where('subject_id', '=', $subjectId);
+            }
         }])
             ->get()
             ->groupBy('section')
             ->map(fn ($students) => $students->sum('attendances_count'));
 
         // 3. Status distribution
-        $statusStats = Attendance::where('scanned_at', '>=', $startDate)
+        $statusStats = (clone $query)
             ->selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->get();

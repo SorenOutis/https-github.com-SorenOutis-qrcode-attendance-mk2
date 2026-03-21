@@ -13,9 +13,13 @@ import {
     XCircle, 
     Info,
     MoreHorizontal,
-    CalendarDays
+    CalendarDays,
+    Download,
+    Check,
+    X
 } from 'lucide-vue-next';
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { useToast } from '@/composables/useToast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,6 +60,31 @@ const savingStatus = ref<Record<number, boolean>>({});
 const successStatus = ref<Record<number, boolean>>({});
 const searchQuery = ref('');
 const selectedDate = ref(props.date);
+const toast = useToast();
+
+const selectedStudents = ref<number[]>([]);
+const isBulkSaving = ref(false);
+
+const allSelected = computed(() => {
+    return filteredStudents.value.length > 0 && selectedStudents.value.length === filteredStudents.value.length;
+});
+
+function toggleSelectAll() {
+    if (allSelected.value) {
+        selectedStudents.value = [];
+    } else {
+        selectedStudents.value = filteredStudents.value.map(s => s.id);
+    }
+}
+
+function toggleStudentSelection(id: number) {
+    const index = selectedStudents.value.indexOf(id);
+    if (index === -1) {
+        selectedStudents.value.push(id);
+    } else {
+        selectedStudents.value.splice(index, 1);
+    }
+}
 
 watch(selectedDate, (newDate) => {
     if (newDate && newDate !== props.date) {
@@ -98,7 +127,6 @@ function updateAttendance(student: Student, newStatus: string) {
     if (student.attendance?.status === newStatus) return;
 
     savingStatus.value[student.id] = true;
-    successStatus.value[student.id] = false;
 
     // Optimistically update the UI
     if (!student.attendance) {
@@ -136,18 +164,62 @@ function updateAttendance(student: Student, newStatus: string) {
     .then(data => {
         if (data.success) {
             student.attendance = data.attendance;
-            successStatus.value[student.id] = true;
-            setTimeout(() => {
-                successStatus.value[student.id] = false;
-            }, 2000);
+            toast.success(`Marked ${student.name} as ${newStatus}`);
         }
     })
     .catch(err => {
         console.error('Failed to update attendance', err);
+        toast.error(`Could not update attendance for ${student.name}`);
     })
     .finally(() => {
         savingStatus.value[student.id] = false;
     });
+}
+
+async function bulkUpdateAttendance(newStatus: string) {
+    if (selectedStudents.value.length === 0) return;
+    
+    isBulkSaving.value = true;
+    const total = selectedStudents.value.length;
+    let successCount = 0;
+
+    toast.info(`Updating ${total} student(s)...`);
+
+    for (const studentId of selectedStudents.value) {
+        const student = props.students.find(s => s.id === studentId);
+        if (!student || student.attendance?.status === newStatus) continue;
+
+        try {
+            const res = await window.fetch('/manage-attendance/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
+                },
+                body: JSON.stringify({
+                    student_id: student.id,
+                    subject_id: props.subject.id,
+                    date: props.date,
+                    status: newStatus,
+                    slot_start: student.slot_start,
+                    slot_end: student.slot_end,
+                    remarks: student.attendance?.remarks || null
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                student.attendance = data.attendance;
+                successCount++;
+            }
+        } catch (err) {
+            console.error(`Failed to update ${student.id}`, err);
+        }
+    }
+
+    isBulkSaving.value = false;
+    selectedStudents.value = [];
+    toast.success(`Successfully updated ${successCount} student(s) to ${newStatus}`);
 }
 
 const isMarkingAllAbsent = ref(false);
@@ -181,14 +253,12 @@ function updateRemarks(student: Student) {
             if (student.attendance) {
                 student.attendance.remarks = remarks;
             }
-            successStatus.value[student.id] = true;
-            setTimeout(() => {
-                successStatus.value[student.id] = false;
-            }, 2000);
+            toast.success('Remark saved');
         }
     })
     .catch(err => {
         console.error('Failed to update remarks', err);
+        toast.error('Failed to save remark');
     })
     .finally(() => {
         savingStatus.value[student.id] = false;
@@ -236,11 +306,12 @@ function markAllAbsent() {
                     scanned_at: new Date().toISOString()
                 };
             });
+            toast.success(`Marked ${unscannedStudents.length} as Absent`);
         }
     })
     .catch(err => {
         console.error('Failed to mark all as absent', err);
-        alert('An error occurred.');
+        toast.error('Operation failed');
     })
     .finally(() => {
         isMarkingAllAbsent.value = false;
@@ -421,6 +492,16 @@ onMounted(() => {
                 <div class="flex items-center gap-3 self-start sm:self-auto">
                     <Button 
                         variant="outline"
+                        as-child
+                        class="h-10 px-4 sm:px-6 rounded-full font-bold text-zinc-600 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-sm"
+                    >
+                        <a :href="`/manage-attendance/${subject.id}/${date}/export`" target="_blank">
+                            <Download class="w-4 h-4 mr-2" />
+                            Export CSV
+                        </a>
+                    </Button>
+                    <Button 
+                        variant="outline"
                         class="h-10 px-4 sm:px-6 rounded-full font-bold text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-black hover:border-zinc-300 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-sm"
                         @click="markAllAbsent"
                         :disabled="isMarkingAllAbsent || students.every(s => s.attendance)"
@@ -547,34 +628,52 @@ onMounted(() => {
                         <table class="w-full text-sm text-left">
                             <thead class="sticky top-0 z-10 text-[10px] text-zinc-500 dark:text-zinc-400 uppercase font-semibold bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 tracking-wider">
                                 <tr>
-                                    <th class="px-8 py-4">Student Information</th>
-                                    <th class="px-8 py-4">Shift / Schedule</th>
-                                    <th class="px-8 py-4">Entry Source</th>
-                                    <th class="px-8 py-4 text-right w-[400px]">Attendance Status</th>
+                                    <th class="px-6 py-4 w-10">
+                                        <input 
+                                            type="checkbox" 
+                                            :checked="allSelected" 
+                                            @change="toggleSelectAll"
+                                            class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:bg-zinc-900 dark:border-zinc-700 h-4 w-4"
+                                        />
+                                    </th>
+                                    <th class="px-6 py-4">Student Information</th>
+                                    <th class="px-6 py-4">Shift / Schedule</th>
+                                    <th class="px-6 py-4 border-l border-zinc-200 dark:border-zinc-800/50">Entry Source</th>
+                                    <th class="px-8 py-4 text-right w-[350px]">Attendance Status</th>
                                 </tr>
                             </thead>
                             <tbody ref="studentsTableBodyRef" class="divide-y divide-zinc-100 dark:divide-zinc-900">
                                 <tr v-for="student in filteredStudents" :key="student.id" 
                                     class="group transition-all hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+                                    :class="{ 'bg-zinc-50 dark:bg-zinc-900/50': selectedStudents.includes(student.id) }"
                                 >
-                                    <td class="px-8 py-5">
+                                    <td class="px-6 py-5">
+                                        <input 
+                                            type="checkbox" 
+                                            :value="student.id" 
+                                            v-model="selectedStudents"
+                                            class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:bg-zinc-900 dark:border-zinc-700 h-4 w-4"
+                                            @click.stop
+                                        />
+                                    </td>
+                                    <td class="px-6 py-5" @click="toggleStudentSelection(student.id)">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
                                                 {{ student.name.charAt(0) }}
                                             </div>
                                             <div>
-                                                <div class="font-bold text-foreground group-hover:text-primary transition-colors">{{ student.name }}</div>
+                                                <div class="font-bold text-foreground group-hover:text-primary transition-colors cursor-pointer">{{ student.name }}</div>
                                                 <div class="text-xs text-muted-foreground tracking-tight">{{ student.student_number }}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-8 py-5">
+                                    <td class="px-6 py-5">
                                         <div class="flex items-center gap-2 font-medium text-muted-foreground">
                                             <Clock class="w-3.5 h-3.5" />
                                             <span>{{ student.slot_start }} - {{ student.slot_end }}</span>
                                         </div>
                                     </td>
-                                    <td class="px-8 py-5">
+                                    <td class="px-6 py-5 border-l border-zinc-200 dark:border-zinc-800/50">
                                         <div v-if="student.attendance?.scanned_at && !student.attendance?.is_manual" class="flex items-center gap-2">
                                             <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-700 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-300 px-2 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
                                                 QR Scan @ {{ new Date(student.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
@@ -591,9 +690,6 @@ onMounted(() => {
                                         <div class="flex items-center justify-end gap-3">
                                             <div v-show="savingStatus[student.id]" class="flex items-center gap-1.5 text-[9px] font-bold uppercase text-zinc-500 animate-pulse mr-2">
                                                 <Save class="w-2.5 h-2.5" /> Updating
-                                            </div>
-                                            <div v-show="successStatus[student.id]" class="flex items-center gap-1.5 text-[9px] font-bold uppercase text-zinc-900 dark:text-white mr-2">
-                                                <CheckCircle2 class="w-2.5 h-2.5" /> Saved
                                             </div>
                                             
                                             <div class="flex p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl gap-1 border border-zinc-200 dark:border-zinc-800 shadow-inner">
@@ -646,13 +742,21 @@ onMounted(() => {
                                     </td>
                                 </tr>
                                 <tr v-if="filteredStudents.length === 0">
-                                    <td colspan="4" class="px-8 py-20 text-center">
-                                        <div class="flex flex-col items-center gap-3">
-                                            <div class="p-4 rounded-full bg-muted text-muted-foreground/20">
-                                                <Search class="w-12 h-12" />
+                                    <td colspan="5" class="px-8 py-20 text-center">
+                                        <div class="flex flex-col items-center gap-5">
+                                            <div class="relative">
+                                                <div class="w-24 h-24 rounded-full bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
+                                                    <Search class="w-10 h-10 text-zinc-200 dark:text-zinc-800" stroke-width="1.5" />
+                                                </div>
+                                                <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800 flex items-center justify-center shadow-lg">
+                                                    <Filter class="w-4 h-4 text-zinc-400" />
+                                                </div>
                                             </div>
-                                            <p class="text-xl font-bold text-muted-foreground">No students found matching your filters.</p>
-                                            <Button variant="link" @click="searchQuery = ''; statusFilter = 'all'" class="text-primary">Clear all filters</Button>
+                                            <div class="space-y-1">
+                                                <h3 class="text-lg font-bold text-foreground">No students found</h3>
+                                                <p class="text-sm text-muted-foreground max-w-[250px] mx-auto">We couldn't find any students matching your current search or status filter.</p>
+                                            </div>
+                                            <Button variant="outline" size="sm" @click="searchQuery = ''; statusFilter = 'all'" class="rounded-full px-6">Clear all filters</Button>
                                         </div>
                                     </td>
                                 </tr>
@@ -713,53 +817,107 @@ onMounted(() => {
                         </div>
 
                         <!-- Action Buttons -->
-                         <div class="grid grid-cols-3 gap-3">
+                         <div class="grid grid-cols-4 gap-2">
                             <button 
                                 @click="updateAttendance(student, 'Present')"
                                 :class="[
-                                    'py-4 rounded-2xl text-[10px] font-black tracking-[0.15em] transition-all duration-300 border-2',
+                                    'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
                                     student.attendance?.status?.toLowerCase() === 'present' 
-                                        ? 'bg-zinc-900 border-zinc-800 text-white shadow-xl scale-[1.03] z-10 dark:bg-zinc-100 dark:text-zinc-900 dark:border-white' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/10 text-zinc-400 dark:text-zinc-500 hover:border-zinc-300'
+                                        ? 'bg-zinc-900 border-zinc-800 text-white shadow-lg dark:bg-white dark:text-zinc-900' 
+                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
                                 ]"
                             >
-                                PRESENT
+                                P
                             </button>
                             <button 
                                 @click="updateAttendance(student, 'Late')"
                                 :class="[
-                                    'py-4 rounded-2xl text-[10px] font-black tracking-[0.15em] transition-all duration-300 border-2',
+                                    'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
                                     student.attendance?.status?.toLowerCase() === 'late' 
-                                        ? 'bg-zinc-500 border-zinc-400 text-white shadow-xl scale-[1.03] z-10' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/10 text-zinc-400 dark:text-zinc-500 hover:border-zinc-300'
+                                        ? 'bg-zinc-500 border-zinc-400 text-white shadow-lg' 
+                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
                                 ]"
                             >
-                                LATE
+                                L
                             </button>
                             <button 
                                 @click="updateAttendance(student, 'Absent')"
                                 :class="[
-                                    'py-4 rounded-2xl text-[10px] font-black tracking-[0.15em] transition-all duration-300 border-2',
+                                    'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
                                     student.attendance?.status?.toLowerCase() === 'absent' 
-                                        ? 'bg-zinc-100 border-zinc-200 text-zinc-500 shadow-md scale-[1.03] z-10 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400' 
-                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/10 text-zinc-400 dark:text-zinc-500 hover:border-zinc-300'
+                                        ? 'bg-white border-zinc-200 text-zinc-500 shadow-sm dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400' 
+                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
                                 ]"
                             >
-                                ABSENT
+                                A
+                            </button>
+                            <button 
+                                @click="updateAttendance(student, 'Excused')"
+                                :class="[
+                                    'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
+                                    student.attendance?.status?.toLowerCase() === 'excused' 
+                                        ? 'bg-zinc-200 border-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:border-zinc-600 dark:text-zinc-200' 
+                                        : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
+                                ]"
+                            >
+                                E
                             </button>
                         </div>
                     </div>
                     
-                    <div v-if="filteredStudents.length === 0" class="bg-white dark:bg-black rounded-3xl p-16 text-center border-2 border-zinc-100 dark:border-zinc-800 shadow-xl">
-                        <div class="relative inline-block mb-6">
-                            <Search class="w-16 h-16 text-zinc-100 dark:text-zinc-800 mx-auto" stroke-width="3" />
-                            <div class="absolute inset-0 bg-gradient-to-t from-white dark:from-black to-transparent opacity-50"></div>
+                    <div v-if="filteredStudents.length === 0" class="bg-white dark:bg-black rounded-[2.5rem] p-12 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800/50">
+                        <div class="w-20 h-20 rounded-full bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center mx-auto mb-6">
+                            <Users class="w-8 h-8 text-zinc-200 dark:text-zinc-800" stroke-width="1.5" />
                         </div>
-                        <p class="font-black text-xl tracking-tight text-zinc-900 dark:text-zinc-100">No students found</p>
-                        <p class="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">Try adjusting your filters or search terms.</p>
+                        <h3 class="font-black text-xl tracking-tight text-zinc-900 dark:text-zinc-100">No students found</h3>
+                        <p class="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium max-w-[200px] mx-auto">Try adjusting your filters or search terms.</p>
                     </div>
                 </div>
             </div>
+
+            <!-- Bulk Action Bar -->
+            <Transition
+                enter-active-class="transition-all duration-500 ease-out"
+                enter-from-class="translate-y-24 opacity-0 scale-95"
+                enter-to-class="translate-y-0 opacity-100 scale-100"
+                leave-active-class="transition-all duration-300 ease-in"
+                leave-from-class="translate-y-0 opacity-100 scale-100"
+                leave-to-class="translate-y-24 opacity-0 scale-95"
+            >
+                <div v-if="selectedStudents.length > 0" class="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[40] w-[92%] max-w-2xl pointer-events-none">
+                    <div class="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-[2rem] p-3 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 dark:border-black/10 backdrop-blur-xl pointer-events-auto flex items-center justify-between gap-4">
+                        <div class="pl-4 flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-2xl bg-white/10 dark:bg-black/10 flex items-center justify-center font-black text-sm">
+                                {{ selectedStudents.length }}
+                            </div>
+                            <div class="hidden sm:block">
+                                <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Selected</p>
+                                <p class="text-xs font-bold leading-none">Students to update</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 p-1 bg-white/5 dark:bg-black/5 rounded-2xl border border-white/10 dark:border-black/10">
+                            <button 
+                                v-for="status in ['Present', 'Late', 'Absent', 'Excused']" 
+                                :key="status"
+                                @click="bulkUpdateAttendance(status)"
+                                :disabled="isBulkSaving"
+                                class="h-11 px-4 sm:px-6 rounded-xl text-[10px] font-black tracking-widest hover:bg-white dark:hover:bg-black hover:text-zinc-900 dark:hover:text-white transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                <Check v-if="!isBulkSaving" class="w-3 h-3 hidden sm:block" />
+                                {{ status.toUpperCase() }}
+                            </button>
+                        </div>
+
+                        <button 
+                            @click="selectedStudents = []"
+                            class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 dark:hover:bg-black/10 transition-colors mr-1"
+                        >
+                            <X class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            </Transition>
         </div>
     </AppLayout>
 </template>

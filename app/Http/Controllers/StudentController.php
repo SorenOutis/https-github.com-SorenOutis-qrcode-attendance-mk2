@@ -9,6 +9,7 @@ use App\Models\Subject;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -68,21 +69,21 @@ class StudentController extends Controller
             ])->values()->all());
 
         // Group total attendances by student for percentage calculation
-        $allAttendancesByStudent = \Illuminate\Support\Facades\DB::table('attendances')
-            ->select('student_id', 'status', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+        $allAttendancesByStudent = DB::table('attendances')
+            ->select('student_id', 'status', DB::raw('count(*) as count'))
             ->groupBy('student_id', 'status')
             ->get()
             ->groupBy('student_id');
 
         $mapStudent = function ($student) use ($latestByStudent, $statusesByStudent, $allAttendancesByStudent) {
             $latest = $latestByStudent->get($student->id);
-            
+
             $historyStats = $allAttendancesByStudent->get($student->id, collect());
             $totalRecords = $historyStats->sum('count');
             $presentCount = $historyStats->whereIn('status', ['Present', 'present'])->sum('count');
             $lateCount = $historyStats->whereIn('status', ['Late', 'late'])->sum('count');
             $excusedCount = $historyStats->whereIn('status', ['Excused', 'excused'])->sum('count');
-            
+
             // Calculate attendance percentage (Present + Late + Excused / Total)
             $positiveRecords = $presentCount + $lateCount + $excusedCount;
             $attendancePercentage = $totalRecords > 0 ? round(($positiveRecords / $totalRecords) * 100) : 100;
@@ -112,22 +113,26 @@ class StudentController extends Controller
         };
 
         // Overall stats for the Chart
-        $attendanceStats = \Illuminate\Support\Facades\DB::table('attendances')
-            ->select('status', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+        $attendanceStats = DB::table('attendances')
+            ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->get()
             ->pluck('count', 'status');
 
+        $studentsData = $students->map($mapStudent);
+        $atRiskCount = $studentsData->filter(fn ($s) => $s['attendance_percentage'] < 80)->count();
+
         return Inertia::render('Dashboard', [
             'subjects' => $subjects,
-            'students' => $students->map($mapStudent),
+            'students' => $studentsData,
             'trashedStudents' => $trashedStudents->map($mapStudent),
+            'atRiskCount' => $atRiskCount,
             'attendanceStats' => [
                 'Present' => $attendanceStats->get('Present', 0) + $attendanceStats->get('present', 0),
                 'Late' => $attendanceStats->get('Late', 0) + $attendanceStats->get('late', 0),
                 'Absent' => $attendanceStats->get('Absent', 0) + $attendanceStats->get('absent', 0),
                 'Excused' => $attendanceStats->get('Excused', 0) + $attendanceStats->get('excused', 0),
-            ]
+            ],
         ]);
     }
 

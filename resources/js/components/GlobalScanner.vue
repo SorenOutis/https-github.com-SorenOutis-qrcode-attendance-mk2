@@ -178,7 +178,7 @@ async function handleCodeDetected(token: string) {
             particleCount: 150,
             spread: 70,
             origin: { y: 0.6 },
-            colors: ['#10b981', '#34d399', '#6ee7b7', '#ffffff'],
+            colors: ['#09090b', '#27272a', '#a1a1aa', '#ffffff'],
             zIndex: 2000
         });
 
@@ -227,19 +227,21 @@ function handleClose() {
 
 <template>
     <Dialog :open="isOpen" @update:open="(val) => !val && handleClose()">
-        <DialogContent class="max-w-md border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl shadow-2xl rounded-2xl">
-            <DialogHeader>
-                <DialogTitle class="text-xl font-bold flex items-center gap-2">
-                    <Scan class="size-5 text-emerald-500" />
+        <DialogContent class="max-w-md border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden p-0">
+            <DialogHeader class="p-6 pb-2">
+                <DialogTitle class="text-2xl font-black tracking-tight flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 dark:bg-zinc-100 dark:border-white shadow-xl">
+                        <Scan class="size-6 text-white dark:text-zinc-900" />
+                    </div>
                     Scan Student QR
                 </DialogTitle>
             </DialogHeader>
 
-            <div class="space-y-4 py-2">
-                <div class="relative aspect-video overflow-hidden rounded-xl border-2 border-zinc-100 dark:border-zinc-800 bg-black shadow-inner">
+            <div class="space-y-6 px-6 pb-6 pt-2">
+                <div class="relative aspect-video overflow-hidden rounded-2xl border-4 border-zinc-100 dark:border-zinc-900 bg-black shadow-2xl ring-1 ring-zinc-950/10">
                     <video
                         ref="videoRef"
-                        class="h-full w-full object-cover scale-x-[-1]"
+                        class="h-full w-full object-cover scale-x-[-1] opacity-90"
                         playsinline
                         muted
                     ></video>
@@ -247,48 +249,49 @@ function handleClose() {
                     <!-- Cooldown Overlay -->
                     <div 
                         v-if="isCooldownActive"
-                        class="absolute inset-0 flex items-center justify-center bg-black/60 z-20"
+                        class="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-20"
                     >
-                        <div class="flex flex-col items-center gap-3">
-                            <div class="h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
-                            <span class="text-sm font-bold text-white tracking-wide">READY IN 2S...</span>
+                        <div class="flex flex-col items-center gap-4">
+                            <div class="h-12 w-12 animate-spin rounded-full border-4 border-white border-t-transparent shadow-[0_0_15px_rgba(255,255,255,0.3)]"></div>
+                            <span class="text-xs font-black text-white tracking-[0.2em]">READY IN 2S...</span>
                         </div>
                     </div>
 
                     <!-- Scanner Feedback Overlay -->
                     <div 
                         v-if="scanning"
-                        class="absolute inset-0 pointer-events-none transition-all duration-300 z-10"
+                        class="absolute inset-0 pointer-events-none transition-all duration-500 z-10"
                         :class="{
-                            'bg-emerald-500/10 border-emerald-500': scanFeedback === 'success',
-                            'bg-rose-500/10 border-rose-500': scanFeedback === 'error',
+                            'bg-white/10 border-white': scanFeedback === 'success',
+                            'bg-zinc-900/40 border-zinc-800': scanFeedback === 'error',
                         }"
                     >
+                        <!-- Scan Line -->
                         <div 
                             v-if="!scanFeedback"
-                            class="absolute left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.9)] animate-scan-line-global"
+                            class="absolute left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-white/80 to-transparent shadow-[0_0_30px_rgba(255,255,255,0.6)] animate-scan-line-global"
                         ></div>
 
                         <div class="absolute inset-0 flex items-center justify-center">
-                            <CheckCircle2 v-if="scanFeedback === 'success'" class="h-16 w-16 text-emerald-500 drop-shadow-lg" />
-                            <AlertCircle v-if="scanFeedback === 'error'" class="h-16 w-16 text-rose-500 drop-shadow-lg" />
+                            <CheckCircle2 v-if="scanFeedback === 'success'" class="h-20 w-20 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)] animate-in zoom-in duration-300" />
+                            <AlertCircle v-if="scanFeedback === 'error'" class="h-20 w-20 text-white drop-shadow-[0_0_20px_rgba(0,0,0,0.5)] animate-shake-global" />
                         </div>
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-emerald-50/50 dark:bg-emerald-500/5 p-3 border border-emerald-100/50 dark:border-emerald-500/10">
-                    <p class="text-[11px] font-medium leading-relaxed text-emerald-800 dark:text-emerald-300">
-                        Point your camera at the student's QR code. The scanner will automatically detect and record attendance.
+                <div class="rounded-2xl bg-zinc-100 dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/80">
+                    <p class="text-[11px] font-bold leading-relaxed text-zinc-600 dark:text-zinc-400 uppercase tracking-wide text-center">
+                        Align the student's QR code within the frame for automatic detection
                     </p>
                 </div>
 
-                <p v-if="scanError && !scanResultModalOpen" class="text-xs font-semibold text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-2 rounded border border-rose-100 dark:border-rose-500/20">
+                <p v-if="scanError && !scanResultModalOpen" class="text-[10px] font-black tracking-widest uppercase text-center text-white bg-zinc-900 p-3 rounded-xl border border-zinc-800 shadow-lg">
                     {{ scanError }}
                 </p>
 
                 <DialogFooter class="sm:justify-center">
-                    <Button variant="outline" size="lg" class="w-full rounded-xl border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 font-semibold" @click="handleClose">
-                        Close Scanner
+                    <Button variant="outline" size="lg" class="w-full h-14 rounded-2xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-900 font-black tracking-widest uppercase transition-all shadow-md active:scale-95" @click="handleClose">
+                        Exit Scanner
                     </Button>
                 </DialogFooter>
             </div>
@@ -297,58 +300,58 @@ function handleClose() {
 
     <!-- Scan Result Modal -->
     <Dialog :open="scanResultModalOpen" @update:open="(val) => !val && closeResultModal()">
-        <DialogContent class="max-w-xs sm:max-w-sm p-0 overflow-hidden border-0 shadow-3xl rounded-3xl">
+        <DialogContent class="max-w-xs sm:max-w-sm p-0 overflow-hidden border-0 shadow-3xl rounded-[2.5rem] bg-background">
             <div 
-                class="p-8 text-center space-y-5"
-                :class="scanError ? 'bg-rose-50/80 dark:bg-rose-950/40 backdrop-blur-xl' : 'bg-emerald-50/80 dark:bg-emerald-950/40 backdrop-blur-xl'"
+                class="p-10 text-center space-y-6"
+                :class="scanError ? 'bg-zinc-900 text-white' : 'bg-white dark:bg-black text-zinc-950 dark:text-white'"
             >
                 <div 
-                    class="mx-auto flex h-24 w-24 items-center justify-center rounded-full shadow-lg transition-transform duration-500 hover:scale-110"
+                    class="mx-auto flex h-28 w-28 items-center justify-center rounded-[2rem] shadow-2xl transition-transform duration-500 hover:scale-110 ring-1 ring-zinc-950/10"
                     :class="[
-                        scanError ? 'bg-rose-100/80 dark:bg-rose-900/80 text-rose-600' : 'bg-emerald-100/80 dark:bg-emerald-900/80 text-emerald-600',
+                        scanError ? 'bg-zinc-800 text-white' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white',
                         !scanError ? 'animate-bounce' : 'animate-shake-global'
                     ]"
                 >
-                    <CheckCircle2 v-if="!scanError" class="h-12 w-12" />
-                    <AlertCircle v-else class="h-12 w-12" />
+                    <CheckCircle2 v-if="!scanError" class="h-14 w-14" />
+                    <AlertCircle v-else class="h-14 w-14" />
                 </div>
                 
-                <div class="space-y-2">
-                    <h3 class="text-2xl font-black tracking-tight" :class="scanError ? 'text-rose-950 dark:text-rose-100' : 'text-emerald-950 dark:text-emerald-100'">
-                        {{ scanError ? 'SCAN FAILED' : 'RECORDED!' }}
+                <div class="space-y-3">
+                    <h3 class="text-3xl font-black tracking-tighter" :class="scanError ? 'text-white' : 'text-zinc-950 dark:text-white'">
+                        {{ scanError ? 'SCAN FAILED' : 'SUCCESSFUL!' }}
                     </h3>
                     <div v-if="!scanError && lastScanResult" class="space-y-1">
-                        <p class="text-lg font-bold text-zinc-900 dark:text-white leading-tight">
+                        <p class="text-xl font-black tracking-tight leading-tight">
                             {{ lastScanResult.student.name }}
                         </p>
-                        <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                        <p class="text-xs font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
                             {{ lastScanResult.student.student_number }}
                         </p>
                     </div>
-                    <div class="flex flex-col items-center gap-2 mt-4">
+                    <div class="flex flex-col items-center gap-3 mt-6">
                         <span 
-                            class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-sm"
+                            class="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg border border-zinc-200 dark:border-zinc-800"
                             :class="[
-                                scanError ? 'bg-rose-500 text-white' : 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                                scanError ? 'bg-white text-zinc-900' : 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
                             ]"
                         >
                             {{ scanError ? 'ERROR' : lastScanResult?.status }}
                         </span>
-                        <p v-if="!scanError && lastScanResult?.slot_start" class="text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                            {{ formatTimeTo12h(lastScanResult.slot_start) }} – {{ formatTimeTo12h(lastScanResult.slot_end) }}
+                        <p v-if="!scanError && lastScanResult?.slot_start" class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 tracking-wider">
+                            SCHEDULED: {{ formatTimeTo12h(lastScanResult.slot_start) }} – {{ formatTimeTo12h(lastScanResult.slot_end) }}
                         </p>
                     </div>
                 </div>
 
                 <Button 
-                    class="w-full h-14 rounded-2xl text-lg font-black transition-all hover:scale-[1.02] active:scale-[0.95] shadow-xl"
-                    :variant="scanError ? 'destructive' : 'default'"
+                    class="w-full h-16 rounded-[1.5rem] text-sm font-black tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.95] shadow-xl uppercase"
+                    :variant="scanError ? 'secondary' : 'default'"
                     @click="closeResultModal"
                 >
-                    CONTINUE
+                    Continue
                 </Button>
                 
-                <p v-if="!scanError && lastScanResult" class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">
+                <p v-if="!scanError && lastScanResult" class="text-[9px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">
                     {{ formatDateTime(lastScanResult.scanned_at) }}
                 </p>
             </div>
@@ -375,6 +378,15 @@ function handleClose() {
 }
 
 .animate-shake-global {
-    animation: shake-anim 0.6s cubic-bezier(.36,.07,.19,.97) both;
+    animation: shake-anim 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.animate-in {
+    animation: zoom-in 0.3s ease-out;
+}
+
+@keyframes zoom-in {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 </style>

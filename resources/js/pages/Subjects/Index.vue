@@ -257,7 +257,7 @@ onMounted(() => {
             <div 
                 v-else 
                 ref="listRef" 
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 pb-12"
+                class="grid grid-cols-2 lg:grid-cols-3 gap-4 pb-12"
             >
                 <div 
                     v-for="subject in props.subjects" 
@@ -266,54 +266,54 @@ onMounted(() => {
                     class="h-full"
                 >
                     <article 
-                        class="group relative flex flex-col h-full rounded-2xl border border-sidebar-border/40 bg-background/40 backdrop-blur-xl p-5 shadow-lg transition-all duration-500 hover:shadow-2xl md:hover:-translate-y-1.5 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden min-h-[140px]"
+                        class="group relative flex flex-col h-36 rounded-xl border border-sidebar-border/40 bg-background/40 backdrop-blur-xl p-4 shadow-lg transition-all duration-500 hover:shadow-2xl md:hover:-translate-y-1.5 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden isolate"
                     >
                         <!-- Silhouette Background Icon -->
-                        <BookOpen class="absolute -right-6 -bottom-6 w-32 h-32 text-foreground/[0.03] dark:text-foreground/[0.05] group-hover:text-primary/10 transition-colors duration-500 z-0 pointer-events-none transform -rotate-12" stroke-width="1" />
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/[0.03] dark:text-foreground/[0.05] group-hover:text-primary/10 transition-all duration-500 z-0 pointer-events-none transform group-hover:scale-125 group-hover:-rotate-12">
+                            <BookOpen class="w-16 h-16" stroke-width="1" />
+                        </div>
 
                         <!-- Visual Depth -->
-                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none z-0"></div>
+                        <div class="absolute -right-4 -top-4 w-20 h-20 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none -z-10"></div>
 
-                        <div class="relative z-10 flex-1 flex flex-col gap-5">
+                        <div class="relative z-10 flex-1 flex flex-col justify-between">
                             <div class="flex items-start justify-between gap-2 overflow-hidden">
-                                <div class="flex items-center gap-3">
-                                    <div class="min-w-0 flex items-center min-h-[40px]">
-                                        <h3 class="text-xl font-serif font-bold text-foreground leading-tight line-clamp-2" :title="subject.name">
-                                            {{ subject.name }}
-                                        </h3>
-                                    </div>
-                                </div>
+                                <h3 class="text-lg font-serif font-black text-foreground leading-tight line-clamp-2" :title="subject.name">
+                                    {{ subject.name }}
+                                </h3>
+                                
+                                <div class="h-1 w-8 rounded-full bg-primary/20 group-hover:bg-primary/40 transition-colors shrink-0 mt-1.5"></div>
                             </div>
-                        </div>
-                        
-                        <div class="relative z-10 mt-4 pt-4 border-t border-sidebar-border/30 flex flex-wrap items-center justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-                            <Button 
-                                size="sm" 
-                                variant="secondary" 
-                                class="h-8 px-3 rounded-full transition-all text-xs font-semibold shrink-0" 
-                                @click="openStudentsModal(subject)"
-                            >
-                                <Users class="h-3.5 w-3.5 xl:mr-1.5" />
-                                <span class="hidden xl:inline">Students</span>
-                            </Button>
-                            <Button 
-                                size="sm" 
-                                variant="outline" 
-                                class="h-8 px-3 rounded-full border-sidebar-border hover:bg-muted transition-all text-xs font-semibold shrink-0" 
-                                @click="openEditModal(subject)"
-                            >
-                                <Edit2 class="h-3.5 w-3.5 xl:mr-1.5" />
-                                <span class="hidden xl:inline">Edit</span>
-                            </Button>
-                            <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                class="h-8 px-3 rounded-full text-destructive hover:bg-destructive/10 transition-all text-xs font-semibold shrink-0" 
-                                @click="deleteSubject(subject.id)"
-                            >
-                                <Trash2 class="h-3.5 w-3.5 xl:mr-1.5" />
-                                <span class="hidden xl:inline">Remove</span>
-                            </Button>
+                            
+                            <div class="flex items-center justify-end gap-1.5">
+                                <Button 
+                                    size="icon" 
+                                    variant="secondary" 
+                                    class="h-8 w-8 rounded-lg transition-all" 
+                                    title="View Students"
+                                    @click="openStudentsModal(subject)"
+                                >
+                                    <Users class="h-3.5 w-3.5" />
+                                </Button>
+                                <Button 
+                                    size="icon" 
+                                    variant="outline" 
+                                    class="h-8 w-8 rounded-lg border-sidebar-border hover:bg-muted transition-all" 
+                                    title="Edit Subject"
+                                    @click="openEditModal(subject)"
+                                >
+                                    <Edit2 class="h-3.5 w-3.5" />
+                                </Button>
+                                <Button 
+                                    size="icon" 
+                                    variant="ghost" 
+                                    class="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10 transition-all" 
+                                    title="Remove Subject"
+                                    @click="deleteSubject(subject.id)"
+                                >
+                                    <Trash2 class="h-3.5 w-3.5" />
+                                </Button>
+                            </div>
                         </div>
                     </article>
                 </div>

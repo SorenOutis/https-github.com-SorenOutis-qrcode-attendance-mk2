@@ -109,14 +109,14 @@ onMounted(() => {
             <!-- Subject Grid -->
             <div 
                 ref="cardsRef"
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                class="grid grid-cols-2 lg:grid-cols-3 gap-4"
             >
                 <div 
                     v-for="(subject, index) in subjects" 
                     :key="subject.id"
                     data-card
                     @click="router.get(`/manage-attendance/${subject.id}/${selectedDate}`)"
-                    class="group relative overflow-hidden rounded-[2rem] p-7 transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-xl cursor-pointer h-52 flex flex-col justify-between isolate"
+                    class="group relative overflow-hidden rounded-[1rem] p-4 transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-xl cursor-pointer h-36 flex flex-col justify-between isolate"
                 >
                     <!-- Background Glow Overlay -->
                     <div 
@@ -128,15 +128,16 @@ onMounted(() => {
                             'bg-zinc-50/50 dark:bg-zinc-900/20'
                         ]"
                     ></div>
+
+                    <!-- Silhouette Icon (Dashboard Style) -->
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/[0.03] dark:text-white/[0.03] transition-transform duration-700 group-hover:scale-125 group-hover:-rotate-12 pointer-events-none z-0">
+                        <BookOpen class="h-16 w-16" />
+                    </div>
                     
                     <div class="relative z-10 flex flex-col h-full justify-between">
-                        <div class="flex items-start justify-between">
-                            <div class="h-14 w-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                                <BookOpen class="h-7 w-7 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors" />
-                            </div>
-                            
+                        <div class="flex items-start justify-end">
                             <div 
-                                class="h-1.5 w-12 rounded-full"
+                                class="h-1 w-10 rounded-full"
                                 :class="[
                                     index % 4 === 0 ? 'bg-emerald-500' :
                                     index % 4 === 1 ? 'bg-amber-500' :
@@ -147,18 +148,15 @@ onMounted(() => {
                         </div>
 
                         <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500 mb-1 leading-none">
-                                Subject Roster
-                            </p>
-                            <h3 class="text-2xl font-serif font-black tracking-tight text-zinc-900 dark:text-white leading-[1.1] line-clamp-2 brightness-90 group-hover:brightness-110 transition-all">
+                             <h3 class="text-lg font-serif font-black tracking-tight text-zinc-900 dark:text-white leading-tight line-clamp-2 brightness-90 group-hover:brightness-110 transition-all">
                                 {{ subject.name }}
                             </h3>
                         </div>
                         
-                        <div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
-                            <span class="px-3 py-1.5 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
-                                Open Class Sheet
-                                <ArrowRight class="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                        <div class="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
+                            <span class="px-2 py-1 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5">
+                                Open Class
+                                <ArrowRight class="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
                             </span>
                         </div>
                     </div>

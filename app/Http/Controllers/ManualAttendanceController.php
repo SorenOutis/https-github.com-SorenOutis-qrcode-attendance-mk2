@@ -31,7 +31,7 @@ class ManualAttendanceController extends Controller
 
         // Get all students (we filter by subject in the collection to bypass SQLite JSON array bugs)
         $enrolledStudents = Student::query()
-            ->select('id', 'name', 'student_number', 'schedule')
+            ->select('id', 'name', 'student_number', 'schedule', 'qr_token')
             ->orderBy('name', 'asc')
             ->get();
 
@@ -39,7 +39,7 @@ class ManualAttendanceController extends Controller
         // And extract their schedule slot for this specific subject and day
         $students = $enrolledStudents->map(function ($student) use ($subject, $dayOfWeek, $parsedDate) {
             $allSlots = collect($student->schedule ?? []);
-            
+
             // Check if they have THIS subject anywhere in their schedule
             $subjectSlots = $allSlots->filter(fn ($s) => isset($s['subject_id']) && $s['subject_id'] == $subject->id);
 
@@ -64,6 +64,7 @@ class ManualAttendanceController extends Controller
                 'student_number' => $student->student_number,
                 'slot_start' => $todaySlot['start'] ?? null,
                 'slot_end' => $todaySlot['end'] ?? null,
+                'qr_token' => $student->qr_token,
                 'attendance' => $attendance,
             ];
         })->filter()->values();
@@ -101,6 +102,7 @@ class ManualAttendanceController extends Controller
             if ($attendance) {
                 $attendance->delete();
             }
+
             return response()->json([
                 'success' => true,
                 'attendance' => null,

@@ -8,6 +8,7 @@ import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieCh
 import QRCode from 'qrcode';
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
+import { useScanner } from '@/composables/useScanner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -87,6 +88,7 @@ const page = usePage();
 const students = computed(() => props.students ?? []);
 const searchQuery = ref('');
 const toast = useToast();
+const { open: openScanner } = useScanner();
 
 const filteredStudents = computed(() => {
     if (!searchQuery.value) return students.value;
@@ -905,17 +907,32 @@ onMounted(() => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 sm:gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
             <!-- Welcome Header -->
-            <div class="flex flex-col gap-1 px-1">
-                <h1 class="text-3xl font-serif font-bold tracking-tight">
-                    {{ greeting }}, {{ userName }}!
-                </h1>
-                <p class="text-sm text-muted-foreground font-medium">
-                    {{ greetingSubtext }}
-                </p>
-                <div class="flex items-center gap-2 text-[10px] text-muted-foreground mt-1">
-                    <Calendar class="h-3.5 w-3.5" />
-                    <span>{{ formattedCurrentDate }}</span>
+            <div class="flex items-center justify-between gap-4 px-1">
+                <div class="flex flex-col gap-1">
+                    <h1 class="text-3xl font-serif font-bold tracking-tight">
+                        {{ greeting }}, {{ userName }}!
+                    </h1>
+                    <p class="text-sm text-muted-foreground font-medium">
+                        {{ greetingSubtext }}
+                    </p>
+                    <div class="flex items-center gap-2 text-[10px] text-muted-foreground mt-1">
+                        <Calendar class="h-3.5 w-3.5" />
+                        <span>{{ formattedCurrentDate }}</span>
+                    </div>
                 </div>
+
+                <!-- Desktop Scan Button -->
+                <Button 
+                    variant="outline" 
+                    size="lg" 
+                    class="hidden h-12 items-center gap-3 rounded-2xl border-zinc-200/50 bg-white px-5 text-sm font-bold shadow-sm transition-all hover:bg-zinc-50 hover:text-zinc-900 hover:shadow-md active:scale-95 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 sm:flex group"
+                    @click="openScanner"
+                >
+                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 group-hover:scale-110 transition-transform">
+                        <QrCode class="size-4" />
+                    </div>
+                    <span>Scan QR Code</span>
+                </Button>
             </div>
 
             <div

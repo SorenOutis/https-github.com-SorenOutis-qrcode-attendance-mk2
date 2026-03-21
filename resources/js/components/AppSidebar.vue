@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, ChartBar, FolderGit2, LayoutGrid, MessagesSquare, QrCode, Star, User, UserCheck } from 'lucide-vue-next';
+import { BookOpen, ChartBar, FolderGit2, LayoutGrid, MessagesSquare, Star, User, UserCheck } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,13 +14,10 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { useScanner } from '@/composables/useScanner';
 import { dashboard } from '@/routes';
 import { edit as profileEdit } from '@/routes/profile';
 import { index as reportsIndex } from '@/routes/reports';
 import type { NavItem } from '@/types';
-
-const { open: openScanner } = useScanner();
 
 const mainNavItems: NavItem[] = [
     {
@@ -32,12 +29,6 @@ const mainNavItems: NavItem[] = [
         title: 'Attendance',
         href: '/manage-attendance',
         icon: UserCheck,
-    },
-    {
-        title: 'Scan QR',
-        href: '#',
-        icon: QrCode,
-        onClick: openScanner,
     },
     {
         title: 'Reports',

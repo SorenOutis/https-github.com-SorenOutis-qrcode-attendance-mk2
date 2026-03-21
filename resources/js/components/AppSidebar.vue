@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/sidebar';
 import { useScanner } from '@/composables/useScanner';
 import { dashboard } from '@/routes';
+import { edit as profileEdit } from '@/routes/profile';
+import { index as reportsIndex } from '@/routes/reports';
 import type { NavItem } from '@/types';
 
 const { open: openScanner } = useScanner();
@@ -39,12 +41,12 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Reports',
-        href: '/reports',
+        href: reportsIndex().url,
         icon: ChartBar,
     },
     {
         title: 'Profile',
-        href: '/profile/edit',
+        href: profileEdit().url,
         icon: User,
     },
 ];

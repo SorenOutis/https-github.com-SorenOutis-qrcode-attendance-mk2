@@ -945,17 +945,30 @@ onMounted(() => {
                             student.attendance?.status === 'Absent' ? 'border-rose-500/30 ring-1 ring-rose-500/10' : 'border-zinc-100 dark:border-zinc-800'
                         ]"
                     >
-                        <!-- Status Badge (Top Right) -->
-                        <div v-if="student.attendance?.status" class="absolute top-6 right-6 animate-in fade-in zoom-in duration-500">
-                            <span :class="[
-                                'inline-flex items-center rounded-full px-3 py-1 text-[10px] uppercase font-black tracking-widest shadow-lg border backdrop-blur-md',
-                                student.attendance?.status === 'Present' ? 'bg-zinc-900 text-white border-zinc-800 shadow-zinc-900/20' :
-                                student.attendance?.status === 'Late' ? 'bg-zinc-500 text-white border-zinc-400 shadow-zinc-500/20' :
-                                student.attendance?.status === 'Absent' ? 'bg-zinc-100 text-zinc-500 border-zinc-200' :
-                                'bg-zinc-300 text-zinc-800 border-zinc-200'
-                            ]">
-                                {{ student.attendance.status }}
-                            </span>
+                        <!-- Action Buttons (Top Right) -->
+                        <div class="absolute top-6 right-6 flex items-center gap-2 z-20">
+                            <!-- Status Badge -->
+                            <div v-if="student.attendance?.status" class="animate-in fade-in zoom-in duration-500">
+                                <span :class="[
+                                    'inline-flex items-center rounded-full px-3 py-1 text-[10px] uppercase font-black tracking-widest shadow-lg border backdrop-blur-md transition-all',
+                                    student.attendance?.status === 'Present' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-800 dark:border-zinc-200' :
+                                    student.attendance?.status === 'Late' ? 'bg-zinc-500 text-white border-zinc-400' :
+                                    student.attendance?.status === 'Absent' ? 'bg-zinc-100 text-zinc-500 border-zinc-200' :
+                                    'bg-zinc-300 text-zinc-800 border-zinc-200'
+                                ]">
+                                    {{ student.attendance.status }}
+                                </span>
+                            </div>
+
+                            <!-- View QR Button -->
+                            <Button 
+                                variant="outline" 
+                                size="icon-sm" 
+                                class="h-8 w-8 rounded-full border-2 border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-all active:scale-90 hover:bg-zinc-900 hover:text-white dark:hover:bg-zinc-100 dark:hover:text-zinc-900 group/qr"
+                                @click.stop="openQrModal(student)"
+                            >
+                                <QrCode class="w-4 h-4 transition-transform group-hover/qr:scale-110" />
+                            </Button>
                         </div>
 
                         <div class="flex items-center gap-4 mb-6">

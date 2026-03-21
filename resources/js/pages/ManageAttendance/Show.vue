@@ -55,6 +55,13 @@ const props = defineProps<{
 const savingStatus = ref<Record<number, boolean>>({});
 const successStatus = ref<Record<number, boolean>>({});
 const searchQuery = ref('');
+const selectedDate = ref(props.date);
+
+watch(selectedDate, (newDate) => {
+    if (newDate && newDate !== props.date) {
+        router.get(`/manage-attendance/${props.subject.id}/${newDate}`);
+    }
+});
 const statusFilter = ref('all');
 
 const filteredStudents = computed(() => {
@@ -383,28 +390,38 @@ onMounted(() => {
     ]">
         <Head :title="`Attendance: ${subject.name}`" />
 
-        <div class="flex h-full flex-col gap-8 p-6 lg:p-10 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div class="flex h-full flex-col gap-5 p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <!-- Header Section -->
-            <div class="flex flex-col gap-6 sm:flex-row sm:items-center justify-between">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="space-y-1">
                     <div class="flex items-center gap-3">
                         <Button variant="ghost" size="icon" @click="goBack" class="-ml-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-full">
                             <ChevronLeft class="h-5 w-5" />
                         </Button>
-                        <h1 class="text-3xl font-serif font-bold tracking-tight text-foreground">{{ subject.name }}</h1>
+                        <h1 class="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-foreground">{{ subject.name }}</h1>
                     </div>
-                    <div class="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 ml-10">
-                        <CalendarDays class="w-4 h-4" />
-                        <span class="text-sm font-medium">
-                            {{ new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
-                        </span>
+
+                    <!-- Date Picker -->
+                    <div class="ml-10 inline-flex items-center gap-2 p-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all">
+                        <div class="pl-2 pr-1">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block -mb-0.5">Date</span>
+                            <Input
+                                id="show-date"
+                                type="date"
+                                v-model="selectedDate"
+                                class="h-7 w-36 bg-transparent border-0 p-0 focus-visible:ring-0 font-bold text-xs text-zinc-900 dark:text-white"
+                            />
+                        </div>
+                        <div class="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0">
+                            <CalendarDays class="w-4 h-4" />
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 self-start sm:self-auto">
                     <Button 
                         variant="outline"
-                        class="h-10 px-6 rounded-full font-bold text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-black hover:border-zinc-300 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm"
+                        class="h-10 px-4 sm:px-6 rounded-full font-bold text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-black hover:border-zinc-300 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-sm"
                         @click="markAllAbsent"
                         :disabled="isMarkingAllAbsent || students.every(s => s.attendance)"
                     >
@@ -415,64 +432,64 @@ onMounted(() => {
             </div>
 
             <!-- Stats Overview -->
-            <div ref="cardsRef" class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div ref="cardsRef" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                 <!-- Total -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Users class="h-16 w-16" />
+                        <Users class="h-12 w-12 sm:h-16 sm:w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Total</p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">{{ stats.total }}</p>
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Total</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">{{ stats.total }}</p>
                     </div>
                 </div>
                 
                 <!-- Present -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-900/5 dark:bg-zinc-100/5 blur-2xl transition-all duration-500 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900/30"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <CheckCircle class="h-16 w-16" />
+                        <CheckCircle class="h-12 w-12 sm:h-16 sm:w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Present</p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-900 dark:text-zinc-100 drop-shadow-sm">{{ stats.present }}</p>
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Present</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-zinc-100 drop-shadow-sm">{{ stats.present }}</p>
                     </div>
                 </div>
 
                 <!-- Late -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-400/5 dark:bg-zinc-500/5 blur-2xl transition-all duration-500 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900/30"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Clock class="h-16 w-16" />
+                        <Clock class="h-12 w-12 sm:h-16 sm:w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Late</p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-700 dark:text-zinc-300 drop-shadow-sm">{{ stats.late }}</p>
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Late</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-700 dark:text-zinc-300 drop-shadow-sm">{{ stats.late }}</p>
                     </div>
                 </div>
 
                 <!-- Absent -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-200/5 dark:bg-zinc-800/5 blur-2xl transition-all duration-500 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900/30"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <XCircle class="h-16 w-16" />
+                        <XCircle class="h-12 w-12 sm:h-16 sm:w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Absent</p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-400 dark:text-zinc-500 drop-shadow-sm">{{ stats.absent }}</p>
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Absent</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-400 dark:text-zinc-500 drop-shadow-sm">{{ stats.absent }}</p>
                     </div>
                 </div>
 
                 <!-- Excused -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Info class="h-16 w-16" />
+                        <Info class="h-12 w-12 sm:h-16 sm:w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Excused</p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">{{ stats.excused }}</p>
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Excused</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">{{ stats.excused }}</p>
                     </div>
                 </div>
             </div>

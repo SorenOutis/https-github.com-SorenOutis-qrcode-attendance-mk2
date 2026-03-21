@@ -76,11 +76,11 @@ onMounted(() => {
     <AppLayout :breadcrumbs="[{ title: 'Manage Attendance', href: '/manage-attendance' }]">
         <Head title="Manage Attendance" />
 
-        <div class="flex h-full flex-1 flex-col gap-8 overflow-x-auto p-6 lg:p-10 bg-zinc-50 dark:bg-black">
+        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-hidden p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 bg-zinc-50 dark:bg-black">
             <!-- Header Section -->
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 px-1">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 px-1">
                 <div class="flex flex-col gap-1">
-                    <h1 class="text-3xl font-serif font-bold tracking-tight text-foreground">
+                    <h1 class="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-foreground">
                         Attendance Sheets
                     </h1>
                     <div class="flex items-center gap-2 text-sm text-muted-foreground">
@@ -90,7 +90,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Minimal Date Picker in Header -->
-                <div class="inline-flex items-center gap-3 p-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
+                <div class="inline-flex items-center gap-3 p-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md self-start md:self-auto">
                     <div class="pl-3 pr-1">
                         <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block -mb-0.5">Reference Date</span>
                         <Input 

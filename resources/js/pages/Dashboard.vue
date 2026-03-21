@@ -1090,7 +1090,7 @@ onMounted(() => {
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
+        <div class="flex h-full flex-1 flex-col gap-4 sm:gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
             <!-- Welcome Header -->
             <div class="flex flex-col gap-1 px-1">
                 <h1 class="text-3xl font-serif font-bold tracking-tight">
@@ -1104,22 +1104,22 @@ onMounted(() => {
 
             <div
                 ref="cardsRef"
-                class="grid gap-6 grid-cols-2 lg:grid-cols-4"
+                class="grid gap-3 sm:gap-4 lg:gap-6 grid-cols-2 lg:grid-cols-4"
             >
                 <!-- Total Students Card -->
                 <div
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
                 >
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Users class="h-16 w-16" />
+                        <Users class="h-12 w-12 sm:h-16 sm:w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Total Students
                         </p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
                             {{ searchQuery ? filteredStudents.length : stats.total }}
                         </p>
                     </div>
@@ -1128,17 +1128,17 @@ onMounted(() => {
                 <!-- Present Today Card -->
                 <div
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
                 >
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <CheckCircle2 class="h-16 w-16" />
+                        <CheckCircle2 class="h-12 w-12 sm:h-16 sm:w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Present Today
                         </p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
                             {{ stats.present }}
                         </p>
                     </div>
@@ -1147,17 +1147,17 @@ onMounted(() => {
                 <!-- Late Today Card -->
                 <div
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
                 >
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Clock class="h-16 w-16" />
+                        <Clock class="h-12 w-12 sm:h-16 sm:w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Late Today
                         </p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
                             {{ stats.late }}
                         </p>
                     </div>
@@ -1166,17 +1166,17 @@ onMounted(() => {
                 <!-- Absent Today Card -->
                 <div
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
                 >
                     <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <XCircle class="h-16 w-16" />
+                        <XCircle class="h-12 w-12 sm:h-16 sm:w-16" />
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Absent Today
                         </p>
-                        <p class="mt-1 text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
                             {{ stats.absent }}
                         </p>
                     </div>
@@ -1212,7 +1212,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Attendance Overview Chart -->
-                    <div v-if="props.attendanceStats" class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
+                    <!-- <div v-if="props.attendanceStats" class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
                         <div class="border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
                             <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                                 <PieChart class="h-3.5 w-3.5" />
@@ -1223,7 +1223,7 @@ onMounted(() => {
                             <Pie v-if="(props.attendanceStats?.Present || props.attendanceStats?.Late || props.attendanceStats?.Absent || props.attendanceStats?.Excused)" :data="chartData" :options="chartOptions" />
                             <div v-else class="text-xs text-muted-foreground italic absolute">No data yet</div>
                         </div>
-                    </div>
+                    </div> -->
 
                     <!-- Recent Activity Feed -->
                     <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
@@ -1278,84 +1278,91 @@ onMounted(() => {
                         ref="tableRef"
                         class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl"
                     >
-                        <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-6 gap-6 bg-zinc-50 dark:bg-zinc-900/50">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <h2 class="text-2xl font-serif font-bold tracking-tight text-foreground">
+                        <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-4 sm:p-6 gap-4 bg-zinc-50 dark:bg-zinc-900/50">
+                            <!-- Title row -->
+                            <div class="flex items-center justify-between gap-2">
+                                <h2 class="text-lg sm:text-2xl font-serif font-bold tracking-tight text-foreground">
                                     Today's Attendance Status
                                 </h2>
-                                <div class="flex items-center gap-2">
-                                    <div class="flex items-center space-x-2 mr-4 bg-muted/50 px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800">
-                                        <input 
-                                            type="checkbox" 
-                                            id="today-toggle" 
-                                            v-model="showOnlyScheduledToday" 
-                                            class="w-3.5 h-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
-                                        />
-                                        <label for="today-toggle" class="text-[10px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 cursor-pointer">
-                                            Only Scheduled Today
-                                        </label>
-                                    </div>
-                                    <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-hide border border-zinc-200 dark:border-zinc-800">
-                            <button
-                                class="rounded-md px-3 py-1 text-xs font-medium transition-all"
-                                :class="activeTab === 'active' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                @click="activeTab = 'active'"
-                            >
-                                Active Students
-                            </button>
-                            <button
-                                class="rounded-md px-3 py-1 text-xs font-medium transition-all"
-                                :class="activeTab === 'deleted' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                @click="activeTab = 'deleted'"
-                            >
-                                Deleted Students ({{ props.trashedStudents.length }})
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                            </div>
 
-                    <div class="flex items-center gap-2 w-full">
-                        <div class="relative flex-1">
-                            <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-                            <Input
-                                v-model="searchQuery"
-                                type="search"
-                                placeholder="Search students..."
-                                class="pl-9 h-9 text-xs rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 shadow-sm"
-                            />
-                        </div>
+                            <!-- Filter controls: stacks on mobile -->
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <!-- Checkbox filter -->
+                                <div class="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 self-start">
+                                    <input 
+                                        type="checkbox" 
+                                        id="today-toggle" 
+                                        v-model="showOnlyScheduledToday" 
+                                        class="w-3.5 h-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 shrink-0"
+                                    />
+                                    <label for="today-toggle" class="text-[10px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 cursor-pointer whitespace-nowrap">
+                                        Only Scheduled Today
+                                    </label>
+                                </div>
 
-                        <!-- View Switcher -->
-                        <div class="hidden md:flex rounded-full bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 border border-zinc-200 dark:border-zinc-800">
-                            <button
-                                class="rounded-full p-1.5 transition-all outline-none"
-                                :class="viewMode === 'table' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                title="Table View"
-                                @click="viewMode = 'table'"
-                            >
-                                <Table class="h-4 w-4" />
-                            </button>
-                            <button
-                                class="rounded-full p-1.5 transition-all outline-none"
-                                :class="viewMode === 'grid' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                title="Grid View"
-                                @click="viewMode = 'grid'"
-                            >
-                                <LayoutGrid class="h-4 w-4" />
-                            </button>
-                        </div>
+                                <!-- Tabs -->
+                                <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-1 border border-zinc-200 dark:border-zinc-800 self-start overflow-x-auto max-w-full">
+                                    <button
+                                        class="rounded-md px-3 py-1 text-xs font-medium transition-all whitespace-nowrap shrink-0"
+                                        :class="activeTab === 'active' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                                        @click="activeTab = 'active'"
+                                    >
+                                        Active Students
+                                    </button>
+                                    <button
+                                        class="rounded-md px-3 py-1 text-xs font-medium transition-all whitespace-nowrap shrink-0"
+                                        :class="activeTab === 'deleted' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                                        @click="activeTab = 'deleted'"
+                                    >
+                                        Deleted ({{ props.trashedStudents.length }})
+                                    </button>
+                                </div>
+                            </div>
 
-                        <Button 
-                            v-if="activeTab === 'active'"
-                            size="sm" 
-                            class="rounded-full shrink-0 gap-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200" 
-                            @click="openCreateModal"
-                        >
-                            <Plus class="h-4 w-4" />
-                            <span class="hidden sm:inline">Add Student</span>
-                        </Button>
-                    </div>
-                </div>
+                            <!-- Search + actions row -->
+                            <div class="flex items-center gap-2 w-full">
+                                <div class="relative flex-1 min-w-0">
+                                    <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                                    <Input
+                                        v-model="searchQuery"
+                                        type="search"
+                                        placeholder="Search students..."
+                                        class="pl-9 h-9 text-xs rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 shadow-sm"
+                                    />
+                                </div>
+
+                                <!-- View Switcher -->
+                                <div class="hidden md:flex rounded-full bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 border border-zinc-200 dark:border-zinc-800">
+                                    <button
+                                        class="rounded-full p-1.5 transition-all outline-none"
+                                        :class="viewMode === 'table' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                                        title="Table View"
+                                        @click="viewMode = 'table'"
+                                    >
+                                        <Table class="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        class="rounded-full p-1.5 transition-all outline-none"
+                                        :class="viewMode === 'grid' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                                        title="Grid View"
+                                        @click="viewMode = 'grid'"
+                                    >
+                                        <LayoutGrid class="h-4 w-4" />
+                                    </button>
+                                </div>
+
+                                <Button 
+                                    v-if="activeTab === 'active'"
+                                    size="sm" 
+                                    class="rounded-full shrink-0 gap-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200" 
+                                    @click="openCreateModal"
+                                >
+                                    <Plus class="h-4 w-4" />
+                                    <span class="hidden sm:inline">Add Student</span>
+                                </Button>
+                            </div>
+                        </div>
 
                 <div v-if="viewMode === 'table'" class="max-h-[520px] overflow-x-auto overflow-y-auto w-full">
                     <table class="min-w-full text-left text-sm whitespace-nowrap">

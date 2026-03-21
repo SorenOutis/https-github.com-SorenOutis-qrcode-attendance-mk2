@@ -117,13 +117,13 @@ function exportCsv() {
     <Head title="Reports & Analytics" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-6">
-            <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-6 p-3 sm:p-6 pb-20 md:pb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <h1 class="text-2xl font-serif font-bold tracking-tight">Reports & Analytics</h1>
-                    <p class="text-muted-foreground">Detailed overview of attendance trends and statistics.</p>
+                    <p class="text-muted-foreground text-sm">Detailed overview of attendance trends and statistics.</p>
                 </div>
-                <Button @click="exportCsv">
+                <Button @click="exportCsv" class="self-start sm:self-auto">
                     <Download class="mr-2 h-4 w-4" />
                     Export CSV
                 </Button>

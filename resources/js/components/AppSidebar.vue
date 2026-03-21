@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, ChartBar, FolderGit2, LayoutGrid, MessagesSquare, Star, UserCheck } from 'lucide-vue-next';
+import { BookOpen, ChartBar, FolderGit2, LayoutGrid, MessagesSquare, QrCode, Star, User, UserCheck } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,54 +14,48 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useScanner } from '@/composables/useScanner';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
+
+const { open: openScanner } = useScanner();
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: dashboard().url,
         icon: LayoutGrid,
     },
     {
-        title: 'Manage Attendance',
+        title: 'Attendance',
         href: '/manage-attendance',
         icon: UserCheck,
     },
     {
-        title: 'Subjects',
-        href: '/subjects',
-        icon: BookOpen,
-    },
-    {
-        title: 'Comments & suggestions',
-        href: '/comments',
-        icon: MessagesSquare,
-    },
-    {
-        title: 'Ratings',
-        href: '/ratings',
-        icon: Star,
+        title: 'Scan QR',
+        href: '#',
+        icon: QrCode,
+        onClick: openScanner,
     },
     {
         title: 'Reports',
         href: '/reports',
         icon: ChartBar,
     },
+    {
+        title: 'Profile',
+        href: '/profile/edit',
+        icon: User,
+    },
 ];
 
-// const footerNavItems: NavItem[] = [
-//     {
-//         title: 'Repository',
-//         href: 'https://github.com/laravel/vue-starter-kit',
-//         icon: FolderGit2,
-//     },
-//     {
-//         title: 'Documentation',
-//         href: 'https://laravel.com/docs/starter-kits#vue',
-//         icon: BookOpen,
-//     },
-// ];
+const footerNavItems: NavItem[] = [
+    {
+        title: 'Repository',
+        href: 'https://github.com/SorenOutis/qrcode-attendance-mk2',
+        icon: FolderGit2,
+    },
+];
 </script>
 
 <template>

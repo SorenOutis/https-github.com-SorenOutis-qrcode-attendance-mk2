@@ -2,11 +2,9 @@
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { useDraggable, useWindowSize } from '@vueuse/core';
 import type { BreadcrumbItem } from '@/types';
-import confetti from 'canvas-confetti';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
 import gsap from 'gsap';
-import jsQR from 'jsqr';
-import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check } from 'lucide-vue-next';
+import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check, QrCode } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
@@ -218,7 +216,6 @@ const atRiskStudents = computed(() => {
 
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
-const scanModalOpen = ref(false);
 const showOnlyScheduledToday = ref(false);
 const activeTab = ref<'active' | 'deleted'>('active');
 const visibleStudents = computed(() => {
@@ -281,11 +278,7 @@ watch([windowWidth, windowHeight], ([newW, newH]) => {
 }, { immediate: true });
 
 const handleScanClick = () => {
-    // If it was just a tiny move, we can treat it as a click
-    // But useDraggable is pretty good at this. 
-    // We'll just check isDragging.
-    if (isDragging.value) return;
-    openScanModal();
+    // Global scanner is handled via the bottom nav or sidebar
 };
 
 // Group attendance records by local date (most-recent date first)
@@ -388,20 +381,6 @@ watch([searchQuery, activeTab, viewMode], () => {
     animateStudents();
 });
 
-const videoRef = ref<HTMLVideoElement | null>(null);
-const scanning = ref(false);
-const scanError = ref<string | null>(null);
-const lastScanResult = ref<{
-    student: Student;
-    scanned_at: string;
-    status: string;
-    slot_start?: string;
-    slot_end?: string;
-} | null>(null);
-const scanFeedback = ref<'success' | 'error' | null>(null);
-const scanResultModalOpen = ref(false);
-const isCooldownActive = ref(false);
-
 const confirmModalOpen = ref(false);
 const confirmTitle = ref('');
 const confirmDescription = ref('');
@@ -423,9 +402,6 @@ function handleConfirm() {
     confirmModalOpen.value = false;
     confirmAction.value = null;
 }
-let scanInterval: number | null = null;
-let mediaStream: MediaStream | null = null;
-
 function resetForm() {
     name.value = '';
     studentNumber.value = '';
@@ -800,187 +776,6 @@ async function copyStudentPortalLink() {
 function openPrintCards() {
     if (!selectedStudent.value) return;
     window.open(`/students/print-cards?ids=${selectedStudent.value.id}`, '_blank', 'noopener,noreferrer');
-}
-
-async function openScanModal() {
-    scanError.value = null;
-    lastScanResult.value = null;
-    scanModalOpen.value = true;
-    await startCamera();
-}
-
-function closeScanModal() {
-    stopCamera();
-    scanModalOpen.value = false;
-    // Don't auto-reset scanResultModalOpen here so users can read the status
-}
-
-function closeScanResultModal() {
-    scanResultModalOpen.value = false;
-    // When closing result, if scanner is still open, wait 2 seconds before resuming
-    if (scanModalOpen.value && mediaStream) {
-        isCooldownActive.value = true;
-        setTimeout(() => {
-            isCooldownActive.value = false;
-            if (scanModalOpen.value && mediaStream) {
-                startScanningLoop();
-            }
-        }, 2000);
-    }
-}
-
-async function startCamera() {
-    if (!navigator.mediaDevices?.getUserMedia) {
-        scanError.value = 'Camera not supported in this browser.';
-        return;
-    }
-
-    try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' },
-        });
-        if (!videoRef.value) return;
-        videoRef.value.srcObject = mediaStream;
-        await videoRef.value.play();
-        startScanningLoop();
-    } catch (e) {
-        scanError.value = 'Unable to access camera.';
-    }
-}
-
-function stopCamera() {
-    if (scanInterval !== null) {
-        window.clearInterval(scanInterval);
-        scanInterval = null;
-    }
-    if (mediaStream) {
-        mediaStream.getTracks().forEach((track) => track.stop());
-        mediaStream = null;
-    }
-    scanning.value = false;
-}
-
-function startScanningLoop() {
-    if (!videoRef.value) return;
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-        scanError.value = 'Unable to initialize scanner.';
-        return;
-    }
-
-    scanning.value = true;
-
-    scanInterval = window.setInterval(async () => {
-        if (!videoRef.value) return;
-        if (videoRef.value.readyState !== videoRef.value.HAVE_ENOUGH_DATA) {
-            return;
-        }
-
-        canvas.width = videoRef.value.videoWidth;
-        canvas.height = videoRef.value.videoHeight;
-        ctx.drawImage(videoRef.value, 0, 0, canvas.width, canvas.height);
-
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, canvas.width, canvas.height);
-
-        if (!code || !code.data) {
-            return;
-        }
-
-        const token = code.data.trim();
-        if (!token) return;
-
-        scanning.value = false;
-        if (scanInterval !== null) {
-            window.clearInterval(scanInterval);
-            scanInterval = null;
-        }
-
-        try {
-            const response = await window.fetch('/attendance/scan', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': (document
-                        .querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)
-                        ?.content ?? '',
-                },
-                body: JSON.stringify({ token }),
-            });
-
-            if (!response.ok) {
-                const contentType = response.headers.get('content-type') || '';
-                if (contentType.includes('application/json')) {
-                    const err = (await response.json()) as { message?: string };
-                    throw new Error(
-                        err?.message ||
-                            `Scan failed (HTTP ${response.status}).`,
-                    );
-                }
-
-                const text = await response.text();
-                throw new Error(
-                    `Scan failed (HTTP ${response.status}). ${text.slice(0, 120)}`,
-                );
-            }
-
-            const data = await response.json();
-            lastScanResult.value = {
-                student: data.student,
-                scanned_at: data.attendance.scanned_at,
-                status: data.attendance.status,
-                slot_start: data.attendance.slot_start,
-                slot_end: data.attendance.slot_end,
-            };
-            // Optimistically update the matching student's today_statuses in the prop
-            const matchedStudent = props.students.find((s) => s.id === data.student.id);
-            if (matchedStudent) {
-                if (!matchedStudent.today_statuses) {
-                    (matchedStudent as any).today_statuses = [];
-                }
-                const newStatus = {
-                    status: data.attendance.status,
-                    time: formatTimeTo12h(new Date(data.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }).slice(0, 5))
-                };
-                
-                // For simplicity, just push it (sequential logic handles uniqueness on re-index)
-                matchedStudent.today_statuses!.push(newStatus);
-
-                matchedStudent.latest_attendance = {
-                    id: data.attendance.id,
-                    status: data.attendance.status,
-                    scanned_at: data.attendance.scanned_at,
-                };
-            }
-            scanError.value = null;
-            scanFeedback.value = 'success';
-            scanResultModalOpen.value = true;
-            toast.success(`Attendance recorded for ${data.student.name}`);
-            
-            // Trigger Confetti
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#10b981', '#34d399', '#6ee7b7', '#ffffff'],
-                zIndex: 2000
-            });
-
-            setTimeout(() => { scanFeedback.value = null; }, 1500);
-        } catch (error) {
-            scanError.value =
-                error instanceof Error
-                    ? error.message
-                    : 'Failed to record attendance.';
-            scanFeedback.value = 'error';
-            scanResultModalOpen.value = true;
-            toast.error(scanError.value);
-            setTimeout(() => { scanFeedback.value = null; }, 1500);
-        }
-    }, 400);
 }
 
 onMounted(() => {
@@ -2352,131 +2147,6 @@ onMounted(() => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog v-model:open="scanModalOpen">
-                <DialogContent class="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Scan student QR code
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <div class="space-y-3">
-                        <div
-                            class="relative overflow-hidden rounded-lg border bg-black/80"
-                        >
-                             <video
-                                ref="videoRef"
-                                class="h-64 w-full object-cover"
-                                playsinline
-                                muted
-                            ></video>
-
-                            <!-- Cooldown Overlay -->
-                            <div 
-                                v-if="isCooldownActive"
-                                class="absolute inset-0 flex items-center justify-center bg-black/60 z-20 animate-in fade-in duration-300"
-                            >
-                                <div class="flex flex-col items-center gap-2">
-                                    <div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
-                                    <span class="text-sm font-semibold text-white">Ready in 2s...</span>
-                                </div>
-                            </div>
-
-                            <!-- Scanner Overlay -->
-                            <div 
-                                v-if="scanning"
-                                class="absolute inset-0 pointer-events-none border-2 border-emerald-500/30 transition-all duration-300 z-10"
-                                :class="{
-                                    'border-emerald-500 scale-[1.02] bg-emerald-500/10': scanFeedback === 'success',
-                                    'border-rose-500 scale-[1.02] bg-rose-500/10': scanFeedback === 'error',
-                                }"
-                            >
-                                <!-- Scanning Line Animation -->
-                                <div 
-                                    v-if="!scanFeedback"
-                                    class="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent shadow-[0_0_15px_rgba(16,185,129,0.8)] animate-scan-line"
-                                ></div>
-
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <CheckCircle2 v-if="scanFeedback === 'success'" class="h-12 w-12 text-emerald-500 animate-in zoom-in duration-300" />
-                                    <AlertCircle v-if="scanFeedback === 'error'" class="h-12 w-12 text-rose-500 animate-in zoom-in duration-300" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <p class="text-xs text-muted-foreground">
-                            Point the camera at a student QR code. Attendance
-                            will be recorded automatically when the code is
-                            detected.
-                        </p>
-
-                        <p
-                            v-if="scanError && !scanResultModalOpen"
-                            class="text-xs font-medium text-destructive"
-                        >
-                            {{ scanError }}
-                        </p>
-
-                        <DialogFooter class="mt-2 flex justify-end gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                @click="closeScanModal"
-                            >
-                                Close Scanner
-                            </Button>
-                        </DialogFooter>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            <!-- Scan Result Modal -->
-            <Dialog v-model:open="scanResultModalOpen" @update:open="(val) => !val && closeScanResultModal()">
-                <DialogContent class="max-w-xs sm:max-w-sm overflow-hidden p-0 rounded-2xl border-0 shadow-2xl">
-                    <div 
-                        class="p-6 text-center space-y-4"
-                        :class="scanError ? 'bg-rose-50/50 dark:bg-rose-950/20' : 'bg-emerald-50/50 dark:bg-emerald-950/20'"
-                    >
-                        <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-500 hover:scale-110"
-                             :class="[
-                                scanError ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-600' : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600',
-                                !scanError ? 'animate-bounce' : 'animate-shake'
-                             ]"
-                        >
-                            <CheckCircle2 v-if="!scanError" class="h-10 w-10" />
-                            <AlertCircle v-else class="h-10 w-10" />
-                        </div>
-                        
-                        <div class="space-y-1">
-                            <h3 class="text-lg font-bold">
-                                {{ scanError ? 'Scan Failed' : 'Attendance Recorded' }}
-                            </h3>
-                            <p v-if="!scanError && lastScanResult" class="text-sm font-medium">
-                                {{ lastScanResult.student.name }}
-                            </p>
-                            <p class="text-xs text-muted-foreground">
-                                {{ scanError || (lastScanResult ? `Status: ${lastScanResult.status}` : '') }}
-                            </p>
-                            <p v-if="!scanError && lastScanResult && lastScanResult.slot_start" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold px-2 py-0.5 bg-emerald-500/10 rounded-full inline-block mt-1">
-                                Slot: {{ formatTimeTo12h(lastScanResult.slot_start) }} – {{ formatTimeTo12h(lastScanResult.slot_end) }}
-                            </p>
-                            <p v-if="!scanError && lastScanResult" class="text-[10px] text-muted-foreground/60">
-                                {{ formatDateTime(lastScanResult.scanned_at) }}
-                            </p>
-                        </div>
-
-                        <Button 
-                            class="w-full rounded-xl py-6 text-base font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            :variant="scanError ? 'destructive' : 'default'"
-                            @click="closeScanResultModal"
-                        >
-                            Close
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
             <!-- Generic Confirmation Modal -->
             <Dialog v-model:open="confirmModalOpen">
                 <DialogContent class="max-w-sm">
@@ -2502,60 +2172,12 @@ onMounted(() => {
                 </DialogContent>
             </Dialog>
         </div>
-
-        <!-- Floating Scan Widget -->
-        <div 
-            ref="el"
-            class="fixed z-50 select-none touch-none transition-[left,top] duration-300 ease-out"
-            :class="{ 'transition-none': isDragging }"
-            :style="{ 
-                left: `${x}px`, 
-                top: `${y}px`,
-                cursor: isDragging ? 'grabbing' : 'grab'
-            }"
-        >
-            <Button
-                size="lg"
-                class="group h-14 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] flex items-center justify-center dark:shadow-[0_8px_30px_rgb(255,255,255,0.1)] dark:hover:shadow-[0_8px_30px_rgb(255,255,255,0.15)] bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0 transition-transform active:scale-95"
-                :class="{ 
-                    'w-14 p-0': windowWidth < 640,
-                    'pr-6 pl-5 gap-2': windowWidth >= 640 
-                }"
-                @click="handleScanClick"
-            >
-                <div class="relative flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:scale-110"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
-                </div>
-                <span v-if="windowWidth >= 640" class="font-semibold text-sm">Scan</span>
-            </Button>
-        </div>
     </AppLayout>
 </template>
 
 <style scoped>
-@keyframes scan {
-    0% { top: 0; opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { top: 100%; opacity: 0; }
-}
-
-.animate-scan-line {
-    animation: scan 2s linear infinite;
-}
-
 .status-pulse {
     transition: all 0.3s ease;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-    20%, 40%, 60%, 80% { transform: translateX(4px); }
-}
-
-.animate-shake {
-    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
 
 .glass-card {

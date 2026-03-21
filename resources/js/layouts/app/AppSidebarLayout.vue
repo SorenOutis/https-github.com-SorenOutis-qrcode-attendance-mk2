@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import NavMobile from '@/components/NavMobile.vue';
+import GlobalScanner from '@/components/GlobalScanner.vue';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
@@ -22,6 +23,7 @@ withDefaults(defineProps<Props>(), {
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
             <slot />
         </AppContent>
+        <GlobalScanner />
         <NavMobile />
     </AppShell>
 </template>

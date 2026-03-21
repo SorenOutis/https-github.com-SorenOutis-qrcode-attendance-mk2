@@ -1114,8 +1114,8 @@ onMounted(() => {
 
         <!-- Student QR Modal -->
         <Dialog v-model:open="qrModalOpen">
-            <DialogContent class="max-w-sm flex max-h-[85dvh] flex-col overflow-hidden border-0 shadow-2xl p-0 rounded-[2.5rem]">
-                <div class="p-8 space-y-6">
+            <DialogContent class="max-w-[320px] sm:max-w-xs flex max-h-[90dvh] flex-col overflow-hidden border-0 shadow-2xl p-0 rounded-[2rem]">
+                <div class="p-5 space-y-4">
                     <DialogHeader class="space-y-1">
                         <div class="flex items-center justify-between">
                             <DialogTitle class="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100 italic">
@@ -1127,70 +1127,70 @@ onMounted(() => {
                         </div>
                     </DialogHeader>
 
-                    <div v-if="selectedStudentForQr" class="space-y-6">
-                        <div class="flex items-center gap-4 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 transition-all hover:bg-white dark:hover:bg-zinc-900 shadow-sm group">
-                            <div class="h-14 w-14 rounded-xl bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-900 font-black text-xl italic group-hover:scale-110 transition-transform">
+                    <div v-if="selectedStudentForQr" class="space-y-4">
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 transition-all hover:bg-white dark:hover:bg-zinc-900 shadow-sm group">
+                            <div class="h-10 w-10 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-900 font-black text-lg italic group-hover:scale-110 transition-transform">
                                 {{ selectedStudentForQr.name.charAt(0) }}
                             </div>
                             <div class="min-w-0">
-                                <p class="text-base font-black text-zinc-900 dark:text-zinc-100 leading-tight truncate italic">
+                                <p class="text-sm font-black text-zinc-900 dark:text-zinc-100 leading-tight truncate italic">
                                     {{ selectedStudentForQr.name }}
                                 </p>
-                                <p class="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
+                                <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">
                                     {{ selectedStudentForQr.student_number }}
                                 </p>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-center p-8 bg-white dark:bg-zinc-950 rounded-[2rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 relative group overflow-hidden">
+                        <div class="flex items-center justify-center p-5 bg-white dark:bg-zinc-950 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 relative group overflow-hidden">
                             <div class="absolute inset-0 bg-zinc-900/5 dark:bg-zinc-100/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <canvas id="qr-canvas" class="h-48 w-48 relative z-10 transition-transform duration-500 group-hover:scale-105"></canvas>
+                            <canvas id="qr-canvas" class="h-40 w-40 relative z-10 transition-transform duration-500 group-hover:scale-105"></canvas>
                         </div>
 
-                        <div class="space-y-4">
-                            <div class="p-4 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 space-y-3 shadow-xl">
+                        <div class="space-y-3">
+                            <div class="p-3 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 space-y-2 shadow-xl">
                                 <div class="flex items-center justify-between">
-                                    <p class="text-[10px] font-black uppercase tracking-widest opacity-60 italic">
-                                        Portal Activation Link
+                                    <p class="text-[9px] font-black uppercase tracking-widest opacity-60 italic">
+                                        Activation Link
                                     </p>
                                     <button 
                                         @click="copyStudentPortalLink"
-                                        class="text-[10px] font-black uppercase tracking-widest hover:underline active:scale-95 transition-all"
+                                        class="text-[9px] font-black uppercase tracking-widest hover:underline active:scale-95 transition-all"
                                     >
                                         Copy
                                     </button>
                                 </div>
-                                <p class="text-[11px] font-mono whitespace-nowrap overflow-hidden text-ellipsis opacity-90 select-all cursor-pointer" @click="copyStudentPortalLink">
+                                <p class="text-[10px] font-mono whitespace-nowrap overflow-hidden text-ellipsis opacity-90 select-all cursor-pointer" @click="copyStudentPortalLink">
                                     {{ studentPortalUrl(selectedStudentForQr.qr_token) }}
                                 </p>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-2 gap-2">
                                 <Button 
                                     @click="downloadQr"
                                     variant="outline" 
-                                    class="h-11 rounded-xl text-[10px] font-black tracking-widest uppercase border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                                    class="h-9 rounded-lg text-[9px] font-black tracking-widest uppercase border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                                 >
-                                    Save Image
+                                    Save
                                 </Button>
                                 <Button 
                                     @click="openPrintCards"
                                     variant="outline" 
-                                    class="h-11 rounded-xl text-[10px] font-black tracking-widest uppercase border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                                    class="h-9 rounded-lg text-[9px] font-black tracking-widest uppercase border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                                 >
-                                    Print Card
+                                    Print
                                 </Button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="p-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
+                <div class="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
                     <Button 
                         @click="closeQrModal"
-                        class="w-full h-12 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-black tracking-widest uppercase italic shadow-lg active:scale-[0.98] transition-all"
+                        class="w-full h-10 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-black tracking-widest uppercase italic shadow-lg active:scale-[0.98] transition-all text-xs"
                     >
-                        DONE
+                        OK
                     </Button>
                 </div>
             </DialogContent>

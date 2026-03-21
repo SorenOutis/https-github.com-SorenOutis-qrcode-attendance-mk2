@@ -221,7 +221,7 @@ async function bulkUpdateAttendance(newStatus: string) {
 
     for (const studentId of selectedStudents.value) {
         const student = props.students.find(s => s.id === studentId);
-        if (!student) continue;
+        if (!student || !student.slot_start) continue;
         
         // If we are NOT removing, skip those who already have the status
         if (!isRemoving && student.attendance?.status === newStatus) continue;
@@ -308,12 +308,15 @@ function updateRemarks(student: Student) {
 }
 
 function markAllAbsent() {
-    const unscannedStudents = props.students.filter(s => !s.attendance);
-    if (unscannedStudents.length === 0) {
+    // Only mark students who have a schedule AND don't have attendance yet
+    const unmarkedScheduledStudents = props.students.filter(s => s.slot_start && !s.attendance);
+    
+    if (unmarkedScheduledStudents.length === 0) {
+        toast.info('No unmarked scheduled students to mark as absent');
         return;
     }
 
-    if (!confirm(`Are you sure you want to mark ${unscannedStudents.length} remaining student(s) as Absent?`)) {
+    if (!confirm(`Are you sure you want to mark ${unmarkedScheduledStudents.length} remaining student(s) as Absent?`)) {
         return;
     }
 
@@ -329,7 +332,7 @@ function markAllAbsent() {
         body: JSON.stringify({
             subject_id: props.subject.id,
             date: props.date,
-            students: unscannedStudents.map(s => ({
+            students: unmarkedScheduledStudents.map((s: Student) => ({
                 id: s.id,
                 slot_start: s.slot_start,
                 slot_end: s.slot_end,
@@ -339,7 +342,7 @@ function markAllAbsent() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            unscannedStudents.forEach(s => {
+            unmarkedScheduledStudents.forEach((s: Student) => {
                 s.attendance = {
                     id: 0,
                     status: 'Absent',
@@ -348,7 +351,7 @@ function markAllAbsent() {
                     scanned_at: new Date().toISOString()
                 };
             });
-            toast.success(`Marked ${unscannedStudents.length} as Absent`);
+            toast.success(`Marked ${unmarkedScheduledStudents.length} as Absent`);
         }
     })
     .catch(err => {
@@ -755,22 +758,25 @@ onMounted(() => {
                                                 <Save class="w-2.5 h-2.5" /> Updating
                                             </div>
                                             
-                                            <div class="flex p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl gap-1 border border-zinc-200 dark:border-zinc-800 shadow-inner">
+                                            <div :class="['flex p-1 rounded-xl gap-1 border shadow-inner transition-opacity', student.slot_start ? 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800' : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-100 dark:border-zinc-900 opacity-50 cursor-not-allowed']">
                                                 <button 
                                                     @click="updateAttendance(student, 'Present')"
-                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.attendance?.status?.toLowerCase() === 'present' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200']"
+                                                    :disabled="!student.slot_start"
+                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.slot_start ? '' : 'cursor-not-allowed', student.attendance?.status?.toLowerCase() === 'present' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200']"
                                                 >
                                                     P
                                                 </button>
                                                 <button 
                                                     @click="updateAttendance(student, 'Late')"
-                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.attendance?.status?.toLowerCase() === 'late' ? 'bg-zinc-500 text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200']"
+                                                    :disabled="!student.slot_start"
+                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.slot_start ? '' : 'cursor-not-allowed', student.attendance?.status?.toLowerCase() === 'late' ? 'bg-zinc-500 text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200']"
                                                 >
                                                     L
                                                 </button>
                                                 <button 
                                                     @click="updateAttendance(student, 'Absent')"
-                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.attendance?.status?.toLowerCase() === 'absent' ? 'bg-white dark:bg-zinc-800 text-zinc-500 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600 border border-zinc-200 dark:border-zinc-700' : 'text-zinc-400 hover:text-zinc-500']"
+                                                    :disabled="!student.slot_start"
+                                                    :class="['w-9 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all', student.slot_start ? '' : 'cursor-not-allowed', student.attendance?.status?.toLowerCase() === 'absent' ? 'bg-white dark:bg-zinc-800 text-zinc-500 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-600 border border-zinc-200 dark:border-zinc-700' : 'text-zinc-400 hover:text-zinc-500']"
                                                 >
                                                     A
                                                 </button>
@@ -881,11 +887,13 @@ onMounted(() => {
                         </div>
 
                         <!-- Action Buttons -->
-                         <div class="grid grid-cols-4 gap-2">
+                         <div :class="['grid grid-cols-4 gap-2 transition-opacity', student.slot_start ? '' : 'opacity-40 grayscale-[0.5]']">
                             <button 
                                 @click="updateAttendance(student, 'Present')"
+                                :disabled="!student.slot_start"
                                 :class="[
                                     'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
+                                    !student.slot_start ? 'cursor-not-allowed opacity-50' : '',
                                     student.attendance?.status?.toLowerCase() === 'present' 
                                         ? 'bg-zinc-900 border-zinc-800 text-white shadow-lg dark:bg-white dark:text-zinc-900' 
                                         : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
@@ -895,8 +903,10 @@ onMounted(() => {
                             </button>
                             <button 
                                 @click="updateAttendance(student, 'Late')"
+                                :disabled="!student.slot_start"
                                 :class="[
                                     'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
+                                    !student.slot_start ? 'cursor-not-allowed opacity-50' : '',
                                     student.attendance?.status?.toLowerCase() === 'late' 
                                         ? 'bg-zinc-500 border-zinc-400 text-white shadow-lg' 
                                         : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
@@ -906,8 +916,10 @@ onMounted(() => {
                             </button>
                             <button 
                                 @click="updateAttendance(student, 'Absent')"
+                                :disabled="!student.slot_start"
                                 :class="[
                                     'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
+                                    !student.slot_start ? 'cursor-not-allowed opacity-50' : '',
                                     student.attendance?.status?.toLowerCase() === 'absent' 
                                         ? 'bg-white border-zinc-200 text-zinc-500 shadow-sm dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400' 
                                         : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'
@@ -917,8 +929,10 @@ onMounted(() => {
                             </button>
                             <button 
                                 @click="updateAttendance(student, 'Excused')"
+                                :disabled="!student.slot_start"
                                 :class="[
                                     'py-3 rounded-xl text-[9px] font-black tracking-widest transition-all duration-300 border',
+                                    !student.slot_start ? 'cursor-not-allowed opacity-50' : '',
                                     student.attendance?.status?.toLowerCase() === 'excused' 
                                         ? 'bg-zinc-200 border-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:border-zinc-600 dark:text-zinc-200' 
                                         : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/50 dark:border-zinc-800 text-zinc-400'

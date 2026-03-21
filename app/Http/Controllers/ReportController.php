@@ -29,7 +29,7 @@ class ReportController extends Controller
         $query = Attendance::query()->whereBetween('scanned_at', [$startDate->toDateTimeString(), $endDate->toDateTimeString()]);
 
         if ($subjectId) {
-            $query->where('subject_id', $subjectId);
+            $query->where('subject_id', '=', $subjectId);
         }
 
         // 1. Attendance Rate over time

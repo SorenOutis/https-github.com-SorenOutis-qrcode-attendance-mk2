@@ -112,33 +112,54 @@ onMounted(() => {
                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
                 <div 
-                    v-for="subject in subjects" 
+                    v-for="(subject, index) in subjects" 
                     :key="subject.id"
                     data-card
                     @click="router.get(`/manage-attendance/${subject.id}/${selectedDate}`)"
-                    class="group relative overflow-hidden rounded-2xl p-6 transition-all duration-500 hover:shadow-lg bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md cursor-pointer h-40 flex flex-col justify-between"
+                    class="group relative overflow-hidden rounded-[2rem] p-7 transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-xl cursor-pointer h-52 flex flex-col justify-between isolate"
                 >
                     <!-- Background Glow Overlay -->
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
+                    <div 
+                        class="absolute -right-8 -top-8 h-40 w-40 rounded-full blur-3xl transition-all duration-700 -z-10 group-hover:scale-110"
+                        :class="[
+                            index % 4 === 0 ? 'bg-emerald-50/50 dark:bg-emerald-900/20' :
+                            index % 4 === 1 ? 'bg-amber-50/50 dark:bg-amber-900/20' :
+                            index % 4 === 2 ? 'bg-indigo-50/50 dark:bg-indigo-900/20' :
+                            'bg-zinc-50/50 dark:bg-zinc-900/20'
+                        ]"
+                    ></div>
                     
-                    <!-- Background Icon Overlay -->
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <BookOpen class="h-20 w-20" />
-                    </div>
-
                     <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div class="flex items-start justify-between">
+                            <div class="h-14 w-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                <BookOpen class="h-7 w-7 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors" />
+                            </div>
+                            
+                            <div 
+                                class="h-1.5 w-12 rounded-full"
+                                :class="[
+                                    index % 4 === 0 ? 'bg-emerald-500' :
+                                    index % 4 === 1 ? 'bg-amber-500' :
+                                    index % 4 === 2 ? 'bg-indigo-500' :
+                                    'bg-zinc-900 dark:bg-white'
+                                ]"
+                            ></div>
+                        </div>
+
                         <div>
-                            <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                                Open Roster
+                            <p class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500 mb-1 leading-none">
+                                Subject Roster
                             </p>
-                            <h3 class="mt-2 text-2xl font-serif font-bold tracking-tight text-zinc-900 dark:text-white leading-tight line-clamp-2">
+                            <h3 class="text-2xl font-serif font-black tracking-tight text-zinc-900 dark:text-white leading-[1.1] line-clamp-2 brightness-90 group-hover:brightness-110 transition-all">
                                 {{ subject.name }}
                             </h3>
                         </div>
                         
-                        <div class="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-white transition-colors">
-                            <span>Manage</span>
-                            <ArrowRight class="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                        <div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
+                            <span class="px-3 py-1.5 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                                Open Class Sheet
+                                <ArrowRight class="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                            </span>
                         </div>
                     </div>
                 </div>

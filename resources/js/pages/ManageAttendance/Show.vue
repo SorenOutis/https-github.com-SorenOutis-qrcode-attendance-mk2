@@ -185,7 +185,11 @@ function updateAttendance(student: Student, newStatus: string) {
     .then(data => {
         if (data.success) {
             student.attendance = data.attendance;
-            toast.success(`Marked ${student.name} as ${newStatus}`);
+            if (isRemoving) {
+                toast.success(`Removed attendance for ${student.name}`);
+            } else {
+                toast.success(`Marked ${student.name} as ${newStatus}`);
+            }
         }
     })
     .catch(err => {
@@ -200,15 +204,27 @@ function updateAttendance(student: Student, newStatus: string) {
 async function bulkUpdateAttendance(newStatus: string) {
     if (selectedStudents.value.length === 0) return;
     
+    // If EVERY selected student already has this status, we toggle it OFF for all
+    const allHaveStatus = selectedStudents.value.every(id => {
+        const s = props.students.find(st => st.id === id);
+        return s?.attendance?.status === newStatus;
+    });
+
+    const isRemoving = allHaveStatus;
+    const finalStatus = isRemoving ? null : newStatus;
+
     isBulkSaving.value = true;
     const total = selectedStudents.value.length;
     let successCount = 0;
 
-    toast.info(`Updating ${total} student(s)...`);
+    toast.info(`${isRemoving ? 'Clearing' : 'Updating'} ${total} student(s)...`);
 
     for (const studentId of selectedStudents.value) {
         const student = props.students.find(s => s.id === studentId);
-        if (!student || student.attendance?.status === newStatus) continue;
+        if (!student) continue;
+        
+        // If we are NOT removing, skip those who already have the status
+        if (!isRemoving && student.attendance?.status === newStatus) continue;
 
         try {
             const res = await window.fetch('/manage-attendance/toggle', {
@@ -222,7 +238,7 @@ async function bulkUpdateAttendance(newStatus: string) {
                     student_id: student.id,
                     subject_id: props.subject.id,
                     date: props.date,
-                    status: newStatus,
+                    status: finalStatus,
                     slot_start: student.slot_start,
                     slot_end: student.slot_end,
                     remarks: student.attendance?.remarks || null
@@ -240,7 +256,12 @@ async function bulkUpdateAttendance(newStatus: string) {
 
     isBulkSaving.value = false;
     selectedStudents.value = [];
-    toast.success(`Successfully updated ${successCount} student(s) to ${newStatus}`);
+    
+    if (isRemoving) {
+        toast.success(`Successfully removed attendance for ${successCount} student(s)`);
+    } else {
+        toast.success(`Successfully marked ${successCount} student(s) as ${newStatus}`);
+    }
 }
 
 const isMarkingAllAbsent = ref(false);

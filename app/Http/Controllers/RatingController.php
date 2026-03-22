@@ -14,27 +14,47 @@ class RatingController extends Controller
     {
         $from = request('from');
         $to = request('to');
+        $sort = request('sort', 'newest');
 
-        $ratings = Rating::query()
+        $query = Rating::query()
             ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
-            ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
-            ->orderByDesc('created_at')
-            ->get([
-                'id',
-                'name',
-                'email',
-                'score',
-                'message',
-                'is_public',
-                'created_at',
-                'updated_at',
-            ]);
+            ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to));
+
+        $query = match ($sort) {
+            'oldest' => $query->orderBy('created_at'),
+            'highest' => $query->orderByDesc('score')->orderByDesc('created_at'),
+            'lowest' => $query->orderBy('score')->orderByDesc('created_at'),
+            default => $query->orderByDesc('created_at'),
+        };
+
+        $ratings = $query->get([
+            'id',
+            'name',
+            'email',
+            'score',
+            'message',
+            'is_public',
+            'created_at',
+            'updated_at',
+        ]);
+
+        /** @var array<int, int> $distribution */
+        $distribution = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $distribution[$i] = Rating::where('score', $i)->count();
+        }
 
         return Inertia::render('Ratings', [
             'ratings' => $ratings,
             'filters' => [
                 'from' => $from,
                 'to' => $to,
+                'sort' => $sort,
+            ],
+            'aggregateStats' => [
+                'average' => round((float) Rating::avg('score'), 1),
+                'total' => Rating::count(),
+                'distribution' => $distribution,
             ],
         ]);
     }

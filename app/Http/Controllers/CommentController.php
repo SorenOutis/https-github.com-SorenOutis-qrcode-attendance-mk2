@@ -14,27 +14,35 @@ class CommentController extends Controller
     {
         $from = request('from');
         $to = request('to');
+        $sort = request('sort', 'newest');
 
-        $comments = Comment::query()
+        $query = Comment::query()
             ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
-            ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
-            ->orderByDesc('created_at')
-            ->get([
-                'id',
-                'name',
-                'email',
-                'message',
-                'is_public',
-                'created_at',
-                'updated_at',
-            ]);
+            ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to));
+
+        $query = match ($sort) {
+            'oldest' => $query->orderBy('created_at'),
+            default => $query->orderByDesc('created_at'),
+        };
+
+        $comments = $query->get([
+            'id',
+            'name',
+            'email',
+            'message',
+            'is_public',
+            'created_at',
+            'updated_at',
+        ]);
 
         return Inertia::render('CommentsSuggestions', [
             'comments' => $comments,
             'filters' => [
                 'from' => $from,
                 'to' => $to,
+                'sort' => $sort,
             ],
+            'totalCount' => Comment::count(),
         ]);
     }
 

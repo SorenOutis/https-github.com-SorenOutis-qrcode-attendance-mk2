@@ -22,10 +22,11 @@ import {
     User
 } from 'lucide-vue-next';
 import QRCode from 'qrcode';
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import {
     Dialog,
     DialogContent,
@@ -143,8 +144,10 @@ const stats = computed(() => {
     const absent = props.students.filter(s => s.attendance?.status?.toLowerCase() === 'absent').length;
     const excused = props.students.filter(s => s.attendance?.status?.toLowerCase() === 'excused').length;
     const unmarked = total - (present + late + absent + excused);
+    const marked = total - unmarked;
+    const progress = total === 0 ? 0 : Math.round((marked / total) * 100);
     
-    return { total, present, late, absent, excused, unmarked };
+    return { total, present, late, absent, excused, unmarked, marked, progress };
 });
 
 function goBack() {
@@ -573,6 +576,25 @@ onMounted(() => {
             gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
         });
     });
+
+    // 4. Keyboard Shortcuts for Rapid Marking
+    const handleKeydown = (e: KeyboardEvent) => {
+        // Prevent triggering if user is typing in the search box or remarks input
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+        
+        if (selectedStudents.value.length > 0 && !isBulkSaving.value) {
+            if (e.key === '1') bulkUpdateAttendance('Present');
+            if (e.key === '2') bulkUpdateAttendance('Late');
+            if (e.key === '3') bulkUpdateAttendance('Absent');
+            if (e.key === '4') bulkUpdateAttendance('Excused');
+        }
+    };
+    
+    window.addEventListener('keydown', handleKeydown);
+    
+    onUnmounted(() => {
+        window.removeEventListener('keydown', handleKeydown);
+    });
 });
 </script>
 
@@ -663,6 +685,20 @@ onMounted(() => {
                         <XCircle v-if="!isMarkingAllAbsent" class="w-4 h-4 mr-2" />
                         {{ isMarkingAllAbsent ? 'Marking...' : 'Mark Remaining Absent' }}
                     </Button>
+                </div>
+            </div>
+
+            <!-- Attendance Progress Bar -->
+            <div class="mb-2">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-widest text-zinc-500">Attendance Completion</span>
+                    <span class="text-xs font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{{ stats.marked }} / {{ stats.total }} Marked (<span class="text-primary">{{ stats.progress }}%</span>)</span>
+                </div>
+                <div class="h-2.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden flex">
+                    <div 
+                        class="h-full bg-primary transition-all duration-1000 ease-out"
+                        :style="`width: ${stats.progress}%`"
+                    ></div>
                 </div>
             </div>
 
@@ -919,12 +955,13 @@ onMounted(() => {
 
                         <div class="flex items-center gap-1.5 p-1 bg-white/5 dark:bg-black/5 rounded-2xl border border-white/10 dark:border-black/10">
                             <button 
-                                v-for="status in ['Present', 'Late', 'Absent', 'Excused']" 
+                                v-for="(status, index) in ['Present', 'Late', 'Absent', 'Excused']" 
                                 :key="status"
                                 @click="bulkUpdateAttendance(status)"
                                 :disabled="isBulkSaving"
                                 class="h-11 px-4 sm:px-6 rounded-xl text-[10px] font-black tracking-widest hover:bg-white dark:hover:bg-black hover:text-zinc-900 dark:hover:text-white transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
                             >
+                                <kbd class="hidden sm:inline-flex h-5 items-center justify-center rounded border border-white/20 dark:border-black/20 bg-white/10 dark:bg-black/10 px-1.5 font-mono text-[9px] font-medium text-white/70 dark:text-black/70">{{ index + 1 }}</kbd>
                                 <Check v-if="!isBulkSaving" class="w-3 h-3 hidden sm:block" />
                                 {{ status.toUpperCase() }}
                             </button>

@@ -6,7 +6,7 @@ import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } f
 import gsap from 'gsap';
 import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check, QrCode } from 'lucide-vue-next';
 import QRCode from 'qrcode';
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useScanner } from '@/composables/useScanner';
 import { Badge } from '@/components/ui/badge';
@@ -87,6 +87,7 @@ const page = usePage();
 
 const students = computed(() => props.students ?? []);
 const searchQuery = ref('');
+const searchInputRef = ref<{ $el: HTMLInputElement } | null>(null);
 const toast = useToast();
 const { open: openScanner } = useScanner();
 
@@ -896,6 +897,22 @@ onMounted(() => {
         });
     });
 
+    // Keyboard shortcut for search
+    const handleKeydown = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            const inputEl = searchInputRef.value?.$el;
+            if (inputEl) {
+                inputEl.focus();
+            }
+        }
+    };
+    window.addEventListener('keydown', handleKeydown);
+
+    onUnmounted(() => {
+        window.removeEventListener('keydown', handleKeydown);
+    });
+
     // Initial student animation
     animateStudents();
 });
@@ -1155,14 +1172,20 @@ onMounted(() => {
 
                             <!-- Search + actions row -->
                             <div class="flex items-center gap-2 w-full">
-                                <div class="relative flex-1 min-w-0">
-                                    <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                                <div class="relative flex-1 min-w-0 group">
+                                    <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500 dark:text-zinc-400 group-focus-within:text-zinc-900 dark:group-focus-within:text-white transition-colors" />
                                     <Input
+                                        ref="searchInputRef"
                                         v-model="searchQuery"
                                         type="search"
                                         placeholder="Search students..."
-                                        class="pl-9 h-9 text-xs rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 shadow-sm"
+                                        class="pl-9 pr-12 h-9 text-xs rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 shadow-sm"
                                     />
+                                    <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                        <kbd class="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 font-mono text-[10px] font-medium text-zinc-500 dark:text-zinc-400 opacity-100 transition-opacity">
+                                            <span class="text-xs">⌘</span>K
+                                        </kbd>
+                                    </div>
                                 </div>
 
                                 <!-- View Switcher -->

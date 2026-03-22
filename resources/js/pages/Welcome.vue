@@ -50,15 +50,21 @@ const props = withDefaults(
         stats?: {
             total_scans: number;
             present_today: number;
+            average_rating: number;
+            total_ratings: number;
         };
     }>(),
     {
         canRegister: true,
         comments: () => [],
         ratings: () => [],
-        stats: () => ({ total_scans: 0, present_today: 0 }),
+        stats: () => ({ total_scans: 0, present_today: 0, average_rating: 0, total_ratings: 0 }),
     },
 );
+
+const animatedPresentToday = ref(0);
+const animatedTotalScans = ref(0);
+const animatedAverageRating = ref(0);
 
 const containerRef = ref<HTMLElement | null>(null);
 const titleRef = ref<HTMLElement | null>(null);
@@ -172,6 +178,23 @@ const animateCarousel = () => {
 
 onMounted(() => {
     const tl = gsap.timeline();
+
+    // Animated number counters
+    const counterTargets = { present: 0, scans: 0, rating: 0 };
+    gsap.to(counterTargets, {
+        present: props.stats.present_today,
+        scans: props.stats.total_scans,
+        rating: props.stats.average_rating,
+        duration: 2,
+        ease: 'power2.out',
+        delay: 0.5,
+        snap: { present: 1, scans: 1 },
+        onUpdate: () => {
+            animatedPresentToday.value = Math.round(counterTargets.present);
+            animatedTotalScans.value = Math.round(counterTargets.scans);
+            animatedAverageRating.value = Math.round(counterTargets.rating * 10) / 10;
+        }
+    });
 
     // Setup 3D perspectives
     if (containerRef.value) {
@@ -431,20 +454,28 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Live Quick-Stats Widget -->
-                <div class="mt-8 lg:mt-16 flex items-center gap-4 lg:gap-6 p-4 lg:p-6 rounded-3xl border border-sidebar-border/50 bg-background/30 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500 max-w-[400px]">
+                <div class="mt-8 lg:mt-16 flex items-center gap-3 lg:gap-6 p-4 lg:p-6 rounded-3xl border border-sidebar-border/50 bg-background/30 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500 max-w-[500px]">
                     <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
-                    <div class="relative z-10">
-                        <div class="text-3xl font-serif font-bold text-foreground">
-                            {{ props.stats.present_today }}
+                    <div class="relative z-10 min-w-0">
+                        <div class="text-2xl lg:text-3xl font-serif font-bold text-foreground tabular-nums">
+                            {{ animatedPresentToday }}
                         </div>
-                        <div class="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">Present Today</div>
+                        <div class="text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">Present Today</div>
                     </div>
-                    <div class="w-[1px] h-12 bg-sidebar-border/50 relative z-10"></div>
-                    <div class="relative z-10">
-                        <div class="text-3xl font-serif font-bold text-foreground">
-                            {{ props.stats.total_scans }}
+                    <div class="w-[1px] h-10 lg:h-12 bg-sidebar-border/50 relative z-10 shrink-0"></div>
+                    <div class="relative z-10 min-w-0">
+                        <div class="text-2xl lg:text-3xl font-serif font-bold text-foreground tabular-nums">
+                            {{ animatedTotalScans }}
                         </div>
-                        <div class="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">Total Scans</div>
+                        <div class="text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">Total Scans</div>
+                    </div>
+                    <div class="w-[1px] h-10 lg:h-12 bg-sidebar-border/50 relative z-10 shrink-0"></div>
+                    <div class="relative z-10 min-w-0">
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl lg:text-3xl font-serif font-bold text-foreground tabular-nums">{{ animatedAverageRating }}</span>
+                            <span class="text-amber-400 text-lg">★</span>
+                        </div>
+                        <div class="text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">{{ props.stats.total_ratings }} Ratings</div>
                     </div>
                 </div>
             </div>

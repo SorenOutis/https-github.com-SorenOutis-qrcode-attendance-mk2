@@ -21,6 +21,8 @@ Route::get('/', function () {
         'stats' => [
             'total_scans' => Attendance::count(),
             'present_today' => Attendance::whereDate('created_at', today())->where('status', 'Present')->count(),
+            'average_rating' => round((float) Rating::avg('score'), 1),
+            'total_ratings' => Rating::count(),
         ],
     ]);
 })->name('home');

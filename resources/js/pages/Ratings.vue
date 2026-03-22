@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import gsap from 'gsap';
-import { Filter, Calendar, X } from 'lucide-vue-next';
+import { Filter, Calendar, X, Search, ArrowUpDown } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,12 +27,20 @@ type Rating = {
     created_at: string;
 };
 
+type AggregateStats = {
+    average: number;
+    total: number;
+    distribution: Record<number, number>;
+};
+
 type PageProps = {
     ratings: Rating[];
     filters?: {
         from?: string | null;
         to?: string | null;
+        sort?: string | null;
     };
+    aggregateStats?: AggregateStats;
 };
 
 const props = defineProps<PageProps>();
@@ -45,6 +53,38 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const ratings = computed(() => props.ratings ?? []);
+const searchQuery = ref('');
+const sortValue = ref(props.filters?.sort ?? 'newest');
+
+const filteredRatings = computed(() => {
+    if (!searchQuery.value) return ratings.value;
+    const q = searchQuery.value.toLowerCase();
+    return ratings.value.filter(r =>
+        (r.name && r.name.toLowerCase().includes(q)) ||
+        (r.message && r.message.toLowerCase().includes(q))
+    );
+});
+
+function applySort(value: string) {
+    sortValue.value = value;
+    router.get(
+        ratingsRoutes.index.url({
+            query: {
+                from: from.value || undefined,
+                to: to.value || undefined,
+                sort: value,
+            },
+        }),
+        {},
+        { preserveScroll: true, preserveState: true },
+    );
+}
+
+function distributionPercent(score: number): number {
+    const total = props.aggregateStats?.total ?? 0;
+    if (total === 0) return 0;
+    return Math.round(((props.aggregateStats?.distribution?.[score] ?? 0) / total) * 100);
+}
 
 const listRef = ref<HTMLDivElement | null>(null);
 const editingId = ref<number | null>(null);
@@ -114,6 +154,7 @@ function applyFilter() {
             query: {
                 from: from.value || undefined,
                 to: to.value || undefined,
+                sort: sortValue.value || undefined,
             },
         }),
         {},
@@ -189,36 +230,91 @@ onMounted(() => {
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
             <div class="rounded-[2rem] border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-5 sm:p-8 shadow-2xl relative overflow-hidden group">
                 <div class="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors duration-700"></div>
-                <h1 class="text-2xl font-serif font-bold text-foreground tracking-tight">
-                    System Ratings
-                </h1>
-                <p class="mt-2 text-sm text-muted-foreground/80 font-light max-w-2xl leading-relaxed">
-                    Monitor the satisfaction levels across the experience. Every star reflects a touchpoint in our seamless attendance journey.
-                </p>
-                <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            class="h-10 px-5 rounded-full border-sidebar-border/50 bg-background/50 backdrop-blur-sm hover:bg-muted/50 transition-all gap-2 text-xs font-semibold tracking-wide"
-                            @click="filterModalOpen = true"
-                        >
-                            <Filter class="h-3.5 w-3.5" />
-                            Filter Timeline
-                        </Button>
+                
+                <div class="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10">
+                    <!-- Left: Title + Controls -->
+                    <div class="flex-1 min-w-0">
+                        <h1 class="text-2xl font-serif font-bold text-foreground tracking-tight">
+                            System Ratings
+                        </h1>
+                        <p class="mt-2 text-sm text-muted-foreground/80 font-light max-w-2xl leading-relaxed">
+                            Monitor satisfaction levels. Every star reflects a touchpoint in our seamless attendance journey.
+                        </p>
+                    </div>
 
-                        <div v-if="from || to" class="flex items-center gap-2 rounded-full border border-sidebar-border bg-muted/30 px-4 py-2 text-[11px] font-medium tracking-wide animate-in fade-in zoom-in duration-500">
-                            <Calendar class="h-3.5 w-3.5 text-primary" />
-                            <span class="text-foreground">
-                                {{ from || 'Initial' }} — {{ to || 'Latest' }}
-                            </span>
-                            <button
-                                class="ml-1 rounded-full p-1 hover:bg-muted/80 transition-colors"
-                                @click="clearFilters"
-                            >
-                                <X class="h-3 w-3" />
-                            </button>
+                    <!-- Right: Aggregate Stats -->
+                    <div v-if="aggregateStats" class="flex flex-col items-center gap-2 shrink-0 p-4 rounded-2xl bg-background/40 border border-sidebar-border/30 min-w-[200px]">
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-4xl font-serif font-bold text-foreground tabular-nums">{{ aggregateStats.average || '0' }}</span>
+                            <span class="text-amber-400 text-2xl">★</span>
                         </div>
+                        <p class="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{{ aggregateStats.total }} total ratings</p>
+
+                        <!-- Distribution Bars -->
+                        <div class="w-full space-y-1.5 mt-3">
+                            <div v-for="star in [5, 4, 3, 2, 1]" :key="star" class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold text-muted-foreground w-4 text-right tabular-nums">{{ star }}</span>
+                                <span class="text-amber-400 text-[10px]">★</span>
+                                <div class="flex-1 h-2 rounded-full bg-muted/50 overflow-hidden">
+                                    <div 
+                                        class="h-full rounded-full bg-foreground/70 transition-all duration-700"
+                                        :style="{ width: distributionPercent(star) + '%' }"
+                                    ></div>
+                                </div>
+                                <span class="text-[9px] font-mono text-muted-foreground/60 w-7 text-right tabular-nums">{{ distributionPercent(star) }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3">
+                    <!-- Search -->
+                    <div class="relative w-full sm:w-auto sm:min-w-[240px]">
+                        <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        <Input
+                            v-model="searchQuery"
+                            placeholder="Search ratings..."
+                            class="pl-9 h-10 rounded-full border-sidebar-border/50 bg-background/50 backdrop-blur-sm text-sm"
+                        />
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="flex items-center gap-2">
+                        <select
+                            :value="sortValue"
+                            @change="applySort(($event.target as HTMLSelectElement).value)"
+                            class="h-10 px-4 rounded-full border border-sidebar-border/50 bg-background/50 backdrop-blur-sm text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer appearance-none pr-8"
+                            style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22><path d=%22m7 15 5 5 5-5%22/><path d=%22m7 9 5-5 5 5%22/></svg>'); background-repeat: no-repeat; background-position: right 12px center;"
+                        >
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="highest">Highest Rated</option>
+                            <option value="lowest">Lowest Rated</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter -->
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-10 px-5 rounded-full border-sidebar-border/50 bg-background/50 backdrop-blur-sm hover:bg-muted/50 transition-all gap-2 text-xs font-semibold tracking-wide"
+                        @click="filterModalOpen = true"
+                    >
+                        <Filter class="h-3.5 w-3.5" />
+                        Filter
+                    </Button>
+
+                    <div v-if="from || to" class="flex items-center gap-2 rounded-full border border-sidebar-border bg-muted/30 px-4 py-2 text-[11px] font-medium tracking-wide animate-in fade-in zoom-in duration-500">
+                        <Calendar class="h-3.5 w-3.5 text-primary" />
+                        <span class="text-foreground">
+                            {{ from || 'Initial' }} — {{ to || 'Latest' }}
+                        </span>
+                        <button
+                            class="ml-1 rounded-full p-1 hover:bg-muted/80 transition-colors"
+                            @click="clearFilters"
+                        >
+                            <X class="h-3 w-3" />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -290,7 +386,7 @@ onMounted(() => {
             >
 
                 <article
-                    v-for="rating in ratings"
+                    v-for="rating in filteredRatings"
                     :key="rating.id"
                     data-rating-card
                     class="group relative flex flex-col rounded-2xl border border-sidebar-border/40 bg-background/40 backdrop-blur-xl p-5 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden"

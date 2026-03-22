@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { Database, RefreshCw, Trash2, Plus, Download, Upload } from 'lucide-vue-next';
+import { Database, RefreshCw, Trash2, Plus, Download, Upload, Loader2, AlertTriangle } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +39,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const toast = useToast();
 const processing = ref(false);
+const processingMessage = ref('');
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const confirmModalOpen = ref(false);
@@ -65,25 +66,33 @@ function handleConfirm() {
 
 function createBackup() {
     processing.value = true;
+    processingMessage.value = 'Creating system backup...';
     router.post('/backups', {}, {
         preserveScroll: true,
         onSuccess: () => toast.success('Backup created successfully.'),
         onError: () => toast.error('Failed to create backup.'),
-        onFinish: () => { processing.value = false; }
+        onFinish: () => { 
+            processing.value = false;
+            processingMessage.value = '';
+        }
     });
 }
 
 function restoreBackup(file: string) {
     showConfirm(
-        'Restore Backup?',
-        'Are you sure you want to restore this backup? This will overwrite the current database and you will lose any new data created since the backup.',
+        'Restore Database Backup?',
+        'PERMANENT ACTION: Are you sure you want to restore this backup? This will overwrite your current database. All data added since this backup was created will be PERMANENTLY LOST.',
         () => {
             processing.value = true;
+            processingMessage.value = 'Restoring database... Please wait.';
             router.post(`/backups/${file}/restore`, {}, {
                 preserveScroll: true,
                 onSuccess: () => toast.success('Database restored successfully.'),
                 onError: () => toast.error('Failed to restore database.'),
-                onFinish: () => { processing.value = false; }
+                onFinish: () => { 
+                    processing.value = false;
+                    processingMessage.value = '';
+                }
             });
         },
         true
@@ -92,15 +101,19 @@ function restoreBackup(file: string) {
 
 function deleteBackup(file: string) {
     showConfirm(
-        'Delete Backup?',
-        'Are you sure you want to delete this backup file? This action cannot be undone.',
+        'Delete Backup File?',
+        'Are you sure you want to delete this backup file? This action is permanent and cannot be undone.',
         () => {
             processing.value = true;
+            processingMessage.value = 'Deleting backup file...';
             router.delete(`/backups/${file}`, {
                 preserveScroll: true,
                 onSuccess: () => toast.success('Backup deleted successfully.'),
                 onError: () => toast.error('Failed to delete backup.'),
-                onFinish: () => { processing.value = false; }
+                onFinish: () => { 
+                    processing.value = false;
+                    processingMessage.value = '';
+                }
             });
         },
         true
@@ -116,6 +129,7 @@ function handleUpload(event: Event) {
     if (!file) return;
 
     processing.value = true;
+    processingMessage.value = 'Uploading backup file...';
     router.post('/backups/upload', { backup: file }, {
         forceFormData: true,
         preserveScroll: true,
@@ -125,6 +139,7 @@ function handleUpload(event: Event) {
         },
         onFinish: () => {
             processing.value = false;
+            processingMessage.value = '';
             if (fileInput.value) fileInput.value.value = '';
         }
     });
@@ -238,21 +253,42 @@ function downloadBackup(file: string) {
         <Dialog :open="confirmModalOpen" @update:open="confirmModalOpen = $event">
             <DialogContent class="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>{{ confirmTitle }}</DialogTitle>
+                    <div v-if="confirmIsDestructive" class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 mb-4">
+                        <AlertTriangle class="h-6 w-6 text-destructive" />
+                    </div>
+                    <DialogTitle class="text-center">{{ confirmTitle }}</DialogTitle>
                 </DialogHeader>
-                <div class="py-4">
+                <div class="py-2 text-center">
                     <p class="text-sm text-muted-foreground">{{ confirmDescription }}</p>
                 </div>
-                <DialogFooter>
+                <DialogFooter class="sm:justify-center gap-2 mt-4">
                     <Button variant="outline" @click="confirmModalOpen = false" :disabled="processing">Cancel</Button>
                     <Button 
                         :variant="confirmIsDestructive ? 'destructive' : 'default'" 
                         @click="handleConfirm"
                         :disabled="processing"
                     >
-                        {{ processing ? 'Processing...' : 'Confirm' }}
+                        Confirm Action
                     </Button>
                 </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Loading Indicator Modal -->
+        <Dialog :open="processing">
+            <DialogContent class="sm:max-w-[400px] flex flex-col items-center justify-center py-10 outline-none border-none shadow-none bg-transparent">
+                <div class="bg-card border p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 min-w-[300px]">
+                    <div class="relative">
+                        <Loader2 class="h-12 w-12 animate-spin text-primary" />
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <Database class="h-5 w-5 text-primary/50" />
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="font-semibold text-lg">{{ processingMessage }}</h3>
+                        <p class="text-sm text-muted-foreground mt-1">Please wait, do not close this window.</p>
+                    </div>
+                </div>
             </DialogContent>
         </Dialog>
     </AppLayout>

@@ -339,10 +339,8 @@ onMounted(() => {
                     v-for="comment in filteredComments"
                     :key="comment.id"
                     data-comment-card
-                    class="group relative flex flex-col rounded-2xl border border-sidebar-border/40 bg-background/40 backdrop-blur-xl p-5 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden"
+                    class="relative flex flex-col rounded-2xl border border-sidebar-border/40 bg-background/40 p-5 shadow-sm transition-colors duration-200 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden"
                 >
-                    <!-- Abstract Background Element -->
-                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
                     
                     <div class="relative z-10 flex-1 flex flex-col gap-4">
                         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 overflow-hidden">

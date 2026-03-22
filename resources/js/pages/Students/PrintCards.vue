@@ -178,7 +178,7 @@ watch([query, selected], async () => {
                             style="width: 3.375in; height: 2.125in;"
                         >
                             <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:28px_28px] opacity-60 print:opacity-30"></div>
-                            <div class="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl print:bg-emerald-500/5"></div>
+
 
                             <div class="relative z-10 flex h-full gap-3">
                                 <div class="flex w-[1.35in] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white p-2">

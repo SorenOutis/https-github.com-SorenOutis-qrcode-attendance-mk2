@@ -198,20 +198,6 @@ onMounted(() => {
         stagger: 0.1,
         ease: 'back.out(1.2)',
     });
-
-    const buttons = document.querySelectorAll('button');
-    buttons.forEach((btn) => {
-        gsap.set(btn, { transformStyle: "preserve-3d" });
-        btn.addEventListener('mousedown', () => {
-            gsap.to(btn, { scale: 0.95, z: -5, duration: 0.1, ease: 'power1.out' });
-        });
-        btn.addEventListener('mouseup', () => {
-            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'bounce.out' });
-        });
-        btn.addEventListener('mouseleave', () => {
-            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
-        });
-    });
 });
 </script>
 
@@ -220,8 +206,7 @@ onMounted(() => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
-            <div class="rounded-[2rem] border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-8 shadow-2xl relative overflow-hidden group">
-                <div class="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors duration-700"></div>
+            <div class="rounded-[2rem] border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-8 shadow-md relative overflow-hidden">
                 <h1 class="text-2xl font-serif font-bold text-foreground tracking-tight">
                     Subjects
                 </h1>
@@ -266,16 +251,8 @@ onMounted(() => {
                     class="h-full"
                 >
                     <article 
-                        class="group relative flex flex-col h-36 rounded-xl border border-sidebar-border/40 bg-background/40 backdrop-blur-xl p-4 shadow-lg transition-all duration-500 hover:shadow-2xl md:hover:-translate-y-1.5 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden isolate"
+                        class="relative flex flex-col h-36 rounded-xl border border-sidebar-border/40 bg-background/40 p-4 shadow-sm transition-colors duration-200 hover:bg-background/60 overflow-hidden"
                     >
-                        <!-- Silhouette Background Icon -->
-                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/[0.03] dark:text-foreground/[0.05] group-hover:text-primary/10 transition-all duration-500 z-0 pointer-events-none transform group-hover:scale-125 group-hover:-rotate-12">
-                            <BookOpen class="w-16 h-16" stroke-width="1" />
-                        </div>
-
-                        <!-- Visual Depth -->
-                        <div class="absolute -right-4 -top-4 w-20 h-20 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none -z-10"></div>
-
                         <div class="relative z-10 flex-1 flex flex-col justify-between">
                             <div class="flex items-start justify-between gap-2 overflow-hidden">
                                 <h3 class="text-lg font-serif font-black text-foreground leading-tight line-clamp-2" :title="subject.name">

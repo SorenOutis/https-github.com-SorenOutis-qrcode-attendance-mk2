@@ -705,11 +705,7 @@ onMounted(() => {
             <!-- Stats Overview -->
             <div ref="cardsRef" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                 <!-- Total -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Users class="h-12 w-12 sm:h-16 sm:w-16" />
-                    </div>
+                <div data-card class="relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Total</p>
                         <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">{{ stats.total }}</p>
@@ -717,11 +713,7 @@ onMounted(() => {
                 </div>
                 
                 <!-- Present -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-900/5 dark:bg-zinc-100/5 blur-2xl transition-all duration-500 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900/30"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <CheckCircle class="h-12 w-12 sm:h-16 sm:w-16" />
-                    </div>
+                <div data-card class="relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Present</p>
                         <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-zinc-100 drop-shadow-sm">{{ stats.present }}</p>
@@ -729,11 +721,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Late -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-400/5 dark:bg-zinc-500/5 blur-2xl transition-all duration-500 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900/30"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Clock class="h-12 w-12 sm:h-16 sm:w-16" />
-                    </div>
+                <div data-card class="relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Late</p>
                         <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-700 dark:text-zinc-300 drop-shadow-sm">{{ stats.late }}</p>
@@ -741,11 +729,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Absent -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-200/5 dark:bg-zinc-800/5 blur-2xl transition-all duration-500 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-900/30"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <XCircle class="h-12 w-12 sm:h-16 sm:w-16" />
-                    </div>
+                <div data-card class="relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Absent</p>
                         <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-400 dark:text-zinc-500 drop-shadow-sm">{{ stats.absent }}</p>
@@ -753,11 +737,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Excused -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md">
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Info class="h-12 w-12 sm:h-16 sm:w-16" />
-                    </div>
+                <div data-card class="relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Excused</p>
                         <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">{{ stats.excused }}</p>
@@ -827,7 +807,7 @@ onMounted(() => {
                     <div v-for="student in filteredStudents" :key="student.id" 
                         data-student-card
                         :class="[
-                            'relative overflow-hidden bg-white dark:bg-black rounded-[1.5rem] sm:rounded-[2rem] p-2.5 sm:p-5 shadow-lg border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer flex flex-col',
+                            'relative overflow-hidden bg-white dark:bg-black rounded-[1.5rem] sm:rounded-[2rem] p-2.5 sm:p-5 shadow-sm border-2 transition-colors duration-200 cursor-pointer flex flex-col hover:bg-zinc-50 dark:hover:bg-zinc-900',
                             student.attendance?.status === 'Present' ? 'border-emerald-500/20' : 
                             student.attendance?.status === 'Late' ? 'border-amber-500/20' :
                             student.attendance?.status === 'Absent' ? 'border-rose-500/20' : 'border-zinc-100 dark:border-zinc-800',
@@ -835,10 +815,6 @@ onMounted(() => {
                         ]"
                         @click="toggleStudentSelection(student.id)"
                     >
-                        <!-- Silhouette background icon (Hidden on mobile grid for clarity) -->
-                        <div class="hidden sm:block absolute -right-4 top-1/2 -translate-y-1/2 text-zinc-400/5 transition-transform duration-700 group-hover:scale-110 group-hover:-rotate-12 pointer-events-none z-10">
-                            <User class="h-32 w-32" />
-                        </div>
 
                         <!-- Checkbox Overlay -->
                         <div class="absolute top-2 left-2 sm:top-4 sm:left-4 z-30" @click.stop>

@@ -30,44 +30,6 @@ onMounted(() => {
             duration: 0.8,
             ease: 'power2.out'
         });
-
-        cards.forEach((card: any) => {
-            card.addEventListener('mousemove', (e: MouseEvent) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                
-                const rotateX = ((y - centerY) / centerY) * -10;
-                const rotateY = ((x - centerX) / centerX) * 10;
-                
-                gsap.to(card, {
-                    rotationX: rotateX,
-                    rotationY: rotateY,
-                    scale: 1.05,
-                    z: 30,
-                    zIndex: 50,
-                    boxShadow: '0 30px 40px -10px rgba(0, 0, 0, 0.3), 0 15px 15px -10px rgba(0, 0, 0, 0.1)',
-                    duration: 0.4,
-                    ease: 'power3.out'
-                });
-            });
-
-            card.addEventListener('mouseleave', () => {
-                gsap.to(card, {
-                    rotationX: 0,
-                    rotationY: 0,
-                    scale: 1,
-                    z: 0,
-                    zIndex: 0,
-                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-                    duration: 0.6,
-                    ease: 'elastic.out(1, 0.3)'
-                });
-            });
-        });
     }
 });
 </script>
@@ -116,24 +78,8 @@ onMounted(() => {
                     :key="subject.id"
                     data-card
                     @click="router.get(`/manage-attendance/${subject.id}/${selectedDate}`)"
-                    class="group relative overflow-hidden rounded-[1rem] p-4 transition-all duration-700 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-xl cursor-pointer h-36 flex flex-col justify-between isolate"
+                    class="relative overflow-hidden rounded-[1rem] p-4 transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-900 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm cursor-pointer h-36 flex flex-col justify-between"
                 >
-                    <!-- Background Glow Overlay -->
-                    <div 
-                        class="absolute -right-8 -top-8 h-40 w-40 rounded-full blur-3xl transition-all duration-700 -z-10 group-hover:scale-110"
-                        :class="[
-                            index % 4 === 0 ? 'bg-emerald-50/50 dark:bg-emerald-900/20' :
-                            index % 4 === 1 ? 'bg-amber-50/50 dark:bg-amber-900/20' :
-                            index % 4 === 2 ? 'bg-indigo-50/50 dark:bg-indigo-900/20' :
-                            'bg-zinc-50/50 dark:bg-zinc-900/20'
-                        ]"
-                    ></div>
-
-                    <!-- Silhouette Icon (Dashboard Style) -->
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/[0.03] dark:text-white/[0.03] transition-transform duration-700 group-hover:scale-125 group-hover:-rotate-12 pointer-events-none z-0">
-                        <BookOpen class="h-16 w-16" />
-                    </div>
-                    
                     <div class="relative z-10 flex flex-col h-full justify-between">
                         <div class="flex items-start justify-end">
                             <div 
@@ -148,15 +94,15 @@ onMounted(() => {
                         </div>
 
                         <div>
-                             <h3 class="text-lg font-serif font-black tracking-tight text-zinc-900 dark:text-white leading-tight line-clamp-2 brightness-90 group-hover:brightness-110 transition-all">
+                             <h3 class="text-lg font-serif font-black tracking-tight text-zinc-900 dark:text-white leading-tight line-clamp-2">
                                 {{ subject.name }}
                             </h3>
                         </div>
                         
-                        <div class="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
+                        <div class="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-zinc-400">
                             <span class="px-2 py-1 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5">
                                 Open Class
-                                <ArrowRight class="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
+                                <ArrowRight class="w-2.5 h-2.5" />
                             </span>
                         </div>
                     </div>

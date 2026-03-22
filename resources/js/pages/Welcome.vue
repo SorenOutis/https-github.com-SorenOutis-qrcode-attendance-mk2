@@ -455,7 +455,7 @@ onUnmounted(() => {
 
                 <!-- Live Quick-Stats Widget -->
                 <div class="mt-8 lg:mt-16 flex items-center gap-3 lg:gap-6 p-4 lg:p-6 rounded-3xl border border-sidebar-border/50 bg-background/30 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500 max-w-[500px]">
-                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
+
                     <div class="relative z-10 min-w-0">
                         <div class="text-2xl lg:text-3xl font-serif font-bold text-foreground tabular-nums">
                             {{ animatedPresentToday }}
@@ -562,7 +562,7 @@ onUnmounted(() => {
                 <!-- Empty State for Carousel -->
                 <div v-else class="w-full lg:w-7/12 relative h-[260px] lg:h-[420px] flex items-center justify-center">
                     <div class="w-full max-w-[320px] text-center space-y-5 rounded-3xl border border-dashed border-sidebar-border bg-background/30 backdrop-blur-sm p-10 shadow-sm relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500">
-                        <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
+    
                         <div class="w-16 h-16 rounded-full bg-background/50 mx-auto flex items-center justify-center text-muted-foreground/50 border border-sidebar-border/50 shadow-inner relative z-10">
                             <MessageSquare class="w-8 h-8 opacity-75" stroke-width="1.5" />
                         </div>
@@ -603,7 +603,7 @@ onUnmounted(() => {
                         style="scrollbar-width: none; -ms-overflow-style: none;"
                     >
                     <!-- Step 1 -->
-                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
+                    <div class="relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-colors shrink-0 w-[85vw] md:w-auto snap-center snap-always">
                         <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-foreground/40 group-hover:bg-foreground/5 transition-all duration-500 shadow-inner">
                             <QrCode class="w-9 h-9 text-muted-foreground group-hover:text-foreground transition-colors" stroke-width="1.5" />
@@ -614,7 +614,7 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 md:-translate-y-4 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
+                    <div class="relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-colors shrink-0 w-[85vw] md:w-auto snap-center snap-always">
                         <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/10 border border-sidebar-border/30 flex items-center justify-center mb-6 group-hover:border-foreground/60 group-hover:bg-foreground/20 transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.1)]">
                             <Camera class="w-9 h-9 text-foreground transition-colors" stroke-width="1.5" />
@@ -625,7 +625,7 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
+                    <div class="relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-colors shrink-0 w-[85vw] md:w-auto snap-center snap-always">
                         <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-foreground/40 group-hover:bg-foreground/5 transition-all duration-500 shadow-inner">
                             <BarChart3 class="w-9 h-9 text-muted-foreground group-hover:text-foreground transition-colors" stroke-width="1.5" />

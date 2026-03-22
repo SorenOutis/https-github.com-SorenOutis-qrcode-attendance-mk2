@@ -156,18 +156,18 @@ function downloadBackup(file: string) {
 
         <div class="flex h-full flex-1 flex-col gap-6 p-4 pt-0">
             <!-- Header -->
-            <div class="flex items-center justify-between mt-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
                 <div>
                     <h1 class="text-2xl font-semibold tracking-tight">System Backups</h1>
-                    <p class="text-sm text-muted-foreground mt-1">Manage, create, and restore database backups.</p>
+                    <p class="text-sm text-muted-foreground mt-1 max-w-md">Manage, create, and restore database backups to keep your attendance data safe.</p>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <input type="file" ref="fileInput" class="hidden" accept=".sqlite" @change="handleUpload" />
-                    <Button variant="outline" @click="triggerUpload" :disabled="processing">
+                    <Button variant="outline" @click="triggerUpload" :disabled="processing" class="flex-1 sm:flex-none">
                         <Upload class="mr-2 h-4 w-4" />
-                        Upload Backup
+                        Upload
                     </Button>
-                    <Button @click="createBackup" :disabled="processing">
+                    <Button @click="createBackup" :disabled="processing" class="flex-1 sm:flex-none">
                         <Plus class="mr-2 h-4 w-4" />
                         Create Backup
                     </Button>
@@ -184,7 +184,8 @@ function downloadBackup(file: string) {
                     </div>
 
                     <div v-else class="overflow-x-auto">
-                        <table class="w-full text-sm">
+                        <!-- Desktop Table -->
+                        <table class="w-full text-sm hidden md:table">
                             <thead>
                                 <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                                     <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-1/3">Backup Name</th>
@@ -244,6 +245,54 @@ function downloadBackup(file: string) {
                                 </tr>
                             </tbody>
                         </table>
+
+                        <!-- Mobile Card List -->
+                        <div class="md:hidden space-y-4">
+                            <div v-for="backup in backups" :key="backup.name" class="p-4 border rounded-lg space-y-4 shadow-sm">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 bg-muted rounded-full">
+                                            <Database class="h-5 w-5 text-primary" />
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-sm break-all pr-2">{{ backup.name }}</p>
+                                            <p class="text-xs text-muted-foreground mt-0.5">{{ backup.date_formatted }} • {{ backup.size }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 w-full">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        @click="downloadBackup(backup.name)"
+                                        :disabled="processing"
+                                        class="flex-1 h-9"
+                                    >
+                                        <Download class="h-4 w-4 mr-1.5" />
+                                        Get
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        @click="restoreBackup(backup.name)"
+                                        :disabled="processing"
+                                        class="flex-1 h-9"
+                                    >
+                                        <RefreshCw class="h-4 w-4 mr-1.5" />
+                                        Restore
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        class="text-destructive hover:bg-destructive/10 border-destructive/20 h-9"
+                                        @click="deleteBackup(backup.name)"
+                                        :disabled="processing"
+                                    >
+                                        <Trash2 class="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

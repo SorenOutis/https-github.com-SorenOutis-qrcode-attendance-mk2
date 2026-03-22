@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Printer, CheckSquare, Square } from 'lucide-vue-next';
+import { Printer, CheckSquare, Square, Download, User as UserIcon } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { computed, onMounted, ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const query = ref('');
 const selected = ref<Set<number>>(new Set(props.preselectedIds ?? []));
 const svgById = ref<Record<number, string>>({});
-const organizationName = ref('ST. JUDE COLLEGE');
+const organizationName = ref('KOAMISHIN.ORG');
 const accentColor = ref('#09090b');
 const showPhoto = ref(true);
 
@@ -116,6 +116,147 @@ function clearSelection() {
 
 function printNow() {
     window.print();
+}
+
+async function downloadCard(student: Student) {
+    const scale = 4; // High DPI
+    const w = 3.375 * 96 * scale;
+    const h = 2.125 * 96 * scale;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 1. Draw Background (Rounded)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    const r = 20 * scale;
+    ctx.moveTo(r, 0);
+    ctx.lineTo(w - r, 0);
+    ctx.quadraticCurveTo(w, 0, w, r);
+    ctx.lineTo(w, h - r);
+    ctx.quadraticCurveTo(w, h, w - r, h);
+    ctx.lineTo(r, h);
+    ctx.quadraticCurveTo(0, h, 0, h - r);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.clip();
+
+    // 2. Decorative Blobs
+    ctx.globalAlpha = 0.1;
+    ctx.fillStyle = accentColor.value;
+    ctx.beginPath();
+    ctx.arc(w - 20 * scale, 0, 100 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.05;
+    ctx.beginPath();
+    ctx.arc(20 * scale, h, 80 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+
+    // 3. Header
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, 40 * scale);
+    ctx.strokeStyle = accentColor.value + '20';
+    ctx.lineWidth = 1 * scale;
+    ctx.beginPath();
+    ctx.moveTo(0, 40 * scale);
+    ctx.lineTo(w, 40 * scale);
+    ctx.stroke();
+
+    ctx.fillStyle = accentColor.value;
+    ctx.font = `black ${9 * scale}px Arial`;
+    ctx.fillText(organizationName.value.toUpperCase(), 16 * scale, 26 * scale);
+    
+    ctx.fillStyle = '#a1a1aa';
+    ctx.font = `600 ${8 * scale}px Arial`;
+    ctx.textAlign = 'right';
+    ctx.fillText('IDENTITY CARD', w - 16 * scale, 26 * scale);
+    ctx.textAlign = 'left';
+
+    // 4. Photo Placeholder
+    ctx.fillStyle = '#fafafa';
+    ctx.beginPath();
+    const photoR = 8 * scale;
+    const px = 16 * scale, py = 56 * scale, pw = 80 * scale, ph = 96 * scale;
+    ctx.moveTo(px + photoR, py);
+    ctx.lineTo(px + pw - photoR, py);
+    ctx.quadraticCurveTo(px + pw, py, px + pw, py + photoR);
+    ctx.lineTo(px + pw, py + ph - photoR);
+    ctx.quadraticCurveTo(px + pw, py + ph, px + pw - photoR, py + ph);
+    ctx.lineTo(px + photoR, py + ph);
+    ctx.quadraticCurveTo(px, py + ph, px, py + ph - photoR);
+    ctx.lineTo(px, py + photoR);
+    ctx.quadraticCurveTo(px, py, px + photoR, py);
+    ctx.fill();
+    ctx.strokeStyle = '#e4e4e7';
+    ctx.setLineDash([4 * scale, 4 * scale]);
+    ctx.stroke();
+    
+    // 5. Student Details
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#09090b';
+    ctx.font = `900 ${16 * scale}px Arial`;
+    ctx.fillText(student.name.toUpperCase(), 112 * scale, 76 * scale);
+
+    ctx.fillStyle = '#a1a1aa';
+    ctx.font = `bold ${8 * scale}px Arial`;
+    ctx.fillText('STUDENT NUMBER', 112 * scale, 96 * scale);
+    ctx.fillStyle = '#09090b';
+    ctx.font = `bold ${11 * scale}px Arial`;
+    ctx.fillText(student.student_number, 112 * scale, 110 * scale);
+
+    if (student.section) {
+        ctx.fillStyle = '#a1a1aa';
+        ctx.font = `bold ${8 * scale}px Arial`;
+        ctx.fillText('SECTION', 112 * scale, 128 * scale);
+        ctx.fillStyle = '#3f3f46';
+        ctx.font = `bold ${11 * scale}px Arial`;
+        ctx.fillText(student.section, 112 * scale, 142 * scale);
+    }
+
+    // 6. Footer bar
+    ctx.strokeStyle = accentColor.value + '10';
+    ctx.beginPath();
+    ctx.moveTo(0, h - 30 * scale);
+    ctx.lineTo(w, h - 30 * scale);
+    ctx.stroke();
+    ctx.fillStyle = '#d4d4d8';
+    ctx.font = `italic ${7 * scale}px Courier New`;
+    ctx.fillText(student.qr_token.substring(0, 16) + '...', 16 * scale, h - 12 * scale);
+    ctx.fillStyle = accentColor.value;
+    ctx.beginPath();
+    ctx.arc(w - 20 * scale, h - 15 * scale, 3 * scale, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 7. QR Code
+    const svgString = svgById.value[student.id];
+    if (svgString) {
+        const img = new Image();
+        const svg64 = btoa(svgString);
+        img.src = 'data:image/svg+xml;base64,' + svg64;
+        await new Promise((resolve) => {
+            img.onload = () => {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                const qrx = w - 90 * scale, qry = 56 * scale, qrw = 74 * scale, qrh = 74 * scale;
+                ctx.roundRect(qrx - 2 * scale, qry - 2 * scale, qrw + 4 * scale, qrh + 4 * scale, 6 * scale);
+                ctx.fill();
+                ctx.drawImage(img, qrx, qry, qrw, qrh);
+                resolve(null);
+            };
+        });
+    }
+
+    // Download
+    const link = document.createElement('a');
+    link.download = `${student.student_number}-${student.name.replace(/\s+/g, '_')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
 }
 
 onMounted(async () => {
@@ -220,6 +361,17 @@ watch([query, selected], async () => {
                                     ringColor: accentColor 
                                 }"
                             >
+                                <!-- Quick Download Button (hidden on print) -->
+                                <Button 
+                                    type="button"
+                                    variant="secondary" 
+                                    size="icon" 
+                                    class="absolute top-2 right-2 h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20 print:hidden bg-white/80 backdrop-blur shadow-sm hover:bg-white"
+                                    @click.stop="downloadCard(student)"
+                                    title="Download as PNG"
+                                >
+                                    <Download class="h-3.5 w-3.5" />
+                                </Button>    
                                 <!-- Decorative background -->
                                 <div 
                                     class="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full opacity-10 blur-2xl"

@@ -3,8 +3,9 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import { useDraggable, useWindowSize } from '@vueuse/core';
 import type { BreadcrumbItem } from '@/types';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
+import { Doughnut } from 'vue-chartjs';
 import gsap from 'gsap';
-import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check, QrCode } from 'lucide-vue-next';
+import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check, QrCode, Scan, Download, UserPlus, CheckCircle2 } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
@@ -91,14 +92,25 @@ const searchInputRef = ref<{ $el: HTMLInputElement } | null>(null);
 const toast = useToast();
 const { open: openScanner } = useScanner();
 
+const statusFilter = ref<'Present' | 'Late' | 'Absent' | null>(null);
+
 const filteredStudents = computed(() => {
-    if (!searchQuery.value) return students.value;
-    const q = searchQuery.value.toLowerCase();
-    return students.value.filter(s => 
-        s.name.toLowerCase().includes(q) || 
-        s.student_number.toLowerCase().includes(q) ||
-        (s.section && s.section.toLowerCase().includes(q))
-    );
+    let result = students.value;
+    
+    if (searchQuery.value) {
+        const q = searchQuery.value.toLowerCase();
+        result = result.filter(s => 
+            s.name.toLowerCase().includes(q) || 
+            s.student_number.toLowerCase().includes(q) ||
+            (s.section && s.section.toLowerCase().includes(q))
+        );
+    }
+    
+    if (statusFilter.value) {
+        result = result.filter(s => s.today_statuses?.some(ts => ts.status === statusFilter.value));
+    }
+    
+    return result;
 });
 
 const filteredTrashedStudents = computed(() => {
@@ -154,6 +166,25 @@ const stats = computed(() => {
         trashed: props.trashedStudents?.length || 0
     };
 });
+
+const animatedStats = ref({
+    total: 0,
+    present: 0,
+    late: 0,
+    absent: 0
+});
+
+watch(stats, (newStats) => {
+    gsap.to(animatedStats.value, {
+        total: newStats.total,
+        present: newStats.present,
+        late: newStats.late,
+        absent: newStats.absent,
+        duration: 1.5,
+        ease: 'power3.out',
+        snap: { total: 1, present: 1, late: 1, absent: 1 }
+    });
+}, { deep: true, immediate: true });
 
 const recentActivity = computed(() => {
     const activity: { name: string; status: string; time: string; subject_id?: string | number; sortTime: number }[] = [];
@@ -380,7 +411,7 @@ function animateStudents() {
     });
 }
 
-watch([searchQuery, activeTab, viewMode], () => {
+watch([searchQuery, activeTab, viewMode, statusFilter], () => {
     animateStudents();
 });
 
@@ -957,80 +988,76 @@ onMounted(() => {
                 class="grid gap-3 sm:gap-4 lg:gap-6 grid-cols-2 lg:grid-cols-4"
             >
                 <!-- Total Students Card -->
-                <div
+                <button
+                    @click="statusFilter = null"
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
+                    class="relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    :class="!statusFilter ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Users class="h-12 w-12 sm:h-16 sm:w-16" />
-                    </div>
-                    <div class="relative z-10">
+                    <div class="relative w-full">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Total Students
                         </p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
-                            {{ searchQuery ? filteredStudents.length : stats.total }}
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
+                            {{ searchQuery ? filteredStudents.length : Math.round(animatedStats.total) }}
+                            <CheckCircle2 v-if="!statusFilter" class="w-5 h-5 text-zinc-900 dark:text-white opacity-50" />
                         </p>
                     </div>
-                </div>
+                </button>
 
                 <!-- Present Today Card -->
-                <div
+                <button
+                    @click="statusFilter = statusFilter === 'Present' ? null : 'Present'"
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
+                    class="relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    :class="statusFilter === 'Present' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <CheckCircle2 class="h-12 w-12 sm:h-16 sm:w-16" />
-                    </div>
-                    <div class="relative z-10">
+                    <div class="relative w-full">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Present Today
                         </p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
-                            {{ stats.present }}
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
+                            {{ Math.round(animatedStats.present) }}
+                            <CheckCircle2 v-if="statusFilter === 'Present'" class="w-5 h-5 text-zinc-900 dark:text-white opacity-50" />
                         </p>
                     </div>
-                </div>
+                </button>
 
                 <!-- Late Today Card -->
-                <div
+                <button
+                    @click="statusFilter = statusFilter === 'Late' ? null : 'Late'"
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
+                    class="relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    :class="statusFilter === 'Late' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <Clock class="h-12 w-12 sm:h-16 sm:w-16" />
-                    </div>
-                    <div class="relative z-10">
+                    <div class="relative w-full">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Late Today
                         </p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
-                            {{ stats.late }}
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
+                            {{ Math.round(animatedStats.late) }}
+                            <CheckCircle2 v-if="statusFilter === 'Late'" class="w-5 h-5 text-zinc-900 dark:text-white opacity-50" />
                         </p>
                     </div>
-                </div>
+                </button>
 
                 <!-- Absent Today Card -->
-                <div
+                <button
+                    @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'"
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-md"
+                    class="relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    :class="statusFilter === 'Absent' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
-                    <div class="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800"></div>
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none z-0">
-                        <XCircle class="h-12 w-12 sm:h-16 sm:w-16" />
-                    </div>
-                    <div class="relative z-10">
+                    <div class="relative w-full">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Absent Today
                         </p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">
-                            {{ stats.absent }}
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
+                            {{ Math.round(animatedStats.absent) }}
+                            <CheckCircle2 v-if="statusFilter === 'Absent'" class="w-5 h-5 text-zinc-900 dark:text-white opacity-50" />
                         </p>
                     </div>
-                </div>
+                </button>
             </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
@@ -1062,7 +1089,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Attendance Overview Chart -->
-                    <!-- <div v-if="props.attendanceStats" class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
+                    <div v-if="props.attendanceStats" class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
                         <div class="border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
                             <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                                 <PieChart class="h-3.5 w-3.5" />
@@ -1070,10 +1097,10 @@ onMounted(() => {
                             </h2>
                         </div>
                         <div class="p-4 h-64 flex items-center justify-center relative">
-                            <Pie v-if="(props.attendanceStats?.Present || props.attendanceStats?.Late || props.attendanceStats?.Absent || props.attendanceStats?.Excused)" :data="chartData" :options="chartOptions" />
+                            <Doughnut v-if="(props.attendanceStats?.Present || props.attendanceStats?.Late || props.attendanceStats?.Absent || props.attendanceStats?.Excused)" :data="chartData" :options="chartOptions" />
                             <div v-else class="text-xs text-muted-foreground italic absolute">No data yet</div>
                         </div>
-                    </div> -->
+                    </div>
 
                     <!-- Recent Activity Feed -->
                     <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
@@ -1187,7 +1214,7 @@ onMounted(() => {
                                         </kbd>
                                     </div>
                                 </div>
-
+                            
                                 <!-- View Switcher -->
                                 <div class="hidden md:flex rounded-full bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 border border-zinc-200 dark:border-zinc-800">
                                     <button

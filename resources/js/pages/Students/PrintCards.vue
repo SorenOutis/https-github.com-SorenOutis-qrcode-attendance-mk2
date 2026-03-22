@@ -30,6 +30,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 const query = ref('');
 const selected = ref<Set<number>>(new Set(props.preselectedIds ?? []));
 const svgById = ref<Record<number, string>>({});
+const organizationName = ref('ST. JUDE COLLEGE');
+const accentColor = ref('#09090b');
+const showPhoto = ref(true);
+
+const colors = [
+    { name: 'Black', value: '#09090b' },
+    { name: 'Blue', value: '#2563eb' },
+    { name: 'Indigo', value: '#4f46e5' },
+    { name: 'Rose', value: '#e11d48' },
+    { name: 'Emerald', value: '#10b981' },
+];
 
 const filtered = computed(() => {
     const q = query.value.trim().toLowerCase();
@@ -49,14 +60,14 @@ const printingList = computed(() => {
 });
 
 async function ensureSvg(student: Student) {
-    if (svgById.value[student.id]) return;
+    if (svgById.value[student.id] && !accentColor.value) return; // Basic cache
     try {
         let svg = await QRCode.toString(student.qr_token, {
             type: 'svg',
             margin: 1,
             width: 220,
             color: {
-                dark: '#09090b',
+                dark: accentColor.value,
                 light: '#ffffff',
             },
         });
@@ -76,6 +87,12 @@ async function ensureSvg(student: Student) {
 async function ensureVisibleSvgs() {
     await Promise.all(printingList.value.map(ensureSvg));
 }
+
+// Watch accent color to regenerate SVGs
+watch(accentColor, async () => {
+    svgById.value = {}; // Clear cache
+    await ensureVisibleSvgs();
+});
 
 function toggle(id: number) {
     const next = new Set(selected.value);
@@ -116,39 +133,56 @@ watch([query, selected], async () => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="p-6 print:p-0">
             <!-- Toolbar (hidden on print) -->
-            <div class="mb-6 flex flex-col gap-3 rounded-2xl border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-4 shadow-lg print:hidden">
-                <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div class="mb-6 flex flex-col gap-6 rounded-2xl border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-6 shadow-lg print:hidden">
+                <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div class="space-y-1">
-                        <h1 class="text-xl font-serif font-bold tracking-tight">Printable QR Cards</h1>
+                        <h1 class="text-2xl font-serif font-bold tracking-tight">ID Card Designer</h1>
                         <p class="text-sm text-muted-foreground">
-                            Tip: select students (optional), then hit Print. If nothing is selected, it prints the current filtered list.
+                            Customize and print premium student ID cards with QR codes.
                         </p>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <Button variant="outline" size="sm" class="rounded-full" @click="selectAllVisible">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Button variant="outline" size="sm" class="rounded-full h-9" @click="selectAllVisible">
                             <CheckSquare class="mr-2 h-4 w-4" />
-                            Select visible
+                            Select All
                         </Button>
-                        <Button variant="outline" size="sm" class="rounded-full" @click="clearSelection">
+                        <Button variant="outline" size="sm" class="rounded-full h-9" @click="clearSelection">
                             <Square class="mr-2 h-4 w-4" />
                             Clear
                         </Button>
-                        <Button size="sm" class="rounded-full" @click="printNow">
+                        <Button size="sm" class="rounded-full h-9 px-6 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900" @click="printNow">
                             <Printer class="mr-2 h-4 w-4" />
-                            Print
+                            Print Now
                         </Button>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <Input v-model="query" placeholder="Search name, ID number, section..." class="max-w-md" />
-                    <div class="text-xs text-muted-foreground">
-                        Showing <span class="font-semibold text-foreground">{{ printingList.length }}</span>
-                        card(s)
-                        <span v-if="selected.size" class="ml-2">
-                            (Selected: <span class="font-semibold text-foreground">{{ selected.size }}</span>)
-                        </span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Search Students</label>
+                        <Input v-model="query" placeholder="Name, ID number, section..." class="h-9 rounded-xl" />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Organization Name</label>
+                        <Input v-model="organizationName" placeholder="e.g. UNIVERSITY NAME" class="h-9 rounded-xl" />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Accent Color</label>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button 
+                                v-for="color in colors" 
+                                :key="color.value"
+                                @click="accentColor = color.value"
+                                class="h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 flex items-center justify-center relative"
+                                :style="{ backgroundColor: color.value }"
+                                :class="accentColor === color.value ? 'border-zinc-400 ring-2 ring-offset-2 ring-zinc-200' : 'border-transparent'"
+                            >
+                                <div v-if="accentColor === color.value" class="h-2 w-2 rounded-full bg-white shadow-sm"></div>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -156,64 +190,107 @@ watch([query, selected], async () => {
             <!-- Print sheet -->
             <div class="mx-auto w-full max-w-[1200px] print:max-w-none">
                 <div
-                    class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-2"
+                    class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 print:grid-cols-2 print:gap-4"
                     style="print-color-adjust: exact; -webkit-print-color-adjust: exact;"
                 >
                     <button
                         v-for="student in printingList"
                         :key="student.id"
                         type="button"
-                        class="text-left"
+                        class="text-left outline-none group"
                         @click="toggle(student.id)"
                     >
                         <div
                             :class="
                                 cn(
-                                    'relative overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-all',
-                                    'border-zinc-200 hover:shadow-md',
-                                    selected.has(student.id) ? 'ring-2 ring-ring ring-offset-2 ring-offset-background' : '',
-                                    'print:shadow-none print:ring-0 print:ring-offset-0 print:border-zinc-300',
+                                    'relative overflow-hidden rounded-[1.25rem] border bg-white shadow-xl transition-all duration-300',
+                                    'border-zinc-200 hover:shadow-2xl group-hover:-translate-y-1',
+                                    selected.has(student.id) ? 'ring-2 ring-offset-4 ring-offset-background' : '',
+                                    'print:shadow-none print:ring-0 print:ring-offset-0 print:border-zinc-300 print:hover:translate-y-0',
                                 )
                             "
-                            style="width: 3.375in; height: 2.125in;"
+                            :style="{ 
+                                width: '3.375in', 
+                                height: '2.125in',
+                                borderColor: selected.has(student.id) ? accentColor : undefined,
+                                ringColor: accentColor 
+                            }"
                         >
-                            <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:28px_28px] opacity-60 print:opacity-30"></div>
+                            <!-- Decorative background -->
+                            <div 
+                                class="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full opacity-10 blur-2xl"
+                                :style="{ backgroundColor: accentColor }"
+                            ></div>
+                            <div 
+                                class="absolute bottom-0 left-0 w-24 h-24 -ml-6 -mb-6 rounded-full opacity-5 blur-xl"
+                                :style="{ backgroundColor: accentColor }"
+                            ></div>
 
-
-                            <div class="relative z-10 flex h-full gap-3">
-                                <div class="flex w-[1.35in] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white p-2">
-                                    <div
-                                        v-if="svgById[student.id]"
-                                        class="h-full w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
-                                        v-html="svgById[student.id]"
-                                    />
-                                    <div v-else class="text-xs text-zinc-500">QR…</div>
+                            <div class="relative z-10 flex h-full flex-col">
+                                <!-- Card Header -->
+                                <div 
+                                    class="h-10 px-4 flex items-center justify-between border-b"
+                                    :style="{ borderBottomColor: accentColor + '20' }"
+                                >
+                                    <div class="text-[9px] font-black uppercase tracking-[0.2em]" :style="{ color: accentColor }">
+                                        {{ organizationName }}
+                                    </div>
+                                    <div class="text-[8px] font-semibold text-zinc-400 uppercase tracking-widest">
+                                        Identity Card
+                                    </div>
                                 </div>
 
-                                <div class="flex min-w-0 flex-1 flex-col justify-between">
-                                    <div class="space-y-1">
-                                        <div class="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-500">
-                                            QR Attendance
-                                        </div>
-                                        <div class="line-clamp-2 text-base font-bold leading-tight text-zinc-900">
-                                            {{ student.name }}
-                                        </div>
-                                        <div class="text-xs font-medium text-zinc-600">
-                                            ID: <span class="font-mono text-zinc-900">{{ student.student_number }}</span>
-                                        </div>
-                                        <div v-if="student.section" class="text-xs text-zinc-600">
-                                            Section: <span class="font-semibold text-zinc-900">{{ student.section }}</span>
+                                <div class="flex-1 flex p-4 gap-4">
+                                    <!-- Photo Placeholder or QR -->
+                                    <div class="flex flex-col gap-2 shrink-0">
+                                        <div 
+                                            class="w-20 h-24 rounded-lg bg-zinc-50 border border-dashed border-zinc-200 flex items-center justify-center overflow-hidden relative"
+                                        >
+                                            <div class="absolute inset-0 flex items-center justify-center opacity-10">
+                                                <UserIcon class="w-12 h-12" />
+                                            </div>
+                                            <span class="text-[8px] text-zinc-400 font-bold uppercase text-center px-2 z-10">Photo Here</span>
                                         </div>
                                     </div>
 
-                                    <div class="flex items-center justify-between pt-2">
-                                        <div class="text-[10px] text-zinc-500">
-                                            Scan to open portal
-                                        </div>
-                                        <div class="rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-700 print:hidden">
-                                            {{ selected.has(student.id) ? 'Selected' : 'Tap to select' }}
+                                    <!-- Student Details -->
+                                    <div class="flex-1 flex flex-col justify-between min-w-0">
+                                        <div class="space-y-1">
+                                            <div class="line-clamp-1 text-base font-black leading-tight text-zinc-900 uppercase">
+                                                {{ student.name }}
+                                            </div>
+                                            <div class="flex flex-col gap-0.5">
+                                                <div class="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Student Number</div>
+                                                <div class="text-xs font-black font-mono text-zinc-900">{{ student.student_number }}</div>
+                                            </div>
+                                            <div v-if="student.section" class="flex flex-col gap-0.5">
+                                                <div class="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Section</div>
+                                                <div class="text-xs font-bold text-zinc-700">{{ student.section }}</div>
+                                            </div>
                                         </div>
                                     </div>
+
+                                    <!-- QR Code (Smaller and Sleek) -->
+                                    <div class="w-20 flex flex-col items-center gap-1 shrink-0 ml-auto">
+                                        <div class="w-16 h-16 rounded-lg border border-zinc-100 bg-white p-1 shadow-sm">
+                                            <div
+                                                v-if="svgById[student.id]"
+                                                class="h-full w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
+                                                v-html="svgById[student.id]"
+                                            />
+                                        </div>
+                                        <div class="text-[7px] font-bold uppercase tracking-tighter text-zinc-400">Scan to verify</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="px-4 py-2 border-t flex items-center justify-between" :style="{ borderTopColor: accentColor + '10' }">
+                                    <div class="text-[7px] text-zinc-300 font-mono italic">
+                                        {{ student.qr_token.substring(0, 16) }}...
+                                    </div>
+                                    <div 
+                                        class="h-1.5 w-1.5 rounded-full"
+                                        :style="{ backgroundColor: accentColor }"
+                                    ></div>
                                 </div>
                             </div>
                         </div>
@@ -223,4 +300,13 @@ watch([query, selected], async () => {
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+@media print {
+    @page {
+        size: auto;
+        margin: 0.5in;
+    }
+}
+</style>
 

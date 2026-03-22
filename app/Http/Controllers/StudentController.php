@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\ActivityLogger;
 use App\Models\Attendance;
 use App\Models\Student;
 use App\Models\StudentQrToken;
@@ -241,7 +242,11 @@ class StudentController extends Controller
 
     public function destroy(Student $student)
     {
+        $name = $student->name;
+        $id = $student->id;
         $student->delete();
+
+        ActivityLogger::log('student.delete', "Moved student to trash: {$name}", ['id' => $id]);
 
         return redirect()
             ->back()
@@ -255,6 +260,8 @@ class StudentController extends Controller
         $student = Student::withTrashed()->findOrFail($id);
         $student->restore();
 
+        ActivityLogger::log('student.restore', "Restored student from trash: {$student->name}", ['id' => $student->id]);
+
         return redirect()
             ->back()
             ->with('flash', [
@@ -265,7 +272,10 @@ class StudentController extends Controller
     public function forceDelete($id)
     {
         $student = Student::withTrashed()->findOrFail($id);
+        $name = $student->name;
         $student->forceDelete();
+
+        ActivityLogger::log('student.force-delete', "Permanently deleted student: {$name}", ['id' => $id]);
 
         return redirect()
             ->back()
@@ -305,6 +315,8 @@ class StudentController extends Controller
         $data['qr_token'] = Str::uuid()->toString();
 
         $student = Student::create($data);
+
+        ActivityLogger::log('student.create', "Created student: {$student->name}", ['id' => $student->id]);
 
         StudentQrToken::create([
             'student_id' => $student->id,
@@ -352,6 +364,8 @@ class StudentController extends Controller
             ->all();
 
         $student->update($data);
+
+        ActivityLogger::log('student.update', "Updated student: {$student->name}", ['id' => $student->id]);
 
         return redirect()
             ->back()

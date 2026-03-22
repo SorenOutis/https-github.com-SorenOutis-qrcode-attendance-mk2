@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ManualAttendanceController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\SubjectController;
 use App\Models\Attendance;
 use App\Models\Comment;
@@ -49,6 +53,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('students/{id}/force-delete', [StudentController::class, 'forceDelete'])->name('students.force-delete');
     Route::post('students/{student}/qr/regenerate', [StudentController::class, 'regenerateQr'])->name('students.qr.regenerate');
     Route::get('students/{student}/attendance', [StudentController::class, 'attendance'])->name('students.attendance');
+    Route::post('students/import', [StudentImportController::class, 'store'])->name('students.import');
+    Route::get('students/sample', [StudentImportController::class, 'downloadSample'])->name('students.sample');
 
     Route::post('attendance/scan', [AttendanceController::class, 'scan'])->name('attendance.scan');
     Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
@@ -77,6 +83,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('backups/{file}', [BackupController::class, 'destroy'])->name('backups.destroy');
     Route::get('backups/{file}/download', [BackupController::class, 'download'])->name('backups.download');
     Route::post('backups/upload', [BackupController::class, 'upload'])->name('backups.upload');
+    Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
 });
 
 require __DIR__.'/settings.php';

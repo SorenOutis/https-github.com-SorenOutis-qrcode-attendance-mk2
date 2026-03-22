@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\ActivityLogger;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class BackupController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $backupDir = storage_path('app/private/backups');
         if (! File::exists($backupDir)) {
@@ -33,7 +36,7 @@ class BackupController extends Controller
         ]);
     }
 
-    public function store()
+    public function store(): RedirectResponse
     {
         $backupDir = storage_path('app/private/backups');
         if (! File::exists($backupDir)) {
@@ -51,10 +54,16 @@ class BackupController extends Controller
 
         File::copy($databasePath, $backupPath);
 
+        ActivityLogger::log(
+            'backup.create',
+            "Created a new database backup: {$fileName}",
+            ['filename' => $fileName]
+        );
+
         return back()->with('success', 'Backup created successfully.');
     }
 
-    public function restore($file)
+    public function restore($file): RedirectResponse
     {
         $backupPath = storage_path('app/private/backups/'.$file);
 
@@ -67,15 +76,27 @@ class BackupController extends Controller
         // Restore the backup by copying it over the existing database
         File::copy($backupPath, $databasePath);
 
+        ActivityLogger::log(
+            'backup.restore',
+            "Restored database from backup: {$file}",
+            ['filename' => $file]
+        );
+
         return back()->with('success', 'Database restored successfully.');
     }
 
-    public function destroy($file)
+    public function destroy($file): RedirectResponse
     {
         $backupPath = storage_path('app/private/backups/'.$file);
 
         if (File::exists($backupPath)) {
             File::delete($backupPath);
+
+            ActivityLogger::log(
+                'backup.delete',
+                "Deleted backup file: {$file}",
+                ['filename' => $file]
+            );
 
             return back()->with('success', 'Backup deleted successfully.');
         }
@@ -94,7 +115,7 @@ class BackupController extends Controller
         return back()->with('error', 'Backup file not found.');
     }
 
-    public function upload(Request $request)
+    public function upload(Request $request): RedirectResponse
     {
         $request->validate([
             'backup' => ['required', 'file'],
@@ -114,10 +135,16 @@ class BackupController extends Controller
         $fileName = 'backup_uploaded_'.now()->format('Y_m_d_His').'.sqlite';
         $file->move($backupDir, $fileName);
 
+        ActivityLogger::log(
+            'backup.upload',
+            "Uploaded an external backup file: {$fileName}",
+            ['filename' => $fileName]
+        );
+
         return back()->with('success', 'Backup uploaded successfully. You can now restore it.');
     }
 
-    private function formatBytes($bytes, $precision = 2)
+    private function formatBytes($bytes, $precision = 2): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
 

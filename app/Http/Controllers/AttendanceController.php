@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\ActivityLogger;
 use App\Models\Attendance;
 use App\Models\Student;
 use Carbon\CarbonImmutable;
@@ -20,6 +21,8 @@ class AttendanceController extends Controller
         $attendance->update([
             'status' => $validated['status'],
         ]);
+
+        ActivityLogger::log('attendance.update', "Updated attendance for student: {$attendance->student->name}", ['id' => $attendance->id, 'status' => $validated['status']]);
 
         return redirect()->back();
     }
@@ -96,6 +99,12 @@ class AttendanceController extends Controller
             'slot_index' => $slotIndex,
             'slot_start' => $slot['start'],
             'slot_end' => $slot['end'],
+        ]);
+
+        ActivityLogger::log('attendance.scan', "Attendance scanned for student: {$student->name}", [
+            'id' => $attendance->id,
+            'status' => $status,
+            'subject_id' => $slot['subject_id'] ?? null,
         ]);
 
         $attendance->load('subject');

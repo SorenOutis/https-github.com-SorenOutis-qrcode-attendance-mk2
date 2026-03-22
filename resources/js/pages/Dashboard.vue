@@ -273,6 +273,9 @@ const el = ref<HTMLElement | null>(null);
 const { width: windowWidth, height: windowHeight } = useWindowSize();
 
 const viewMode = ref<'table' | 'grid'>('table');
+const importModalOpen = ref(false);
+const importFile = ref<File | null>(null);
+const importing = ref(false);
 
 // Automatic switching for mobile
 watch(windowWidth, (newWidth) => {
@@ -314,6 +317,35 @@ watch([windowWidth, windowHeight], ([newW, newH]) => {
 const handleScanClick = () => {
     // Global scanner is handled via the bottom nav or sidebar
 };
+
+function handleFileChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+        importFile.value = target.files[0];
+    }
+}
+
+async function submitImport() {
+    if (!importFile.value) return;
+
+    importing.value = true;
+    const formData = new FormData();
+    formData.append('file', importFile.value);
+
+    router.post('/students/import', formData, {
+        onSuccess: () => {
+            importModalOpen.value = false;
+            importFile.value = null;
+            toast.success('Students imported successfully');
+        },
+        onError: (errors) => {
+            toast.error(errors.file || 'Error importing students');
+        },
+        onFinish: () => {
+            importing.value = false;
+        },
+    });
+}
 
 // Group attendance records by local date (most-recent date first)
 const groupedAttendanceHistory = computed(() => {
@@ -1234,6 +1266,17 @@ onMounted(() => {
                                         <LayoutGrid class="h-4 w-4" />
                                     </button>
                                 </div>
+
+                                <Button 
+                                    v-if="activeTab === 'active'"
+                                    variant="outline"
+                                    size="sm" 
+                                    class="rounded-full shrink-0 gap-1.5 border-zinc-200 dark:border-zinc-800" 
+                                    @click="importModalOpen = true"
+                                >
+                                    <UserPlus class="h-4 w-4" />
+                                    <span class="hidden sm:inline">Import</span>
+                                </Button>
 
                                 <Button 
                                     v-if="activeTab === 'active'"
@@ -2210,6 +2253,68 @@ onMounted(() => {
                                 Close
                             </Button>
                         </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <!-- Import Students Dialog -->
+            <Dialog v-model:open="importModalOpen">
+                <DialogContent class="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle class="flex items-center gap-2">
+                            <UserPlus class="h-5 w-5" />
+                            Import Students
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div class="py-4 space-y-4">
+                        <p class="text-sm text-muted-foreground">
+                            Upload a CSV file containing student information. The file should have the following headers: 
+                            <code class="text-xs bg-muted px-1 rounded font-bold">name</code>, 
+                            <code class="text-xs bg-muted px-1 rounded font-bold">student_number</code>, 
+                            <code class="text-xs bg-muted px-1 rounded font-bold">email</code>, 
+                            <code class="text-xs bg-muted px-1 rounded font-bold">section</code>.
+                        </p>
+
+                        <div class="flex items-center justify-between p-3 border rounded-lg bg-zinc-50 dark:bg-zinc-900/50">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 rounded-full bg-zinc-200 dark:bg-zinc-800">
+                                    <Download class="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold">Need a template?</span>
+                                    <span class="text-[10px] text-muted-foreground">Download our sample CSV file.</span>
+                                </div>
+                            </div>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                class="text-[10px] font-bold h-7"
+                                as-child
+                            >
+                                <a href="/students/sample" target="_blank">Download Sample</a>
+                            </Button>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">CSV File</label>
+                            <input 
+                                type="file" 
+                                accept=".csv"
+                                class="w-full text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-semibold file:bg-zinc-900 file:text-white dark:file:bg-white dark:file:text-zinc-900 hover:file:bg-zinc-800 transition-all cursor-pointer border rounded-lg p-1"
+                                @change="handleFileChange"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter class="gap-2">
+                        <Button variant="outline" @click="importModalOpen = false">
+                            Cancel
+                        </Button>
+                        <Button 
+                            :disabled="!importFile || importing"
+                            @click="submitImport"
+                        >
+                            {{ importing ? 'Importing...' : 'Start Import' }}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

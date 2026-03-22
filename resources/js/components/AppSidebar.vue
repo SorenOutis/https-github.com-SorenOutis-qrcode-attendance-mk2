@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, ChartBar, Database, FolderGit2, LayoutGrid, MessagesSquare, Star, User, UserCheck } from 'lucide-vue-next';
+import { Activity, BookOpen, Calendar, ChartBar, Database, FolderGit2, LayoutGrid, MessagesSquare, Star, User, UserCheck } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -51,6 +51,16 @@ const mainNavItems: NavItem[] = [
         title: 'Backups',
         href: backupsIndex().url,
         icon: Database,
+    },
+    {
+        title: 'Activity Logs',
+        href: '/activity-logs',
+        icon: Activity,
+    },
+    {
+        title: 'Calendar',
+        href: '/calendar',
+        icon: Calendar,
     },
 ];
 

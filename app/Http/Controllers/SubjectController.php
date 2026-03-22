@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Subject;
+use App\ActivityLogger;
 use App\Http\Requests\StoreSubjectRequest;
 use App\Http\Requests\UpdateSubjectRequest;
+use App\Models\Student;
+use App\Models\Subject;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
 
 class SubjectController extends Controller
 {
@@ -17,16 +19,19 @@ class SubjectController extends Controller
     public function index(): Response
     {
         $subjects = Subject::orderBy('name')->get();
-        $students = \App\Models\Student::get(['id', 'name', 'student_number', 'schedule']);
+        $students = Student::get(['id', 'name', 'student_number', 'schedule']);
 
         $subjects->transform(function ($subject) use ($students) {
             $enrolledStudents = $students->filter(function ($student) use ($subject) {
-                if (!is_array($student->schedule)) return false;
+                if (! is_array($student->schedule)) {
+                    return false;
+                }
                 foreach ($student->schedule as $slot) {
                     if (isset($slot['subject_id']) && $slot['subject_id'] == $subject->id) {
                         return true;
                     }
                 }
+
                 return false;
             })->map(function ($s) {
                 return [
@@ -37,6 +42,7 @@ class SubjectController extends Controller
             })->values();
 
             $subject->students = $enrolledStudents;
+
             return $subject;
         });
 
@@ -50,7 +56,9 @@ class SubjectController extends Controller
      */
     public function store(StoreSubjectRequest $request): RedirectResponse
     {
-        Subject::create($request->validated());
+        $subject = Subject::create($request->validated());
+
+        ActivityLogger::log('subject.create', "Created subject: {$subject->name}", ['id' => $subject->id]);
 
         return redirect()->back()->with('flash', [
             'subject_created' => true,
@@ -64,6 +72,8 @@ class SubjectController extends Controller
     {
         $subject->update($request->validated());
 
+        ActivityLogger::log('subject.update', "Updated subject: {$subject->name}", ['id' => $subject->id]);
+
         return redirect()->back()->with('flash', [
             'subject_updated' => true,
         ]);
@@ -74,7 +84,11 @@ class SubjectController extends Controller
      */
     public function destroy(Subject $subject): RedirectResponse
     {
+        $name = $subject->name;
+        $id = $subject->id;
         $subject->delete();
+
+        ActivityLogger::log('subject.delete', "Deleted subject: {$name}", ['id' => $id]);
 
         return redirect()->back()->with('flash', [
             'subject_deleted' => true,

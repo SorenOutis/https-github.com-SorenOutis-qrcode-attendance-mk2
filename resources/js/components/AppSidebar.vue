@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, ChartBar, FolderGit2, LayoutGrid, MessagesSquare, Star, User, UserCheck } from 'lucide-vue-next';
+import { BookOpen, ChartBar, Database, FolderGit2, LayoutGrid, MessagesSquare, Star, User, UserCheck } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -17,6 +17,8 @@ import {
 import { dashboard } from '@/routes';
 import { edit as profileEdit } from '@/routes/profile';
 import { index as reportsIndex } from '@/routes/reports';
+import { index as backupsIndex } from '@/routes/backups';
+import { index as subjectsIndex } from '@/routes/subjects';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -31,6 +33,11 @@ const mainNavItems: NavItem[] = [
         icon: UserCheck,
     },
     {
+        title: 'Subjects',
+        href: subjectsIndex().url,
+        icon: BookOpen,
+    },
+    {
         title: 'Reports',
         href: reportsIndex().url,
         icon: ChartBar,
@@ -39,6 +46,11 @@ const mainNavItems: NavItem[] = [
         title: 'Profile',
         href: profileEdit().url,
         icon: User,
+    },
+    {
+        title: 'Backups',
+        href: backupsIndex().url,
+        icon: Database,
     },
 ];
 

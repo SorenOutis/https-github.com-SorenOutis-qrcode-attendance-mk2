@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ManualAttendanceController;
 use App\Http\Controllers\RatingController;
@@ -70,6 +70,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('manage-attendance/toggle', [ManualAttendanceController::class, 'toggle'])->name('manage-attendance.toggle');
     Route::post('manage-attendance/mark-all-absent', [ManualAttendanceController::class, 'markAllAbsent'])->name('manage-attendance.mark-all-absent');
     Route::get('manage-attendance/{subject}/{date}/export', [ManualAttendanceController::class, 'exportCsv'])->name('manage-attendance.export');
+
+    Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
+    Route::post('backups', [BackupController::class, 'store'])->name('backups.store');
+    Route::post('backups/{file}/restore', [BackupController::class, 'restore'])->name('backups.restore');
+    Route::delete('backups/{file}', [BackupController::class, 'destroy'])->name('backups.destroy');
+    Route::get('backups/{file}/download', [BackupController::class, 'download'])->name('backups.download');
+    Route::post('backups/upload', [BackupController::class, 'upload'])->name('backups.upload');
 });
 
 require __DIR__.'/settings.php';

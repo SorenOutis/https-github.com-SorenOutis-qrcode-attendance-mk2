@@ -169,7 +169,7 @@ async function downloadCard(student: Student) {
     ctx.stroke();
 
     ctx.fillStyle = accentColor.value;
-    ctx.font = `black ${9 * scale}px Arial`;
+    ctx.font = `900 ${9 * scale}px Arial`; // Use 900 for "black" weight
     ctx.fillText(organizationName.value.toUpperCase(), 16 * scale, 26 * scale);
     
     ctx.fillStyle = '#a1a1aa';
@@ -194,40 +194,64 @@ async function downloadCard(student: Student) {
     ctx.quadraticCurveTo(px, py, px + photoR, py);
     ctx.fill();
     ctx.strokeStyle = '#e4e4e7';
-    ctx.setLineDash([4 * scale, 4 * scale]);
+    const dashSize = 4 * scale;
+    ctx.setLineDash([dashSize, dashSize]);
+    ctx.lineWidth = 0.5 * scale;
     ctx.stroke();
     
-    // 5. Student Details
+    // Draw "PHOTO HERE" text more precisely
     ctx.setLineDash([]);
+    ctx.fillStyle = '#a1a1aa';
+    
+    // Draw simple User icon
+    ctx.beginPath();
+    ctx.arc(px + pw/2, py + ph/2 - 10 * scale, 12 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(px + pw/2, py + ph/2 + 20 * scale, 20 * scale, Math.PI, 0);
+    ctx.fill();
+
+    ctx.font = `bold ${6 * scale}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText('PHOTO HERE', px + pw/2, py + ph/2 + 28 * scale);
+    ctx.textAlign = 'left';
+
+    // 5. Student Details
     ctx.fillStyle = '#09090b';
-    ctx.font = `900 ${16 * scale}px Arial`;
+    ctx.font = `900 ${16 * scale}px Arial`; // Name should be boldest
     ctx.fillText(student.name.toUpperCase(), 112 * scale, 76 * scale);
 
+    const labelFont = `bold ${9 * scale}px Arial`;
+    const valueFont = `900 ${11 * scale}px Arial`;
+
     ctx.fillStyle = '#a1a1aa';
-    ctx.font = `bold ${8 * scale}px Arial`;
-    ctx.fillText('STUDENT NUMBER', 112 * scale, 96 * scale);
+    ctx.font = labelFont;
+    ctx.fillText('STUDENT NUMBER', 112 * scale, 98 * scale);
     ctx.fillStyle = '#09090b';
-    ctx.font = `bold ${11 * scale}px Arial`;
-    ctx.fillText(student.student_number, 112 * scale, 110 * scale);
+    ctx.font = valueFont;
+    ctx.fillText(student.student_number, 112 * scale, 114 * scale);
 
     if (student.section) {
         ctx.fillStyle = '#a1a1aa';
-        ctx.font = `bold ${8 * scale}px Arial`;
-        ctx.fillText('SECTION', 112 * scale, 128 * scale);
+        ctx.font = labelFont;
+        ctx.fillText('SECTION', 112 * scale, 134 * scale);
         ctx.fillStyle = '#3f3f46';
         ctx.font = `bold ${11 * scale}px Arial`;
-        ctx.fillText(student.section, 112 * scale, 142 * scale);
+        ctx.fillText(student.section, 112 * scale, 150 * scale);
     }
 
     // 6. Footer bar
-    ctx.strokeStyle = accentColor.value + '10';
+    ctx.strokeStyle = accentColor.value + '20';
+    ctx.lineWidth = 0.5 * scale;
     ctx.beginPath();
     ctx.moveTo(0, h - 30 * scale);
     ctx.lineTo(w, h - 30 * scale);
     ctx.stroke();
+
     ctx.fillStyle = '#d4d4d8';
     ctx.font = `italic ${7 * scale}px Courier New`;
     ctx.fillText(student.qr_token.substring(0, 16) + '...', 16 * scale, h - 12 * scale);
+    
     ctx.fillStyle = accentColor.value;
     ctx.beginPath();
     ctx.arc(w - 20 * scale, h - 15 * scale, 3 * scale, 0, Math.PI * 2);
@@ -243,10 +267,29 @@ async function downloadCard(student: Student) {
             img.onload = () => {
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
-                const qrx = w - 90 * scale, qry = 56 * scale, qrw = 74 * scale, qrh = 74 * scale;
-                ctx.roundRect(qrx - 2 * scale, qry - 2 * scale, qrw + 4 * scale, qrh + 4 * scale, 6 * scale);
+                const qrx = w - 90 * scale, qry = 54 * scale, qrw = 74 * scale, qrh = 74 * scale;
+                // Draw a nice rounded box for the QR
+                const qrr = 6 * scale;
+                ctx.moveTo(qrx - 2 * scale + qrr, qry - 2 * scale);
+                ctx.lineTo(qrx + qrw + 2 * scale - qrr, qry - 2 * scale);
+                ctx.quadraticCurveTo(qrx + qrw + 2 * scale, qry - 2 * scale, qrx + qrw + 2 * scale, qry - 2 * scale + qrr);
+                ctx.lineTo(qrx + qrw + 2 * scale, qry + qrh + 2 * scale - qrr);
+                ctx.quadraticCurveTo(qrx + qrw + 2 * scale, qry + qrh + 2 * scale, qrx + qrw + 2 * scale - qrr, qry + qrh + 2 * scale);
+                ctx.lineTo(qrx - 2 * scale + qrr, qry + qrh + 2 * scale);
+                ctx.quadraticCurveTo(qrx - 2 * scale, qry + qrh + 2 * scale, qrx - 2 * scale, qry + qrh + 2 * scale - qrr);
+                ctx.lineTo(qrx - 2 * scale, qry - 2 * scale + qrr);
+                ctx.quadraticCurveTo(qrx - 2 * scale, qry - 2 * scale, qrx - 2 * scale + qrr, qry - 2 * scale);
+                ctx.closePath();
                 ctx.fill();
+
                 ctx.drawImage(img, qrx, qry, qrw, qrh);
+
+                // Add "SCAN TO VERIFY" below QR
+                ctx.fillStyle = '#a1a1aa';
+                ctx.font = `bold ${7 * scale}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('SCAN TO VERIFY', qrx + qrw/2, qry + qrh + 8 * scale);
+                ctx.textAlign = 'left';
                 resolve(null);
             };
         });

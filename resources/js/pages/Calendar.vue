@@ -175,8 +175,8 @@ onMounted(() => {
                         <span class="h-1 w-1 rounded-full bg-zinc-400 animate-pulse"></span>
                         <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Tracker</span>
                     </div>
-                    <h1 class="text-3xl sm:text-4xl font-serif font-black tracking-tighter text-foreground leading-none">Attendance Calendar</h1>
-                    <p class="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-bold">Visualize attendance history</p>
+                    <h1 class="text-xl sm:text-4xl font-serif font-black tracking-tighter text-foreground leading-none">Attendance Calendar</h1>
+                    <p class="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2 uppercase tracking-widest font-bold">Visualize attendance history</p>
                 </div>
                 
                 <div class="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
@@ -197,9 +197,9 @@ onMounted(() => {
             <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm overflow-hidden flex flex-col h-full min-h-[600px] stagger-animate relative">
                 <CalendarIcon class="absolute right-[-10%] top-[-5%] h-64 w-64 text-zinc-900/[0.02] dark:text-white/[0.02] pointer-events-none" />
                 
-                <div class="flex items-center justify-between p-4 sm:p-6 border-b border-zinc-100 dark:border-zinc-800 relative z-10 bg-zinc-50/50 dark:bg-zinc-900/50 backdrop-blur-sm">
-                    <h2 class="text-xl font-serif font-bold uppercase tracking-widest">{{ monthNames[currentMonth] }} {{ currentYear }}</h2>
-                    <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between p-3 sm:p-6 border-b border-zinc-100 dark:border-zinc-800 relative z-10 bg-zinc-50/50 dark:bg-zinc-900/50 backdrop-blur-sm">
+                    <h2 class="text-lg sm:text-xl font-serif font-bold uppercase tracking-widest">{{ monthNames[currentMonth] }} {{ currentYear }}</h2>
+                    <div class="flex items-center gap-1 sm:gap-2">
                         <Button variant="outline" size="icon" @click="prevMonth" class="h-10 w-10 rounded-full border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center">
                             <ChevronLeft class="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
                         </Button>
@@ -221,7 +221,7 @@ onMounted(() => {
                         v-for="(day, i) in calendarDays" 
                         :key="i"
                         @click="openDayDetails(day.day, day.month, day.year)"
-                        class="min-h-[80px] sm:min-h-[120px] border-r border-zinc-100 dark:border-zinc-800 border-b last:border-r-0 p-2 sm:p-3 group transition-colors flex flex-col gap-1 cursor-pointer hover:bg-zinc-50/80 dark:hover:bg-zinc-900/80 hover:shadow-inner"
+                        class="min-h-[60px] sm:min-h-[120px] border-r border-zinc-100 dark:border-zinc-800 border-b last:border-r-0 p-1.5 sm:p-3 group transition-colors flex flex-col gap-1 cursor-pointer hover:bg-zinc-50/80 dark:hover:bg-zinc-900/80 hover:shadow-inner"
                         :class="[
                             day.currentMonth ? '' : 'bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-600 opacity-60',
                         ]"
@@ -251,7 +251,7 @@ onMounted(() => {
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 sm:gap-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground stagger-animate bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 self-start">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 sm:gap-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground stagger-animate bg-zinc-50 dark:bg-zinc-900/50 p-3 sm:p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 self-start">
                 <div class="flex items-center gap-2">
                     <div class="h-2.5 w-2.5 rounded-full bg-zinc-900 dark:bg-white shadow-[0_0_10px_rgba(0,0,0,0.1)] dark:shadow-[0_0_10px_rgba(255,255,255,0.2)]"></div>
                     <span>Present</span>

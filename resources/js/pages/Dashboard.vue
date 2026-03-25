@@ -1004,15 +1004,15 @@ onMounted(() => {
         <div class="flex h-full flex-1 flex-col gap-4 sm:gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
             <!-- Welcome Header -->
             <div class="flex items-center justify-between gap-4 px-1">
-                <div class="flex flex-col gap-1">
-                    <h1 class="text-3xl font-serif font-bold tracking-tight">
+                <div class="flex flex-col gap-0.5 sm:gap-1">
+                    <h1 class="text-xl sm:text-3xl font-serif font-bold tracking-tight">
                         {{ greeting }}, {{ userName }}!
                     </h1>
-                    <p class="text-sm text-muted-foreground font-medium">
+                    <p class="text-xs sm:text-sm text-muted-foreground font-medium">
                         {{ greetingSubtext }}
                     </p>
-                    <div class="flex items-center gap-2 text-[10px] text-muted-foreground mt-1">
-                        <Calendar class="h-3.5 w-3.5" />
+                    <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] text-muted-foreground mt-0.5 sm:mt-1">
+                        <Calendar class="h-3 sm:h-3.5 w-3 sm:w-3.5" />
                         <span>{{ formattedCurrentDate }}</span>
                     </div>
                 </div>
@@ -1047,9 +1047,9 @@ onMounted(() => {
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Total Students
                         </p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
+                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
                             {{ searchQuery ? filteredStudents.length : Math.round(animatedStats.total) }}
-                            <CheckCircle2 v-if="!statusFilter" class="w-5 h-5 text-zinc-900 dark:text-white opacity-50" />
+                            <CheckCircle2 v-if="!statusFilter" class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-900 dark:text-white opacity-50" />
                         </p>
                     </div>
                 </button>
@@ -1066,9 +1066,9 @@ onMounted(() => {
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Present Today
                         </p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
+                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
                             {{ Math.round(animatedStats.present) }}
-                            <CheckCircle2 v-if="statusFilter === 'Present'" class="w-5 h-5 text-zinc-900 dark:text-white opacity-50" />
+                            <CheckCircle2 v-if="statusFilter === 'Present'" class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-900 dark:text-white opacity-50" />
                         </p>
                     </div>
                 </button>
@@ -1085,9 +1085,9 @@ onMounted(() => {
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Late Today
                         </p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
+                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
                             {{ Math.round(animatedStats.late) }}
-                            <CheckCircle2 v-if="statusFilter === 'Late'" class="w-5 h-5 text-zinc-900 dark:text-white opacity-50" />
+                            <CheckCircle2 v-if="statusFilter === 'Late'" class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-900 dark:text-white opacity-50" />
                         </p>
                     </div>
                 </button>
@@ -1104,9 +1104,9 @@ onMounted(() => {
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Absent Today
                         </p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
+                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
                             {{ Math.round(animatedStats.absent) }}
-                            <CheckCircle2 v-if="statusFilter === 'Absent'" class="w-5 h-5 text-zinc-900 dark:text-white opacity-50" />
+                            <CheckCircle2 v-if="statusFilter === 'Absent'" class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-900 dark:text-white opacity-50" />
                         </p>
                     </div>
                 </button>
@@ -1207,10 +1207,10 @@ onMounted(() => {
                         ref="tableRef"
                         class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl"
                     >
-                        <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-4 sm:p-6 gap-4 bg-zinc-50 dark:bg-zinc-900/50">
+                        <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-3 sm:p-6 gap-3 sm:gap-4 bg-zinc-50 dark:bg-zinc-900/50">
                             <!-- Title row -->
                             <div class="flex items-center justify-between gap-2">
-                                <h2 class="text-lg sm:text-2xl font-serif font-bold tracking-tight text-foreground">
+                                <h2 class="text-base sm:text-2xl font-serif font-bold tracking-tight text-foreground">
                                     Today's Attendance Status
                                 </h2>
                             </div>

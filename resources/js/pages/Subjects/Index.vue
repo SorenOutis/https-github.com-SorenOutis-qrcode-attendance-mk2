@@ -206,7 +206,7 @@ onMounted(() => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
-            <div class="rounded-[2rem] border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-8 shadow-md relative overflow-hidden">
+            <div class="rounded-xl sm:rounded-[2rem] border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-4 sm:p-8 shadow-md relative overflow-hidden">
                 <h1 class="text-2xl font-serif font-bold text-foreground tracking-tight">
                     Subjects
                 </h1>
@@ -251,7 +251,7 @@ onMounted(() => {
                     class="h-full"
                 >
                     <article 
-                        class="group relative flex flex-col h-36 rounded-xl border border-sidebar-border/40 bg-background/40 p-4 shadow-sm transition-colors duration-200 hover:bg-background/60 overflow-hidden"
+                        class="group relative flex flex-col h-28 sm:h-36 rounded-xl border border-sidebar-border/40 bg-background/40 p-3 sm:p-4 shadow-sm transition-colors duration-200 hover:bg-background/60 overflow-hidden"
                     >
                         <Users class="absolute right-[-5%] bottom-[-10%] h-24 w-24 text-foreground/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                         <div class="relative z-10 flex-1 flex flex-col justify-between">

@@ -46,8 +46,8 @@ const handleItemClick = (item: any) => {
 </script>
 
 <template>
-    <div class="fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 px-4 md:hidden">
-        <nav class="flex h-20 items-center justify-around rounded-[2.5rem] bg-white px-2 shadow-[0_15px_50px_-12px_rgba(0,0,0,0.15)] ring-1 ring-zinc-950/5 backdrop-blur-md dark:bg-zinc-900 dark:ring-white/10 dark:shadow-[0_15px_50px_-12px_rgba(0,0,0,0.5)]">
+    <div class="fixed bottom-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 px-4 md:hidden">
+        <nav class="flex h-16 items-center justify-around rounded-[2.5rem] bg-white px-2 shadow-[0_15px_50px_-12px_rgba(0,0,0,0.15)] ring-1 ring-zinc-950/5 backdrop-blur-md dark:bg-zinc-900 dark:ring-white/10 dark:shadow-[0_15px_50px_-12px_rgba(0,0,0,0.5)]">
             <template v-for="item in navItems" :key="item.title">
                 <component
                     :is="item.isScanner ? 'button' : Link"

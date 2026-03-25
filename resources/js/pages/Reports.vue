@@ -13,7 +13,7 @@ import {
     ArcElement,
 } from 'chart.js';
 import gsap from 'gsap';
-import { Download, TrendingUp, Users, Clock } from 'lucide-vue-next';
+import { Download, TrendingUp, Users, Clock, ChevronDown } from 'lucide-vue-next';
 import { onMounted, ref, watch } from 'vue';
 import { Line, Bar, Pie } from 'vue-chartjs';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,7 @@ const props = defineProps<{
 }>();
 
 const loading = ref(true);
+const filtersExpanded = ref(false);
 const stats = ref<any>(null);
 
 const selectedSubject = ref<string>('all');
@@ -169,47 +170,63 @@ function exportCsv() {
     <Head title="Reports & Analytics" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 px-1">
+        <div class="flex flex-col gap-4 sm:gap-6 p-3 sm:p-6 lg:p-8 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 px-1">
                 <div>
                     <p class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500 mb-1 leading-none">
                         Analytics
                     </p>
-                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-serif font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
+                    <h1 class="text-xl sm:text-4xl lg:text-5xl font-serif font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
                         Reports <span class="text-zinc-400 dark:text-zinc-500 italic font-medium">&</span> Insights.
                     </h1>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <Button variant="outline" @click="exportCsv" class="rounded-full h-11 px-6 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm font-bold text-xs uppercase tracking-widest">
-                        <Download class="mr-2 h-4 w-4" stroke-width="2.5" />
-                        Export Data
+                    <Button variant="outline" @click="exportCsv" class="rounded-full h-9 sm:h-11 px-4 sm:px-6 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm font-bold text-[10px] sm:text-xs uppercase tracking-widest">
+                        <Download class="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" stroke-width="2.5" />
+                        Export
                     </Button>
                 </div>
             </div>
 
             <!-- Filters Bar -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 rounded-[2rem] bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50 shadow-inner">
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 ml-1">Subject Scope</label>
-                    <Select v-model="selectedSubject">
-                        <SelectTrigger class="h-11 rounded-2xl bg-white dark:bg-black border-zinc-100 dark:border-zinc-800 shadow-sm focus:ring-0">
-                            <SelectValue placeholder="All Subjects" />
-                        </SelectTrigger>
-                        <SelectContent class="rounded-2xl">
-                            <SelectItem value="all">Global Perspective</SelectItem>
-                            <SelectItem v-for="subject in props.subjects" :key="subject.id" :value="subject.id.toString()">
-                                {{ subject.name }}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 ml-1">Time Horizon (From)</label>
-                    <Input type="date" v-model="startDate" class="h-11 rounded-2xl bg-white dark:bg-black border-zinc-100 dark:border-zinc-800 shadow-sm focus:ring-0" />
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 ml-1">Time Horizon (To)</label>
-                    <Input type="date" v-model="endDate" class="h-11 rounded-2xl bg-white dark:bg-black border-zinc-100 dark:border-zinc-800 shadow-sm focus:ring-0" />
+            <div class="rounded-xl sm:rounded-[2rem] bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50 shadow-inner overflow-hidden">
+                <!-- Mobile filter toggle -->
+                <button
+                    class="flex w-full items-center justify-between px-4 py-2.5 sm:hidden"
+                    @click="filtersExpanded = !filtersExpanded"
+                >
+                    <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Filters</span>
+                    <ChevronDown
+                        class="h-4 w-4 text-zinc-400 transition-transform duration-200"
+                        :class="filtersExpanded ? 'rotate-180' : ''"
+                    />
+                </button>
+                <div
+                    class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-6"
+                    :class="filtersExpanded ? 'block' : 'hidden sm:grid'"
+                >
+                    <div class="space-y-1.5 sm:space-y-2">
+                        <label class="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 ml-1">Subject Scope</label>
+                        <Select v-model="selectedSubject">
+                            <SelectTrigger class="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-white dark:bg-black border-zinc-100 dark:border-zinc-800 shadow-sm focus:ring-0 text-xs sm:text-sm">
+                                <SelectValue placeholder="All Subjects" />
+                            </SelectTrigger>
+                            <SelectContent class="rounded-xl sm:rounded-2xl">
+                                <SelectItem value="all">Global Perspective</SelectItem>
+                                <SelectItem v-for="subject in props.subjects" :key="subject.id" :value="subject.id.toString()">
+                                    {{ subject.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div class="space-y-1.5 sm:space-y-2">
+                        <label class="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 ml-1">Time Horizon (From)</label>
+                        <Input type="date" v-model="startDate" class="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-white dark:bg-black border-zinc-100 dark:border-zinc-800 shadow-sm focus:ring-0 text-xs sm:text-sm" />
+                    </div>
+                    <div class="space-y-1.5 sm:space-y-2">
+                        <label class="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 ml-1">Time Horizon (To)</label>
+                        <Input type="date" v-model="endDate" class="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-white dark:bg-black border-zinc-100 dark:border-zinc-800 shadow-sm focus:ring-0 text-xs sm:text-sm" />
+                    </div>
                 </div>
             </div>
 
@@ -220,68 +237,68 @@ function exportCsv() {
                 </div>
             </div>
 
-            <div v-else class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div v-else class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <!-- Trend Card -->
-                <div class="report-card md:col-span-2 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-8 shadow-2xl text-zinc-900 dark:text-white isolate">
+                <div class="report-card md:col-span-2 rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-8 shadow-xl sm:shadow-2xl text-zinc-900 dark:text-white isolate">
                     <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-zinc-50 dark:bg-zinc-900/30 blur-3xl -z-10"></div>
-                    <div class="mb-6 flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
-                                <TrendingUp class="h-5 w-5 text-zinc-400" />
+                    <div class="mb-3 sm:mb-6 flex items-center justify-between">
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
+                                <TrendingUp class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
                             </div>
                             <div>
-                                <h3 class="font-serif font-black text-xl tracking-tight leading-none mb-1">Attendance Pulse</h3>
-                                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">30 Day Horizon</p>
+                                <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Attendance Pulse</h3>
+                                <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">30 Day Horizon</p>
                             </div>
                         </div>
                     </div>
-                    <div class="h-[300px] sm:h-[350px] lg:h-[400px] w-full mt-6">
+                    <div class="h-[220px] sm:h-[350px] lg:h-[400px] w-full mt-3 sm:mt-6">
                         <Line :data="lineData" :options="chartOptions" v-if="lineData" />
                     </div>
                 </div>
 
                 <!-- Status Distribution -->
-                <div class="report-card rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-8 shadow-2xl text-zinc-900 dark:text-white isolate">
+                <div class="report-card rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-8 shadow-xl sm:shadow-2xl text-zinc-900 dark:text-white isolate">
                     <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-zinc-50 dark:bg-zinc-900/30 blur-3xl -z-10"></div>
-                    <div class="mb-6 flex items-center gap-3">
-                        <div class="h-10 w-10 rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
-                            <Clock class="h-5 w-5 text-zinc-400" />
+                    <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
+                            <Clock class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
                         </div>
                         <div>
-                            <h3 class="font-serif font-black text-xl tracking-tight leading-none mb-1">Status Mix</h3>
-                            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Distribution</p>
+                            <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Status Mix</h3>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Distribution</p>
                         </div>
                     </div>
-                    <div class="h-[300px] sm:h-[350px] lg:h-[400px] w-full mt-6">
+                    <div class="h-[220px] sm:h-[350px] lg:h-[400px] w-full mt-3 sm:mt-6">
                         <Pie :data="pieData" :options="chartOptions" v-if="pieData" />
                     </div>
                 </div>
 
                 <!-- Section Comparison -->
-                <div class="report-card md:col-span-2 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-8 shadow-2xl text-zinc-900 dark:text-white isolate">
+                <div class="report-card md:col-span-2 rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-8 shadow-xl sm:shadow-2xl text-zinc-900 dark:text-white isolate">
                     <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-zinc-50 dark:bg-zinc-900/30 blur-3xl -z-10"></div>
-                    <div class="mb-6 flex items-center gap-3">
-                        <div class="h-10 w-10 rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
-                            <Users class="h-5 w-5 text-zinc-400" />
+                    <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
+                            <Users class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
                         </div>
                         <div>
-                            <h3 class="font-serif font-black text-xl tracking-tight leading-none mb-1">Section Leaderboard</h3>
-                            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Comparison</p>
+                            <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Section Leaderboard</h3>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Comparison</p>
                         </div>
                     </div>
-                    <div class="h-[300px] sm:h-[350px] lg:h-[400px] w-full mt-6">
+                    <div class="h-[220px] sm:h-[350px] lg:h-[400px] w-full mt-3 sm:mt-6">
                         <Bar :data="barData" :options="chartOptions" v-if="barData" />
                     </div>
                 </div>
                 
-                <div class="report-card rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-zinc-900 dark:bg-white p-8 shadow-2xl text-white dark:text-zinc-900 flex flex-col justify-center items-center text-center isolate">
+                <div class="report-card rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-zinc-900 dark:bg-white p-5 sm:p-8 shadow-xl sm:shadow-2xl text-white dark:text-zinc-900 flex flex-col justify-center items-center text-center isolate">
                     <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-zinc-800/50 dark:bg-zinc-100/50 blur-3xl -z-10"></div>
-                    <div class="h-14 w-14 rounded-2xl bg-white/10 dark:bg-black/5 flex items-center justify-center mb-6 border border-white/20 dark:border-black/5">
-                        <TrendingUp class="h-7 w-7" />
+                    <div class="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-white/10 dark:bg-black/5 flex items-center justify-center mb-4 sm:mb-6 border border-white/20 dark:border-black/5">
+                        <TrendingUp class="h-5 w-5 sm:h-7 sm:w-7" />
                     </div>
-                    <h3 class="text-xl font-black mb-2 font-serif uppercase tracking-tight">Generate Deep Logs</h3>
-                    <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-6 font-medium leading-relaxed">Extract full student trajectories and attendance maps in high-fidelity CSV format.</p>
-                    <Button variant="outline" class="rounded-full px-8 h-11 border-white/20 dark:border-black/20 hover:bg-white hover:text-black dark:hover:bg-black dark:hover:text-white transition-all font-bold uppercase tracking-widest text-[10px]" @click="exportCsv">Initiate Export</Button>
+                    <h3 class="text-base sm:text-xl font-black mb-1.5 sm:mb-2 font-serif uppercase tracking-tight">Generate Deep Logs</h3>
+                    <p class="text-[10px] sm:text-xs text-zinc-400 dark:text-zinc-500 mb-4 sm:mb-6 font-medium leading-relaxed">Extract full student trajectories and attendance maps in CSV format.</p>
+                    <Button variant="outline" class="rounded-full px-6 sm:px-8 h-9 sm:h-11 border-white/20 dark:border-black/20 hover:bg-white hover:text-black dark:hover:bg-black dark:hover:text-white transition-all font-bold uppercase tracking-widest text-[10px]" @click="exportCsv">Initiate Export</Button>
                 </div>
             </div>
         </div>

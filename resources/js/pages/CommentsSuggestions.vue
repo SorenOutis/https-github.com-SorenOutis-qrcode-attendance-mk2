@@ -204,7 +204,7 @@ onMounted(() => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
-            <div class="rounded-[2rem] border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-5 sm:p-8 shadow-2xl relative overflow-hidden group">
+            <div class="rounded-xl sm:rounded-[2rem] border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-4 sm:p-8 shadow-2xl relative overflow-hidden group">
                 <div class="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors duration-700"></div>
                 <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div>

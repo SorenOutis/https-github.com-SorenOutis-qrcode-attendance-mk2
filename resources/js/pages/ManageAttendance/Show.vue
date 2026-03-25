@@ -638,34 +638,34 @@ onMounted(() => {
         <div class="flex h-full flex-col gap-5 p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between pb-4 border-b border-zinc-100 dark:border-zinc-900">
                 <div class="space-y-4">
-                    <div class="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" @click="goBack" class="-ml-2 h-12 w-12 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 shadow-sm active:scale-90">
-                            <ChevronLeft class="h-6 w-6 text-zinc-600 dark:text-zinc-400" />
+                    <div class="flex items-center gap-3 sm:gap-4">
+                        <Button variant="ghost" size="icon" @click="goBack" class="-ml-1 sm:-ml-2 h-10 w-10 sm:h-12 sm:w-12 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 shadow-sm active:scale-90 shrink-0">
+                            <ChevronLeft class="h-5 w-5 sm:h-6 sm:w-6 text-zinc-600 dark:text-zinc-400" />
                         </Button>
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 mb-0.5 sm:mb-1">
                                 <span class="h-1 w-1 rounded-full bg-zinc-400 animate-pulse"></span>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Attendance Roster</span>
+                                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-400 truncate">Attendance Roster</span>
                             </div>
-                            <h1 class="text-3xl sm:text-4xl font-serif font-bold tracking-tighter text-foreground leading-none">{{ subject.name }}</h1>
+                            <h1 class="text-2xl sm:text-4xl font-serif font-bold tracking-tighter text-foreground leading-none truncate">{{ subject.name }}</h1>
                         </div>
                     </div>
 
                     <!-- Date Selector Revamp -->
-                    <div class="inline-flex items-center bg-white dark:bg-black rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden group/picker h-14 transition-all hover:shadow-2xl">
+                    <div class="inline-flex items-center bg-white dark:bg-black rounded-[1rem] sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden group/picker h-11 sm:h-14 transition-all hover:shadow-2xl">
                         <button 
                             @click="goToPrevDay"
-                            class="h-full px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 transition-colors group/prev"
+                            class="h-full px-3 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 transition-colors group/prev"
                         >
-                            <ChevronLeft class="w-5 h-5 text-zinc-400 group-hover/prev:text-zinc-900 dark:group-hover/prev:text-white transition-colors" />
+                            <ChevronLeft class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 group-hover/prev:text-zinc-900 dark:group-hover/prev:text-white transition-colors" />
                         </button>
                         
-                        <div class="relative px-6 flex flex-col justify-center min-w-[200px]">
-                            <div class="flex items-center justify-between mb-0.5">
-                                <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block">Selected Date</span>
+                        <div class="relative px-3 sm:px-6 flex flex-col justify-center min-w-[160px] sm:min-w-[200px]">
+                            <div class="flex items-center justify-between mb-0.5 gap-2">
+                                <span class="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400 block truncate">Selected Date</span>
                                 <button 
                                     @click="goToToday"
-                                    class="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all hover:scale-105 active:scale-95 px-1.5 py-0.5 bg-zinc-50 dark:bg-zinc-900 rounded-md border border-zinc-100 dark:border-zinc-800"
+                                    class="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all hover:scale-105 active:scale-95 px-1.5 py-0.5 bg-zinc-50 dark:bg-zinc-900 rounded-md border border-zinc-100 dark:border-zinc-800 shrink-0"
                                 >
                                     Today
                                 </button>
@@ -677,42 +677,42 @@ onMounted(() => {
                                     v-model="selectedDate"
                                     class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
                                 />
-                                <div class="flex items-center gap-2 pointer-events-none group-hover/input:translate-x-1 transition-transform">
-                                    <span class="font-black text-sm text-zinc-900 dark:text-zinc-100 tracking-tight">
+                                <div class="flex items-center gap-1.5 sm:gap-2 pointer-events-none group-hover/input:translate-x-1 transition-transform">
+                                    <span class="font-black text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 tracking-tight">
                                         {{ new Date(props.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }}
                                     </span>
-                                    <CalendarDays class="w-4 h-4 text-zinc-400" />
+                                    <CalendarDays class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
                                 </div>
                             </div>
                         </div>
 
                         <button 
                             @click="goToNextDay"
-                            class="h-full px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-l border-zinc-100 dark:border-zinc-800 transition-colors group/next"
+                            class="h-full px-3 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-l border-zinc-100 dark:border-zinc-800 transition-colors group/next"
                         >
-                            <ChevronRight class="w-5 h-5 text-zinc-400 group-hover/next:text-zinc-900 dark:group-hover/next:text-white transition-colors" />
+                            <ChevronRight class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 group-hover/next:text-zinc-900 dark:group-hover/next:text-white transition-colors" />
                         </button>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 self-start sm:self-auto">
+                <div class="flex items-center gap-2 sm:gap-3 self-stretch sm:self-auto shrink-0 w-full sm:w-auto">
                     <Button 
                         variant="outline"
                         as-child
-                        class="h-10 px-4 sm:px-6 rounded-full font-bold text-zinc-600 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-sm"
+                        class="h-9 sm:h-10 px-3 flex-1 sm:flex-none sm:px-6 rounded-full font-bold text-zinc-600 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-xs sm:text-sm"
                     >
-                        <a :href="`/manage-attendance/${subject.id}/${date}/export`" target="_blank">
-                            <Download class="w-4 h-4 mr-2" />
+                        <a :href="`/manage-attendance/${subject.id}/${date}/export`" target="_blank" class="flex items-center justify-center">
+                            <Download class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                             Export CSV
                         </a>
                     </Button>
                     <Button 
                         variant="outline"
-                        class="h-10 px-4 sm:px-6 rounded-full font-bold text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-black hover:border-zinc-300 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-sm"
+                        class="h-9 sm:h-10 px-3 flex-1 sm:flex-none sm:px-6 rounded-full font-bold text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-black hover:border-zinc-300 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-[10px] sm:text-sm"
                         @click="markAllAbsent"
                         :disabled="isMarkingAllAbsent || students.every(s => s.attendance)"
                     >
-                        <XCircle v-if="!isMarkingAllAbsent" class="w-4 h-4 mr-2" />
+                        <XCircle v-if="!isMarkingAllAbsent" class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
                         {{ isMarkingAllAbsent ? 'Marking...' : 'Mark Remaining Absent' }}
                     </Button>
                 </div>
@@ -733,65 +733,65 @@ onMounted(() => {
             </div>
 
             <!-- Stats Overview (Horizontal scroll on mobile) -->
-            <div ref="cardsRef" class="flex sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 snap-x snap-mandatory no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
+            <div ref="cardsRef" class="flex sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 snap-x snap-mandatory no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 scroll-pl-3">
                 <!-- Total -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
-                    <Users class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                    <Users class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Total</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.total) }}</p>
+                        <p class="mt-0.5 sm:mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.total) }}</p>
                     </div>
                 </div>
                 
                 <!-- Present -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
-                    <UserCheck class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                    <UserCheck class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Present</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-zinc-100 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.present) }}</p>
+                        <p class="mt-0.5 sm:mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-zinc-100 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.present) }}</p>
                     </div>
                 </div>
 
                 <!-- Late -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
-                    <Clock class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                    <Clock class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Late</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-700 dark:text-zinc-300 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.late) }}</p>
+                        <p class="mt-0.5 sm:mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-700 dark:text-zinc-300 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.late) }}</p>
                     </div>
                 </div>
 
                 <!-- Absent -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
-                    <UserX class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                    <UserX class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Absent</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-400 dark:text-zinc-500 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.absent) }}</p>
+                        <p class="mt-0.5 sm:mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-400 dark:text-zinc-500 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.absent) }}</p>
                     </div>
                 </div>
 
                 <!-- Excused -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
-                    <Info class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                    <Info class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Excused</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.excused) }}</p>
+                        <p class="mt-0.5 sm:mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.excused) }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Toolbar: Search & Filters (Sticky) -->
-            <div class="sticky top-0 z-20 flex flex-col md:flex-row gap-3 sm:gap-4 items-center bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-lg p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div class="sticky top-0 z-20 flex flex-col md:flex-row gap-2 sm:gap-4 items-center bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-lg p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
                 <div class="relative w-full md:max-w-md">
-                    <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                    <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500 dark:text-zinc-400" />
                     <Input 
                         v-model="searchQuery" 
                         placeholder="Search student name or number..." 
-                        class="pl-10 h-10 rounded-full bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 shadow-sm"
+                        class="pl-9 sm:pl-10 h-9 sm:h-10 text-xs sm:text-sm rounded-full bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 shadow-sm"
                     />
                 </div>
                 
-                <div class="flex items-center gap-1.5 sm:gap-3 bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full md:w-auto overflow-x-auto no-scrollbar">
+                <div class="flex items-center gap-1 sm:gap-3 bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full md:w-auto overflow-x-auto no-scrollbar">
                     <div class="flex items-center px-2 sm:px-3 border-r border-zinc-300 dark:border-zinc-700 mr-0.5 sm:mr-1 shrink-0">
                         <input 
                             type="checkbox" 
@@ -843,7 +843,7 @@ onMounted(() => {
                     <div v-for="student in filteredStudents" :key="student.id" 
                         data-student-card
                         :class="[
-                            'relative overflow-hidden bg-white dark:bg-black rounded-[1.5rem] sm:rounded-[2rem] p-2.5 sm:p-5 shadow-sm border-2 transition-colors duration-200 cursor-pointer flex flex-col hover:bg-zinc-50 dark:hover:bg-zinc-900',
+                            'relative overflow-hidden bg-white dark:bg-black rounded-xl sm:rounded-[2rem] p-2 sm:p-5 shadow-sm border-2 transition-colors duration-200 cursor-pointer flex flex-col hover:bg-zinc-50 dark:hover:bg-zinc-900',
                             student.attendance?.status === 'Present' ? 'border-emerald-500/20' : 
                             student.attendance?.status === 'Late' ? 'border-amber-500/20' :
                             student.attendance?.status === 'Absent' ? 'border-rose-500/20' : 'border-zinc-100 dark:border-zinc-800',
@@ -927,7 +927,7 @@ onMounted(() => {
                                 @click="updateAttendance(student, status)"
                                 :disabled="!student.slot_start"
                                 :class="[
-                                    'flex flex-col items-center justify-center py-1 sm:py-2.5 rounded-lg sm:rounded-2xl border transition-all active:scale-95 group/btn',
+                                    'flex flex-col items-center justify-center py-0.5 sm:py-2.5 rounded-md sm:rounded-2xl border transition-all active:scale-95 group/btn',
                                     student.attendance?.status === status 
                                         ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-900 shadow-lg' 
                                         : 'bg-white dark:bg-zinc-900/40 border-zinc-100 dark:border-zinc-800 text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-900 dark:hover:text-white'

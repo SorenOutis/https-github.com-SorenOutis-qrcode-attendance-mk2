@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { useDraggable, useWindowSize } from '@vueuse/core';
+import { useDraggable, useWindowSize, useStorage } from '@vueuse/core';
 import type { BreadcrumbItem } from '@/types';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
 import { Doughnut } from 'vue-chartjs';
 import gsap from 'gsap';
-import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check, QrCode, Scan, Download, UserPlus, CheckCircle2, UserCheck, UserX } from 'lucide-vue-next';
+import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check, QrCode, Scan, Download, UserPlus, CheckCircle2, UserCheck, UserX, Zap } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
@@ -21,6 +21,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
@@ -88,6 +89,7 @@ const page = usePage();
 
 const students = computed(() => props.students ?? []);
 const searchQuery = ref('');
+const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
 const searchInputRef = ref<{ $el: HTMLInputElement } | null>(null);
 const toast = useToast();
 const { open: openScanner } = useScanner();
@@ -2367,6 +2369,56 @@ onMounted(() => {
                             Confirm
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <!-- Welcome Modal -->
+            <Dialog v-model:open="showWelcomeModal">
+                <DialogContent class="sm:max-w-[440px] max-w-[95vw] p-0 overflow-hidden border-none bg-transparent shadow-none">
+                    <div class="relative bg-card rounded-[32px] overflow-hidden border border-border/50 shadow-2xl animate-in zoom-in-95 duration-300">
+                        <!-- Background Glow -->
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-zinc-500/10 rounded-full blur-[80px]"></div>
+                        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-zinc-500/10 rounded-full blur-[80px]"></div>
+
+                        <div class="relative p-6 sm:p-8 flex flex-col items-center text-center">
+                            <!-- Mascot / Icon -->
+                            <div class="relative mb-4 sm:mb-6 group">
+                                <div class="absolute inset-0 bg-foreground/10 rounded-full blur-2xl group-hover:bg-foreground/20 transition-all duration-500 scale-110"></div>
+                                <div class="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-card shadow-xl overflow-hidden bg-background flex items-center justify-center">
+                                    <Scan class="w-12 h-12 text-foreground transform group-hover:scale-110 transition-transform duration-500" stroke-width="1.5" />
+                                </div>
+                                <div class="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-foreground text-background p-1.5 sm:p-2 rounded-2xl shadow-lg animate-bounce">
+                                    <Zap class="w-3 h-3 sm:w-4 sm:h-4" />
+                                </div>
+                            </div>
+
+                            <DialogHeader class="space-y-2 sm:space-y-3">
+                                <DialogTitle class="text-2xl sm:text-3xl font-black font-serif tracking-tight text-foreground">
+                                    Welcome Back, <span class="bg-gradient-to-r from-zinc-800 to-zinc-500 dark:from-zinc-200 dark:to-zinc-500 bg-clip-text text-transparent">{{ page.props.auth?.user?.name?.split(' ')[0] || 'Admin' }}</span>!
+                                </DialogTitle>
+                                <DialogDescription class="text-sm sm:text-base text-muted-foreground font-medium leading-relaxed px-2 sm:px-4">
+                                    We're excited to have you back! Your attendance hub is ready. Let's manage some records today.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div class="mt-6 sm:mt-8 grid grid-cols-2 gap-2 sm:gap-3 w-full">
+                                <div class="p-3 sm:p-4 rounded-2xl bg-muted/50 border border-border/40 text-left hover:border-foreground/20 transition-colors">
+                                    <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Students</p>
+                                    <p class="text-base sm:text-lg font-bold text-foreground tabular-nums">{{ students.length }}</p>
+                                </div>
+                                <div class="p-3 sm:p-4 rounded-2xl bg-muted/50 border border-border/40 text-left hover:border-foreground/20 transition-colors">
+                                    <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">At Risk</p>
+                                    <p class="text-base sm:text-lg font-bold text-foreground tabular-nums">{{ atRiskCount }}</p>
+                                </div>
+                            </div>
+
+                            <DialogFooter class="mt-6 sm:mt-8 w-full sm:justify-center">
+                                <button @click="showWelcomeModal = false" class="w-full sm:w-auto px-8 sm:px-10 py-3 sm:py-4 rounded-[18px] sm:rounded-[20px] bg-foreground text-background font-bold text-sm sm:text-base shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                    Get Started
+                                </button>
+                            </DialogFooter>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

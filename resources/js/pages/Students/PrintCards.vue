@@ -401,7 +401,7 @@ watch([query, selected], async () => {
                                     width: '3.375in', 
                                     height: '2.125in',
                                     borderColor: selected.has(student.id) ? accentColor : undefined,
-                                    ringColor: accentColor 
+                                    '--tw-ring-color': accentColor 
                                 }"
                             >
                                 <!-- Quick Download Button (hidden on print) -->

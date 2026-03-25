@@ -21,14 +21,14 @@ import {
     QrCode,
     User,
     UserCheck,
-    UserX
+    UserX,
+    AlertTriangle
 } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import {
     Dialog,
     DialogContent,
@@ -151,6 +151,34 @@ const stats = computed(() => {
     
     return { total, present, late, absent, excused, unmarked, marked, progress };
 });
+
+const isAllMarked = computed(() => stats.value.total > 0 && stats.value.unmarked === 0);
+
+const animatedStats = ref({ total: 0, present: 0, late: 0, absent: 0, excused: 0, marked: 0, progress: 0 });
+
+watch(stats, (newStats) => {
+    gsap.to(animatedStats.value, {
+        total: newStats.total,
+        present: newStats.present,
+        late: newStats.late,
+        absent: newStats.absent,
+        excused: newStats.excused,
+        marked: newStats.marked,
+        progress: newStats.progress,
+        duration: 0.8,
+        ease: 'power2.out',
+        snap: { total: 1, present: 1, late: 1, absent: 1, excused: 1, marked: 1, progress: 1 }
+    });
+}, { immediate: true });
+
+function avatarGradient(name: string): string {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `linear-gradient(135deg, hsl(${hue}, 15%, 20%) 0%, hsl(${(hue + 40) % 360}, 10%, 35%) 100%)`;
+}
 
 function goBack() {
     router.get('/manage-attendance');
@@ -694,66 +722,66 @@ onMounted(() => {
             <div class="mb-2">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-bold uppercase tracking-widest text-zinc-500">Attendance Completion</span>
-                    <span class="text-xs font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{{ stats.marked }} / {{ stats.total }} Marked (<span class="text-primary">{{ stats.progress }}%</span>)</span>
+                    <span class="text-xs font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{{ Math.round(animatedStats.marked) }} / {{ Math.round(animatedStats.total) }} Marked (<span class="text-primary">{{ Math.round(animatedStats.progress) }}%</span>)</span>
                 </div>
                 <div class="h-2.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden flex">
                     <div 
                         class="h-full bg-primary transition-all duration-1000 ease-out"
-                        :style="`width: ${stats.progress}%`"
+                        :style="`width: ${animatedStats.progress}%`"
                     ></div>
                 </div>
             </div>
 
-            <!-- Stats Overview -->
-            <div ref="cardsRef" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            <!-- Stats Overview (Horizontal scroll on mobile) -->
+            <div ref="cardsRef" class="flex sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 snap-x snap-mandatory no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
                 <!-- Total -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
                     <Users class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Total</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">{{ stats.total }}</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.total) }}</p>
                     </div>
                 </div>
                 
                 <!-- Present -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
                     <UserCheck class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Present</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-zinc-100 drop-shadow-sm">{{ stats.present }}</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-zinc-100 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.present) }}</p>
                     </div>
                 </div>
 
                 <!-- Late -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
                     <Clock class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Late</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-700 dark:text-zinc-300 drop-shadow-sm">{{ stats.late }}</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-700 dark:text-zinc-300 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.late) }}</p>
                     </div>
                 </div>
 
                 <!-- Absent -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
                     <UserX class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Absent</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-400 dark:text-zinc-500 drop-shadow-sm">{{ stats.absent }}</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-400 dark:text-zinc-500 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.absent) }}</p>
                     </div>
                 </div>
 
                 <!-- Excused -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 snap-start">
                     <Info class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Excused</p>
-                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm">{{ stats.excused }}</p>
+                        <p class="mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.excused) }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Toolbar: Search & Filters -->
-            <div class="flex flex-col md:flex-row gap-4 items-center bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <!-- Toolbar: Search & Filters (Sticky) -->
+            <div class="sticky top-0 z-20 flex flex-col md:flex-row gap-3 sm:gap-4 items-center bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-lg p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
                 <div class="relative w-full md:max-w-md">
                     <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                     <Input 
@@ -763,8 +791,8 @@ onMounted(() => {
                     />
                 </div>
                 
-                <div class="flex items-center gap-3 bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full md:w-auto overflow-x-auto no-scrollbar">
-                    <div class="flex items-center px-3 border-r border-zinc-300 dark:border-zinc-700 mr-1 shrink-0">
+                <div class="flex items-center gap-1.5 sm:gap-3 bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full md:w-auto overflow-x-auto no-scrollbar">
+                    <div class="flex items-center px-2 sm:px-3 border-r border-zinc-300 dark:border-zinc-700 mr-0.5 sm:mr-1 shrink-0">
                         <input 
                             type="checkbox" 
                             :checked="allSelected" 
@@ -775,33 +803,34 @@ onMounted(() => {
                     </div>
                     <button 
                         @click="statusFilter = 'all'"
-                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'all' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
+                        :class="['h-8 sm:h-9 px-2.5 sm:px-4 rounded-lg text-[10px] sm:text-xs font-semibold transition-all shrink-0', statusFilter === 'all' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
                     >
                         All
                     </button>
                     <button 
                         @click="statusFilter = 'unmarked'"
-                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'unmarked' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
+                        :class="['h-8 sm:h-9 px-2.5 sm:px-4 rounded-lg text-[10px] sm:text-xs font-semibold transition-all shrink-0', statusFilter === 'unmarked' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
                     >
-                        Unmarked ({{ stats.unmarked }})
+                        <span class="sm:hidden">{{ stats.unmarked }}</span>
+                        <span class="hidden sm:inline">Unmarked ({{ stats.unmarked }})</span>
                     </button>
                     <button 
                         @click="statusFilter = 'present'"
-                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'present' ? 'bg-zinc-900 text-white shadow-sm dark:bg-zinc-100 dark:text-zinc-900' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
+                        :class="['h-8 sm:h-9 px-2.5 sm:px-4 rounded-lg text-[10px] sm:text-xs font-semibold transition-all shrink-0', statusFilter === 'present' ? 'bg-zinc-900 text-white shadow-sm dark:bg-zinc-100 dark:text-zinc-900' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
                     >
-                        Present
+                        P
                     </button>
                     <button 
                         @click="statusFilter = 'late'"
-                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'late' ? 'bg-zinc-500 text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
+                        :class="['h-8 sm:h-9 px-2.5 sm:px-4 rounded-lg text-[10px] sm:text-xs font-semibold transition-all shrink-0', statusFilter === 'late' ? 'bg-zinc-500 text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
                     >
-                        Late
+                        L
                     </button>
                     <button 
                         @click="statusFilter = 'absent'"
-                        :class="['h-9 px-4 rounded-lg text-xs font-semibold transition-all shrink-0', statusFilter === 'absent' ? 'bg-zinc-100 text-zinc-600 shadow-sm border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
+                        :class="['h-8 sm:h-9 px-2.5 sm:px-4 rounded-lg text-[10px] sm:text-xs font-semibold transition-all shrink-0', statusFilter === 'absent' ? 'bg-zinc-100 text-zinc-600 shadow-sm border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
                     >
-                        Absent
+                        A
                     </button>
                 </div>
             </div>
@@ -836,7 +865,10 @@ onMounted(() => {
                         <!-- Header Area: Stacked on mobile, side-by-side on desktop -->
                         <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between mb-2 sm:mb-4 relative z-20 gap-2 sm:gap-0">
                             <div class="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-4 text-center sm:text-left">
-                                <div class="h-8 w-8 sm:h-12 sm:w-12 shrink-0 border border-zinc-100 dark:border-zinc-800 rounded-xl sm:rounded-2xl flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 text-xs sm:text-lg font-black shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                <div 
+                                    class="h-8 w-8 sm:h-12 sm:w-12 shrink-0 rounded-xl sm:rounded-2xl flex items-center justify-center text-xs sm:text-lg font-black shadow-inner group-hover:scale-110 transition-transform duration-500 text-white border border-white/10"
+                                    :style="{ background: avatarGradient(student.name) }"
+                                >
                                     {{ student.name.charAt(0) }}
                                 </div>
                                 <div class="w-full max-w-[80px] sm:max-w-[140px]">
@@ -871,12 +903,15 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <!-- Info Pill (Desktop Only) -->
+                        <!-- Info Pill -->
                         <div class="hidden sm:flex items-center justify-between gap-3 text-[10px] font-black text-zinc-500 dark:text-zinc-400 mb-6 bg-zinc-50/80 dark:bg-zinc-900/80 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 relative z-20 shadow-inner">
                             <div class="flex items-center gap-2">
                                 <Clock class="w-3.5 h-3.5" />
                                 <span v-if="student.slot_start" class="tracking-widest">{{ student.slot_start }} - {{ student.slot_end }}</span>
-                                <span v-else class="italic opacity-50 uppercase tracking-widest">No slot</span>
+                                <span v-else class="italic text-zinc-400/60 dark:text-zinc-600 uppercase tracking-widest flex items-center gap-1.5">
+                                    <AlertTriangle class="w-3 h-3" />
+                                    No schedule assigned
+                                </span>
                             </div>
                             <div v-if="student.attendance?.scanned_at" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800 shadow-sm transition-all group-hover:border-zinc-300 dark:group-hover:border-zinc-600">
                                 <span class="text-[8px] uppercase font-black opacity-40">Marked @</span>
@@ -885,7 +920,7 @@ onMounted(() => {
                         </div>
 
                         <!-- Quick Actions Grid (Ultra-compact on mobile) -->
-                        <div :class="['grid grid-cols-4 gap-1 sm:gap-2 relative z-20 transition-opacity mt-auto', student.slot_start ? '' : 'opacity-40 grayscale-[0.5]']" @click.stop>
+                        <div :class="['grid grid-cols-4 gap-1 sm:gap-2 relative z-20 transition-all mt-auto', student.slot_start ? '' : 'opacity-30 grayscale pointer-events-none']" @click.stop>
                             <button 
                                 v-for="status in ['Present', 'Late', 'Absent', 'Excused']"
                                 :key="status"
@@ -901,16 +936,31 @@ onMounted(() => {
                                 <span class="text-[8px] sm:text-[10px] font-black uppercase tracking-tighter">{{ status.charAt(0) }}</span>
                             </button>
                         </div>
+
+                        <!-- No Slot Indicator (Mobile) -->
+                        <div v-if="!student.slot_start" class="sm:hidden mt-1 flex items-center justify-center gap-1 text-[8px] text-zinc-400/60 font-bold uppercase tracking-widest">
+                            <AlertTriangle class="w-2.5 h-2.5" />
+                            No slot
+                        </div>
+                    </div>
+
+                    <!-- Celebration State (All Marked) -->
+                    <div v-if="isAllMarked && filteredStudents.length > 0" class="col-span-full bg-zinc-50/50 dark:bg-zinc-900/20 rounded-[2rem] p-10 sm:p-16 text-center border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-700">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-zinc-900 dark:bg-white flex items-center justify-center mx-auto mb-6 shadow-xl">
+                            <CheckCircle2 class="w-8 h-8 sm:w-10 sm:h-10 text-white dark:text-zinc-900" stroke-width="1.5" />
+                        </div>
+                        <h3 class="font-black text-xl sm:text-2xl tracking-tighter text-zinc-900 dark:text-zinc-100 leading-tight">All Attendance Marked</h3>
+                        <p class="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm mt-2 font-medium max-w-[280px] mx-auto leading-relaxed">Every student has been accounted for today. Great work!</p>
                     </div>
 
                     <!-- Empty State -->
-                    <div v-if="filteredStudents.length === 0" class="col-span-full bg-zinc-50/50 dark:bg-zinc-900/20 rounded-[3rem] p-20 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 animate-in fade-in zoom-in duration-700">
-                        <div class="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center mx-auto mb-8 shadow-inner">
-                            <Users class="w-10 h-10 text-zinc-300 dark:text-zinc-700" stroke-width="1.5" />
+                    <div v-if="filteredStudents.length === 0" class="col-span-full bg-zinc-50/50 dark:bg-zinc-900/20 rounded-[2rem] sm:rounded-[3rem] p-10 sm:p-20 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 animate-in fade-in zoom-in duration-700">
+                        <div class="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-inner">
+                            <Users class="w-7 h-7 sm:w-10 sm:h-10 text-zinc-300 dark:text-zinc-700" stroke-width="1.5" />
                         </div>
-                        <h3 class="font-black text-2xl tracking-tighter text-zinc-900 dark:text-zinc-100 leading-tight">No students found</h3>
-                        <p class="text-zinc-500 dark:text-zinc-400 text-sm mt-3 font-medium max-w-[240px] mx-auto leading-relaxed">Try adjusting your filters or search terms to find what you're looking for.</p>
-                        <Button variant="outline" size="sm" @click="searchQuery = ''; statusFilter = 'all'" class="mt-8 rounded-full px-8 h-12 font-black border-zinc-200 hover:bg-zinc-900 hover:text-white dark:hover:bg-zinc-100 dark:hover:text-zinc-900 transition-all">Clear Filters</Button>
+                        <h3 class="font-black text-xl sm:text-2xl tracking-tighter text-zinc-900 dark:text-zinc-100 leading-tight">No students found</h3>
+                        <p class="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm mt-3 font-medium max-w-[240px] mx-auto leading-relaxed">Try adjusting your filters or search terms to find what you're looking for.</p>
+                        <Button variant="outline" size="sm" @click="searchQuery = ''; statusFilter = 'all'" class="mt-6 sm:mt-8 rounded-full px-6 sm:px-8 h-10 sm:h-12 font-black border-zinc-200 hover:bg-zinc-900 hover:text-white dark:hover:bg-zinc-100 dark:hover:text-zinc-900 transition-all text-xs sm:text-sm">Clear Filters</Button>
                     </div>
                 </div>
             </div>

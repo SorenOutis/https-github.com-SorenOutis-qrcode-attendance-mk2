@@ -80,7 +80,7 @@ const cards = computed(() => {
             id: 'r' + r.id,
             title: r.name || 'Anonymous',
             desc: `Says: "${r.message || 'Rated the system.'}"\n\n${'★'.repeat(r.score)}${'☆'.repeat(5 - r.score)}`,
-            color: 'from-amber-500/10 via-background to-background'
+            color: 'from-zinc-200/20 via-background to-background dark:from-zinc-800/20'
         })));
     }
     if (props.comments && props.comments.length > 0) {
@@ -88,7 +88,7 @@ const cards = computed(() => {
             id: 'c' + c.id,
             title: c.name || 'Anonymous',
             desc: `Says: "${c.message}"`,
-            color: 'from-indigo-500/10 via-background to-background'
+            color: 'from-zinc-300/20 via-background to-background dark:from-zinc-700/20'
         })));
     }
     
@@ -454,28 +454,27 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Live Quick-Stats Widget -->
-                <div class="mt-8 lg:mt-16 flex items-center gap-3 lg:gap-6 p-4 lg:p-6 rounded-3xl border border-sidebar-border/50 bg-background/30 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500 max-w-[500px]">
-
-                    <div class="relative z-10 min-w-0">
-                        <div class="text-2xl lg:text-3xl font-serif font-bold text-foreground tabular-nums">
+                <div class="mt-8 lg:mt-16 grid grid-cols-3 p-4 lg:p-6 rounded-3xl border border-sidebar-border/50 bg-background/30 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500 w-full max-w-[500px] divide-x divide-sidebar-border/50">
+                    <div class="relative z-10 min-w-0 pr-2 lg:pr-4 flex flex-col justify-center">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-serif font-black text-foreground tabular-nums">
                             {{ animatedPresentToday }}
                         </div>
-                        <div class="text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">Present Today</div>
+                        <div class="text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">Present Today</div>
                     </div>
-                    <div class="w-[1px] h-10 lg:h-12 bg-sidebar-border/50 relative z-10 shrink-0"></div>
-                    <div class="relative z-10 min-w-0">
-                        <div class="text-2xl lg:text-3xl font-serif font-bold text-foreground tabular-nums">
+                    
+                    <div class="relative z-10 min-w-0 px-2 lg:px-4 flex flex-col justify-center">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-serif font-black text-foreground tabular-nums">
                             {{ animatedTotalScans }}
                         </div>
-                        <div class="text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">Total Scans</div>
+                        <div class="text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">Total Scans</div>
                     </div>
-                    <div class="w-[1px] h-10 lg:h-12 bg-sidebar-border/50 relative z-10 shrink-0"></div>
-                    <div class="relative z-10 min-w-0">
+                    
+                    <div class="relative z-10 min-w-0 pl-2 lg:pl-4 flex flex-col justify-center">
                         <div class="flex items-baseline gap-1">
-                            <span class="text-2xl lg:text-3xl font-serif font-bold text-foreground tabular-nums">{{ animatedAverageRating }}</span>
-                            <span class="text-amber-400 text-lg">★</span>
+                            <span class="text-xl sm:text-2xl lg:text-3xl font-serif font-black text-foreground tabular-nums">{{ animatedAverageRating }}</span>
+                            <span class="text-foreground text-sm lg:text-lg drop-shadow-sm">★</span>
                         </div>
-                        <div class="text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">{{ props.stats.total_ratings }} Ratings</div>
+                        <div class="text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-1">{{ props.stats.total_ratings }} Ratings</div>
                     </div>
                 </div>
             </div>
@@ -603,7 +602,7 @@ onUnmounted(() => {
                         style="scrollbar-width: none; -ms-overflow-style: none;"
                     >
                     <!-- Step 1 -->
-                    <div class="relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-colors shrink-0 w-[85vw] md:w-auto snap-center snap-always">
+                    <div class="relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-colors shrink-0 w-[80vw] sm:w-[60vw] md:w-auto snap-center snap-always">
                         <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-foreground/40 group-hover:bg-foreground/5 transition-all duration-500 shadow-inner">
                             <QrCode class="w-9 h-9 text-muted-foreground group-hover:text-foreground transition-colors" stroke-width="1.5" />
@@ -614,7 +613,7 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-colors shrink-0 w-[85vw] md:w-auto snap-center snap-always">
+                    <div class="relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-colors shrink-0 w-[80vw] sm:w-[60vw] md:w-auto snap-center snap-always">
                         <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/10 border border-sidebar-border/30 flex items-center justify-center mb-6 group-hover:border-foreground/60 group-hover:bg-foreground/20 transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.1)]">
                             <Camera class="w-9 h-9 text-foreground transition-colors" stroke-width="1.5" />
@@ -625,7 +624,7 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-colors shrink-0 w-[85vw] md:w-auto snap-center snap-always">
+                    <div class="relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-foreground/30 hover:bg-background/40 transition-colors shrink-0 w-[80vw] sm:w-[60vw] md:w-auto snap-center snap-always">
                         <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-foreground/40 group-hover:bg-foreground/5 transition-all duration-500 shadow-inner">
                             <BarChart3 class="w-9 h-9 text-muted-foreground group-hover:text-foreground transition-colors" stroke-width="1.5" />
@@ -653,41 +652,41 @@ onUnmounted(() => {
                 <div class="flex flex-wrap items-center justify-center gap-8 lg:gap-16 opacity-40 hover:opacity-60 transition-opacity duration-500">
                     <!-- Laravel -->
                     <div class="flex items-center gap-2 group cursor-default">
-                        <svg class="h-6 opacity-70 grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100" viewBox="0 0 66 66" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M62.91 16.81c.08.43.08.86.08 1.3v14.37c0 1.71-.92 3.3-2.41 4.16L48.84 43.3v13.56c0 1.72-.91 3.3-2.4 4.16L33.27 68.3a4.82 4.82 0 01-4.8 0L15.3 61.02A4.82 4.82 0 0112.89 57V43.44L1.58 36.84A4.82 4.82 0 01.17 32.8V18.11c0-1.72.91-3.3 2.4-4.16L15.74 6.7a4.82 4.82 0 014.8 0l12.45 7.25a4.82 4.82 0 014.8 0l13.17-7.66a4.82 4.82 0 014.8 0l11.75 6.85c1.13.65 1.88 1.72 2.1 2.97z" fill="#FF2D20" fill-opacity="0.1"/>
-                            <text x="33" y="40" font-family="serif" font-size="22" font-weight="bold" fill="#FF2D20" text-anchor="middle">L</text>
+                        <svg class="h-6 opacity-70 grayscale transition-all duration-300 group-hover:opacity-100" viewBox="0 0 66 66" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M62.91 16.81c.08.43.08.86.08 1.3v14.37c0 1.71-.92 3.3-2.41 4.16L48.84 43.3v13.56c0 1.72-.91 3.3-2.4 4.16L33.27 68.3a4.82 4.82 0 01-4.8 0L15.3 61.02A4.82 4.82 0 0112.89 57V43.44L1.58 36.84A4.82 4.82 0 01.17 32.8V18.11c0-1.72.91-3.3 2.4-4.16L15.74 6.7a4.82 4.82 0 014.8 0l12.45 7.25a4.82 4.82 0 014.8 0l13.17-7.66a4.82 4.82 0 014.8 0l11.75 6.85c1.13.65 1.88 1.72 2.1 2.97z" fill="#18181b" fill-opacity="0.1" class="dark:fill-white dark:fill-opacity-20"/>
+                            <text x="33" y="40" font-family="serif" font-size="22" font-weight="bold" fill="currentColor" text-anchor="middle">L</text>
                         </svg>
-                        <span class="text-sm font-semibold tracking-wide" style="font-family: 'Inter', sans-serif;">Laravel</span>
+                        <span class="text-sm font-semibold tracking-wide text-foreground" style="font-family: 'Inter', sans-serif;">Laravel</span>
                     </div>
                     <!-- Vue -->
                     <div class="flex items-center gap-2 group cursor-default">
-                        <svg class="h-5 grayscale transition-all duration-300 group-hover:grayscale-0" viewBox="0 0 256 221" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0h47.36z" fill="#41B883"/>
-                            <path d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0H0z" fill="#41B883"/>
-                            <path d="M50.56 0L128 133.12 204.8 0h-47.36L128 51.2 97.92 0H50.56z" fill="#35495E"/>
+                        <svg class="h-5 grayscale transition-all duration-300 opacity-70 group-hover:opacity-100" viewBox="0 0 256 221" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0h47.36z" fill="#18181b" class="dark:fill-white"/>
+                            <path d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0H0z" fill="#3f3f46" class="dark:fill-zinc-300"/>
+                            <path d="M50.56 0L128 133.12 204.8 0h-47.36L128 51.2 97.92 0H50.56z" fill="#09090b" class="dark:fill-zinc-100"/>
                         </svg>
-                        <span class="text-sm font-semibold tracking-wide" style="font-family: 'Inter', sans-serif;">Vue.js</span>
+                        <span class="text-sm font-semibold tracking-wide text-foreground" style="font-family: 'Inter', sans-serif;">Vue.js</span>
                     </div>
                     <!-- Tailwind -->
                     <div class="flex items-center gap-2 group cursor-default">
-                        <svg class="h-5 grayscale transition-all duration-300 group-hover:grayscale-0" viewBox="0 0 248 31" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M25.517 0C18.712 0 14.46 3.382 12.758 10.146c2.552-3.382 5.529-4.65 8.931-3.805 1.941.482 3.329 1.882 4.864 3.432 2.502 2.524 5.398 5.545 11.722 5.545 6.804 0 11.057-3.382 12.758-10.145-2.551 3.382-5.528 4.65-8.93 3.804-1.942-.482-3.33-1.882-4.865-3.431C34.736 3.022 31.841 0 25.517 0zM12.758 15.218C5.954 15.218 1.701 18.6 0 25.364c2.552-3.382 5.529-4.65 8.93-3.805 1.942.482 3.33 1.882 4.865 3.432 2.502 2.524 5.397 5.545 11.722 5.545 6.804 0 11.057-3.381 12.758-10.145-2.552 3.382-5.529 4.65-8.931 3.805-1.941-.483-3.329-1.883-4.864-3.432-2.502-2.524-5.398-5.546-11.722-5.546z" fill="#38BDF8"/>
+                        <svg class="h-5 grayscale transition-all duration-300 opacity-70 group-hover:opacity-100" viewBox="0 0 248 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M25.517 0C18.712 0 14.46 3.382 12.758 10.146c2.552-3.382 5.529-4.65 8.931-3.805 1.941.482 3.329 1.882 4.864 3.432 2.502 2.524 5.398 5.545 11.722 5.545 6.804 0 11.057-3.382 12.758-10.145-2.551 3.382-5.528 4.65-8.93 3.804-1.942-.482-3.33-1.882-4.865-3.431C34.736 3.022 31.841 0 25.517 0zM12.758 15.218C5.954 15.218 1.701 18.6 0 25.364c2.552-3.382 5.529-4.65 8.93-3.805 1.942.482 3.33 1.882 4.865 3.432 2.502 2.524 5.397 5.545 11.722 5.545 6.804 0 11.057-3.381 12.758-10.145-2.552 3.382-5.529 4.65-8.931 3.805-1.941-.483-3.329-1.883-4.864-3.432-2.502-2.524-5.398-5.546-11.722-5.546z" fill="#18181b" class="dark:fill-white"/>
                         </svg>
-                        <span class="text-sm font-semibold tracking-wide" style="font-family: 'Inter', sans-serif;">Tailwind CSS</span>
+                        <span class="text-sm font-semibold tracking-wide text-foreground" style="font-family: 'Inter', sans-serif;">Tailwind CSS</span>
                     </div>
                     <!-- Inertia -->
                     <div class="flex items-center gap-2 group cursor-default">
-                        <div class="h-5 w-5 rounded bg-violet-500/20 border border-violet-500/40 flex items-center justify-center">
-                            <span class="text-[8px] font-black text-violet-500">I</span>
+                        <div class="h-5 w-5 rounded bg-foreground/5 border border-foreground/30 flex items-center justify-center transition-all opacity-70 group-hover:opacity-100">
+                            <span class="text-[8px] font-black text-foreground drop-shadow-sm">I</span>
                         </div>
-                        <span class="text-sm font-semibold tracking-wide" style="font-family: 'Inter', sans-serif;">Inertia.js</span>
+                        <span class="text-sm font-semibold tracking-wide text-foreground" style="font-family: 'Inter', sans-serif;">Inertia.js</span>
                     </div>
                     <!-- GSAP -->
                     <div class="flex items-center gap-2 group cursor-default">
-                        <div class="h-5 w-5 rounded-full bg-foreground/10 border border-foreground/20 flex items-center justify-center">
-                            <span class="text-[8px] font-black text-foreground">G</span>
+                        <div class="h-5 w-5 rounded-full bg-foreground/10 border border-foreground/30 flex items-center justify-center transition-all opacity-70 group-hover:opacity-100">
+                            <span class="text-[8px] font-black text-foreground drop-shadow-sm">G</span>
                         </div>
-                        <span class="text-sm font-semibold tracking-wide" style="font-family: 'Inter', sans-serif;">GSAP</span>
+                        <span class="text-sm font-semibold tracking-wide text-foreground" style="font-family: 'Inter', sans-serif;">GSAP</span>
                     </div>
                 </div>
             </div>
@@ -717,7 +716,7 @@ onUnmounted(() => {
                             :key="i"
                             type="button"
                             class="text-3xl transition-all hover:scale-110 active:scale-95"
-                            :class="i <= ratingForm.score ? 'text-yellow-400 drop-shadow-sm' : 'text-muted-foreground/30'"
+                            :class="i <= ratingForm.score ? 'text-zinc-900 dark:text-zinc-100 drop-shadow-sm' : 'text-muted-foreground/30'"
                             @click="ratingForm.score = i"
                         >
                              ★

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Calendar, Clock, Printer, Shield, History } from 'lucide-vue-next';
+import { Calendar, Clock, Printer, Shield, History, Flame } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { computed, onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ type HistoryRecord = {
 const props = defineProps<{
     student: PortalStudent;
     subjects: Subject[];
+    stats: { percentage: number; streak: number };
     todaySchedule: { day: string; start: string; end: string; subject_id?: number | null }[];
     todayStatuses: TodayStatus[];
     history: HistoryRecord[];
@@ -146,6 +147,30 @@ onMounted(async () => {
             <!-- Status + schedule + history -->
             <section class="md:col-span-7 print:hidden">
                 <div class="grid gap-6">
+                    <!-- Stats Overview -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="rounded-3xl border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-5 shadow-2xl flex flex-col justify-center items-center text-center isolate">
+                            <div class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Attendance Rate</div>
+                            <div class="text-4xl font-serif font-black" :class="stats.percentage >= 80 ? 'text-zinc-900 dark:text-white' : 'text-rose-600 dark:text-rose-400'">{{ stats.percentage }}<span class="text-2xl opacity-50">%</span></div>
+                            <div class="mt-3 w-20 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden relative">
+                                <div class="absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ease-out" :class="stats.percentage >= 80 ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-rose-500'" :style="{ width: stats.percentage + '%' }"></div>
+                            </div>
+                        </div>
+                        <div class="rounded-3xl border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-5 shadow-2xl flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                           <div class="absolute -right-6 -top-4 text-zinc-100 dark:text-zinc-800/30 group-hover:scale-110 group-hover:text-amber-50 dark:group-hover:text-amber-900/30 transition-all duration-500 pointer-events-none">
+                                <Flame class="w-32 h-32" stroke-width="1.5" />
+                           </div>
+                           <div class="relative z-10 w-full flex flex-col items-center">
+                                <div class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Current Streak</div>
+                                <div class="text-4xl font-serif font-black text-zinc-900 dark:text-white flex items-center gap-1">
+                                    {{ stats.streak }}
+                                    <Flame v-if="stats.streak > 2" class="w-5 h-5 text-amber-500 dark:text-amber-400 animate-pulse" stroke-width="3" />
+                                </div>
+                                <div class="text-[9px] text-muted-foreground font-semibold mt-1 uppercase tracking-widest">Consecutive Scans</div>
+                           </div>
+                        </div>
+                    </div>
+
                     <div class="rounded-3xl border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-6 shadow-2xl">
                         <div class="mb-4 flex items-center gap-2">
                             <Clock class="h-5 w-5 text-muted-foreground" />

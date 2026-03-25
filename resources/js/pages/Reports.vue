@@ -136,8 +136,25 @@ const pieData = ref<any>(null);
 const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            position: 'bottom' as const,
+            labels: {
+                boxWidth: 12,
+                padding: 15,
+                font: {
+                    family: "ui-sans-serif, system-ui, sans-serif",
+                    size: 11
+                }
+            }
+        }
+    },
+    layout: {
+        padding: {
+            top: 20
+        }
+    }
 };
-
 
 onMounted(async () => {
     await fetchStats();
@@ -152,8 +169,8 @@ function exportCsv() {
     <Head title="Reports & Analytics" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-3 sm:p-6 pb-20 md:pb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 px-1">
+        <div class="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 px-1">
                 <div>
                     <p class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500 mb-1 leading-none">
                         Analytics
@@ -218,7 +235,7 @@ function exportCsv() {
                             </div>
                         </div>
                     </div>
-                    <div class="h-72">
+                    <div class="h-[300px] sm:h-[350px] lg:h-[400px] w-full mt-6">
                         <Line :data="lineData" :options="chartOptions" v-if="lineData" />
                     </div>
                 </div>
@@ -235,7 +252,7 @@ function exportCsv() {
                             <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Distribution</p>
                         </div>
                     </div>
-                    <div class="h-72">
+                    <div class="h-[300px] sm:h-[350px] lg:h-[400px] w-full mt-6">
                         <Pie :data="pieData" :options="chartOptions" v-if="pieData" />
                     </div>
                 </div>
@@ -252,7 +269,7 @@ function exportCsv() {
                             <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Comparison</p>
                         </div>
                     </div>
-                    <div class="h-72">
+                    <div class="h-[300px] sm:h-[350px] lg:h-[400px] w-full mt-6">
                         <Bar :data="barData" :options="chartOptions" v-if="barData" />
                     </div>
                 </div>

@@ -224,6 +224,35 @@ class StudentController extends Controller
             ->values()
             ->all();
 
+        // Calculate Stats
+        $historyStats = DB::table('attendances')
+            ->where('student_id', $student->id)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->get();
+            
+        $totalRecords = $historyStats->sum('count');
+        $presentCount = $historyStats->whereIn('status', ['Present', 'present'])->sum('count');
+        $lateCount = $historyStats->whereIn('status', ['Late', 'late'])->sum('count');
+        $excusedCount = $historyStats->whereIn('status', ['Excused', 'excused'])->sum('count');
+
+        $positiveRecords = $presentCount + $lateCount + $excusedCount;
+        $attendancePercentage = $totalRecords > 0 ? (int) round(($positiveRecords / $totalRecords) * 100) : 100;
+
+        $streak = 0;
+        $attendancesDesc = DB::table('attendances')
+            ->where('student_id', $student->id)
+            ->orderByDesc('scanned_at')
+            ->pluck('status');
+            
+        foreach ($attendancesDesc as $s) {
+            if (in_array(strtolower($s), ['present', 'late', 'excused'])) {
+                $streak++;
+            } else {
+                break;
+            }
+        }
+
         return Inertia::render('StudentPortal', [
             'student' => [
                 'id' => $student->id,
@@ -232,6 +261,10 @@ class StudentController extends Controller
                 'email' => $student->email,
                 'section' => $student->section,
                 'qr_token' => $student->qr_token,
+            ],
+            'stats' => [
+                'percentage' => $attendancePercentage,
+                'streak' => $streak,
             ],
             'subjects' => $subjects,
             'todaySchedule' => $todaySchedule,

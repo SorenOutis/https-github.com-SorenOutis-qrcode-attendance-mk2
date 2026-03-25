@@ -844,6 +844,20 @@ function openPrintCards() {
     window.open(`/students/print-cards?ids=${selectedStudent.value.id}`, '_blank', 'noopener,noreferrer');
 }
 
+function getAvatarGradient(name: string) {
+    const colors = [
+        'from-zinc-200 to-zinc-400 dark:from-zinc-700 dark:to-zinc-900',
+        'from-zinc-300 to-zinc-500 dark:from-zinc-600 dark:to-zinc-800',
+        'from-zinc-100 to-zinc-300 dark:from-zinc-800 dark:to-zinc-950',
+        'from-zinc-400 to-zinc-600 dark:from-zinc-500 dark:to-zinc-700'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+}
+
 onMounted(() => {
     // 1. Enter and Hover Animations for Cards
     if (cardsRef.value) {
@@ -1154,8 +1168,8 @@ onMounted(() => {
                             <div v-else class="divide-y divide-zinc-200 dark:divide-zinc-800">
                                 <div v-for="(act, i) in recentActivity" :key="i" class="flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors group">
                                     <div class="flex items-center gap-3">
-                                        <div class="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors border border-zinc-200 dark:border-zinc-700">
-                                            <span class="text-[10px] font-bold text-zinc-900 dark:text-white">{{ act.name.charAt(0) }}</span>
+                                        <div :class="['h-8 w-8 rounded-full flex items-center justify-center shrink-0 border border-white/20 shadow-inner bg-gradient-to-br', getAvatarGradient(act.name)]">
+                                            <span class="text-[10px] font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ act.name.charAt(0) }}</span>
                                         </div>
                                         <div class="flex flex-col overflow-hidden">
                                             <span class="text-xs font-semibold group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white truncate">{{ act.name }}</span>
@@ -1526,18 +1540,26 @@ onMounted(() => {
                             v-for="student in visibleStudents"
                             :key="student.id"
                             data-student-card
-                            class="group relative overflow-hidden rounded-xl border bg-card p-4 transition-all hover:shadow-md hover:border-primary/30 cursor-pointer"
+                            class="group relative overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4 transition-all hover:shadow-md cursor-pointer"
                             @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                         >
-                            <div class="flex items-start justify-between mb-3">
-                                <div>
-                                    <h4 class="font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors">
-                                        {{ student.name }}
-                                    </h4>
-                                    <p class="text-[10px] text-muted-foreground font-mono">
-                                        {{ student.student_number }}
-                                    </p>
-                                    <div class="mt-2">
+                            <div class="flex flex-col mb-3">
+                                <div class="flex items-start justify-between gap-3 w-full">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <!-- Gradient Avatar -->
+                                        <div :class="['h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', getAvatarGradient(student.name)]">
+                                            <span class="text-xs font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ student.name.charAt(0) }}</span>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <h4 class="font-serif font-bold text-sm line-clamp-1 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white">
+                                                {{ student.name }}
+                                            </h4>
+                                            <p class="text-[10px] text-zinc-500 font-mono">
+                                                {{ student.student_number }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="shrink-0">
                                         <Badge 
                                             variant="outline" 
                                             class="text-[9px] font-bold px-1.5 py-0"
@@ -1552,39 +1574,39 @@ onMounted(() => {
                                 </div>
                                 <div 
                                     v-if="activeTab === 'active'"
-                                    class="flex flex-wrap gap-1 justify-end"
+                                    class="flex flex-wrap gap-1 mt-3"
                                 >
                                     <template v-for="s in student.today_statuses">
                                         <div 
-                                            class="h-5 flex items-center gap-1 rounded-full px-1.5 py-0.5"
+                                            class="h-5 flex items-center gap-1 rounded-full px-1.5 py-0.5 border"
                                             :class="[
-                                                s.status === 'Present' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' :
-                                                s.status === 'Late' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' :
-                                                s.status === 'Time Out' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' :
-                                                'bg-muted'
+                                                s.status === 'Present' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-zinc-200 dark:border-zinc-700' :
+                                                s.status === 'Late' ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white border-zinc-300 dark:border-zinc-600' :
+                                                s.status === 'Time Out' ? 'bg-zinc-300 dark:bg-zinc-600 text-zinc-900 dark:text-white border-zinc-400 dark:border-zinc-500' :
+                                                'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
                                             ]"
                                             :title="s.status"
                                         >
-                                            <CheckCircle2 v-if="s.status !== 'Late'" class="w-2.5 h-2.5" />
+                                            <CheckCircle2 v-if="s.status !== 'Late' && s.status !== 'Absent'" class="w-2.5 h-2.5" />
                                             <AlertCircle v-else class="w-2.5 h-2.5" />
-                                            <span class="text-[8px] font-bold">{{ s.time }}</span>
+                                            <span class="text-[8px] font-bold uppercase tracking-wider">{{ s.time }}</span>
                                         </div>
                                     </template>
                                 </div>
                             </div>
                             
                             <div class="flex items-center justify-between text-[11px]">
-                                <span class="bg-muted px-2 py-0.5 rounded-md text-muted-foreground">
+                                <span class="bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-md text-zinc-500 dark:text-zinc-400 font-bold tracking-tight uppercase">
                                     {{ student.section || 'N/A' }}
                                 </span>
                                 <span 
                                     v-if="activeTab === 'active'"
-                                    class="font-medium"
+                                    class="font-bold text-[10px] uppercase tracking-widest"
                                     :class="[
-                                        student.latest_attendance?.status === 'Present' ? 'text-emerald-600' :
-                                        student.latest_attendance?.status === 'Late' ? 'text-amber-600' :
-                                        student.latest_attendance?.status === 'Time Out' ? 'text-blue-600' :
-                                        'text-muted-foreground'
+                                        student.latest_attendance?.status === 'Present' ? 'text-zinc-900 dark:text-white' :
+                                        student.latest_attendance?.status === 'Late' ? 'text-zinc-500' :
+                                        student.latest_attendance?.status === 'Time Out' ? 'text-zinc-400' :
+                                        'text-zinc-300 dark:text-zinc-600'
                                     ]"
                                 >
                                     {{ student.latest_attendance?.status || (isScheduledForToday(student) ? 'Scheduled' : 'No record') }}

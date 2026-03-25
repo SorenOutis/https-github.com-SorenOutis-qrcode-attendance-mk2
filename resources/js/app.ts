@@ -28,7 +28,8 @@ createInertiaApp({
         createApp(ToastContainer).mount(toastEl);
     },
     progress: {
-        color: '#4B5563',
+        color: 'var(--foreground)',
+        showSpinner: true,
     },
 });
 

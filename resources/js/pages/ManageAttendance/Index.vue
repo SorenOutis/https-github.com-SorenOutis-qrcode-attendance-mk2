@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import gsap from 'gsap';
-import { CalendarDays, BookOpen, ArrowRight, Calendar } from 'lucide-vue-next';
+import { CalendarDays, BookOpen, ArrowRight, Calendar, Users } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -73,13 +73,14 @@ onMounted(() => {
                 ref="cardsRef"
                 class="grid grid-cols-2 lg:grid-cols-3 gap-4"
             >
-                <div 
+                    <div 
                     v-for="(subject, index) in subjects" 
                     :key="subject.id"
                     data-card
                     @click="router.get(`/manage-attendance/${subject.id}/${selectedDate}`)"
-                    class="relative overflow-hidden rounded-[1rem] p-4 transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-900 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm cursor-pointer h-36 flex flex-col justify-between"
+                    class="group relative overflow-hidden rounded-[1rem] p-4 transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-900 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm cursor-pointer h-36 flex flex-col justify-between"
                 >
+                    <Users class="absolute right-[-5%] bottom-[-10%] h-24 w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10 flex flex-col h-full justify-between">
                         <div class="flex items-start justify-end">
                             <div 

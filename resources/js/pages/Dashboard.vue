@@ -5,7 +5,7 @@ import type { BreadcrumbItem } from '@/types';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
 import { Doughnut } from 'vue-chartjs';
 import gsap from 'gsap';
-import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check, QrCode, Scan, Download, UserPlus, CheckCircle2 } from 'lucide-vue-next';
+import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check, QrCode, Scan, Download, UserPlus, CheckCircle2, UserCheck, UserX } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
@@ -1023,10 +1023,11 @@ onMounted(() => {
                 <button
                     @click="statusFilter = null"
                     data-card
-                    class="relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
                     :class="!statusFilter ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
-                    <div class="relative w-full">
+                    <Users class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                    <div class="relative w-full z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Total Students
                         </p>
@@ -1041,10 +1042,11 @@ onMounted(() => {
                 <button
                     @click="statusFilter = statusFilter === 'Present' ? null : 'Present'"
                     data-card
-                    class="relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
                     :class="statusFilter === 'Present' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
-                    <div class="relative w-full">
+                    <UserCheck class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                    <div class="relative w-full z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Present Today
                         </p>
@@ -1059,10 +1061,11 @@ onMounted(() => {
                 <button
                     @click="statusFilter = statusFilter === 'Late' ? null : 'Late'"
                     data-card
-                    class="relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
                     :class="statusFilter === 'Late' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
-                    <div class="relative w-full">
+                    <Clock class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                    <div class="relative w-full z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Late Today
                         </p>
@@ -1077,10 +1080,11 @@ onMounted(() => {
                 <button
                     @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'"
                     data-card
-                    class="relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
                     :class="statusFilter === 'Absent' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
-                    <div class="relative w-full">
+                    <UserX class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                    <div class="relative w-full z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Absent Today
                         </p>

@@ -251,8 +251,9 @@ onMounted(() => {
                     class="h-full"
                 >
                     <article 
-                        class="relative flex flex-col h-36 rounded-xl border border-sidebar-border/40 bg-background/40 p-4 shadow-sm transition-colors duration-200 hover:bg-background/60 overflow-hidden"
+                        class="group relative flex flex-col h-36 rounded-xl border border-sidebar-border/40 bg-background/40 p-4 shadow-sm transition-colors duration-200 hover:bg-background/60 overflow-hidden"
                     >
+                        <Users class="absolute right-[-5%] bottom-[-10%] h-24 w-24 text-foreground/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                         <div class="relative z-10 flex-1 flex flex-col justify-between">
                             <div class="flex items-start justify-between gap-2 overflow-hidden">
                                 <h3 class="text-lg font-serif font-black text-foreground leading-tight line-clamp-2" :title="subject.name">

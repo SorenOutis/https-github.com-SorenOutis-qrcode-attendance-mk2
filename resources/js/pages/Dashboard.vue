@@ -1153,7 +1153,7 @@ onMounted(() => {
                             <div class="divide-y divide-zinc-200 dark:divide-zinc-800 max-h-64 overflow-y-auto">
                                 <div v-for="student in atRiskStudents" :key="'risk-' + student.id" class="flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer" @click="openStudentInfoModal(student)">
                                     <div class="flex flex-col min-w-0">
-                                        <span class="text-xs font-semibold text-zinc-900 dark:text-white" :title="student.name">{{ student.name }}</span>
+                                        <span class="text-xs font-semibold text-zinc-900 dark:text-white line-clamp-2 break-words" :title="student.name">{{ student.name }}</span>
                                         <span class="text-[10px] text-zinc-500">{{ student.student_number }}</span>
                                     </div>
                                     <div class="flex flex-col items-end gap-1 shrink-0">
@@ -1423,7 +1423,7 @@ onMounted(() => {
                             >
                                 <td class="px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium">
                                     <span class="flex items-center gap-1.5 flex-wrap">
-                                        <span class="">{{ student.name }}</span>
+                                        <span class="" :title="student.name">{{ student.name }}</span>
                                         <div 
                                             v-if="activeTab === 'active'"
                                             class="h-1 w-1 lg:h-1.5 lg:w-1.5 rounded-full status-pulse shrink-0"
@@ -1578,7 +1578,7 @@ onMounted(() => {
                                             <span class="text-xs font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ student.name.charAt(0) }}</span>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <h4 class="font-serif font-bold text-sm group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white">
+                                            <h4 class="font-serif font-bold text-sm line-clamp-2 break-words group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white" :title="student.name">
                                                 {{ student.name }}
                                             </h4>
                                             <p class="text-[10px] text-zinc-500 font-mono">

@@ -105,7 +105,8 @@ onMounted(async () => {
             <!-- Print card (also visible on screen) -->
             <section class="md:col-span-5 print:col-span-12">
                 <div
-                    class="rounded-3xl border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-6 shadow-2xl print:border-zinc-300 print:bg-white print:shadow-none"
+                    v-tilt
+                    class="rounded-3xl border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-6 shadow-2xl print:border-zinc-300 print:bg-white print:shadow-none preserve-3d shadow-3d"
                 >
                     <div class="mb-4 flex items-start justify-between gap-4">
                         <div class="min-w-0">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import BackgroundShapes from '@/components/BackgroundShapes.vue';
 import type { AppVariant } from '@/types';
 
 type Props = {
@@ -15,6 +16,7 @@ const isOpen = usePage().props.sidebarOpen;
 </script>
 
 <template>
+    <BackgroundShapes />
     <div v-if="variant === 'header'" class="flex min-h-screen w-full flex-col">
         <slot />
     </div>

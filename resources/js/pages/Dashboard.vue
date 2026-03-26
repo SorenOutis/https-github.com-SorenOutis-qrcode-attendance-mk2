@@ -10,6 +10,7 @@ import QRCode from 'qrcode';
 import { ref, computed, onMounted, onUnmounted, nextTick, watch, toValue } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useScanner } from '@/composables/useScanner';
+import { useTilt } from '@/composables/useTilt';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -301,29 +302,40 @@ const importModalOpen = ref(false);
 const importFile = ref<File | null>(null);
 const importing = ref(false);
 
+// Summary Card Refs
+const totalStudentsCard = ref(null);
+const presentCard = ref(null);
+const lateCard = ref(null);
+const absentCard = ref(null);
+
+useTilt(totalStudentsCard);
+useTilt(presentCard);
+useTilt(lateCard);
+useTilt(absentCard);
+
 const el = ref<HTMLElement | null>(null);
 const { width: windowWidth, height: windowHeight } = useWindowSize();
 
 // Automatic switching for mobile
 watch(windowWidth, (w) => {
-    if (toValue(w) < 768) {
+    if (Number(w) < 768) {
         viewMode.value = 'grid';
     }
 }, { immediate: true });
 
-const { x, y, isDragging } = useDraggable(el, {
+const { x, y, isDragging } = useDraggable(el as any, {
   initialValue: { x: window.innerWidth - 100, y: window.innerHeight - 100 },
   preventDefault: true,
   onEnd: () => {
       // Chathead snapping logic: snap to nearest left/right edge
       const margin = 20;
       const buttonWidth = 100;
-      const threshold = windowWidth.value / 2;
+      const threshold = Number(windowWidth.value) / 2;
       
       if (x.value < threshold) {
           x.value = margin;
       } else {
-          x.value = windowWidth.value - buttonWidth - margin;
+          x.value = Number(windowWidth.value) - buttonWidth - margin;
       }
   }
 });
@@ -335,9 +347,12 @@ watch([windowWidth, windowHeight], ([newW, newH]) => {
     const buttonWidth = 100;
     const buttonHeight = 56;
     
-    if (x.value > newW - buttonWidth - margin) x.value = newW - buttonWidth - margin;
+    const w = Number(newW);
+    const h = Number(newH);
+
+    if (x.value > w - buttonWidth - margin) x.value = w - buttonWidth - margin;
     if (x.value < margin) x.value = margin;
-    if (y.value > newH - buttonHeight - margin) y.value = newH - buttonHeight - margin;
+    if (y.value > h - buttonHeight - margin) y.value = h - buttonHeight - margin;
     if (y.value < margin) y.value = margin;
 }, { immediate: true });
 
@@ -372,6 +387,10 @@ async function submitImport() {
             importing.value = false;
         },
     });
+}
+
+function closeWelcomeModal() {
+    showWelcomeModal.value = false;
 }
 
 // Group attendance records by local date (most-recent date first)
@@ -886,7 +905,7 @@ function getAvatarGradient(name: string) {
 }
 
 onMounted(() => {
-    // 1. Enter and Hover Animations for Cards
+    // 1. Entrance Animations for Cards
     if (cardsRef.value) {
         const cards = cardsRef.value.querySelectorAll<HTMLElement>('[data-card]');
         
@@ -905,46 +924,6 @@ onMounted(() => {
             stagger: 0.1,
             ease: 'power2.out',
             clearProps: 'all' // Crucial: removes GSAP inline styles after completion
-        });
-        
-        cards.forEach((card) => {
-            gsap.set(card, { transformStyle: "preserve-3d" });
-
-            card.addEventListener('mousemove', (e: MouseEvent) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                
-                const rotateX = ((y - centerY) / centerY) * -10;
-                const rotateY = ((x - centerX) / centerX) * 10;
-                
-                gsap.to(card, {
-                    rotationX: rotateX,
-                    rotationY: rotateY,
-                    scale: 1.05,
-                    z: 30,
-                    zIndex: 50,
-                    boxShadow: '0 30px 40px -10px rgba(0, 0, 0, 0.3), 0 15px 15px -10px rgba(0, 0, 0, 0.1)',
-                    duration: 0.4,
-                    ease: 'power3.out'
-                });
-            });
-
-            card.addEventListener('mouseleave', () => {
-                gsap.to(card, {
-                    rotationX: 0,
-                    rotationY: 0,
-                    scale: 1,
-                    z: 0,
-                    zIndex: 0,
-                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-                    duration: 0.6,
-                    ease: 'elastic.out(1, 0.3)'
-                });
-            });
         });
     }
 
@@ -1062,9 +1041,10 @@ onMounted(() => {
             >
                 <!-- Total Students Card -->
                 <button
+                    ref="totalStudentsCard"
                     @click="statusFilter = null"
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d"
                     :class="!statusFilter ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
                     <Users class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
@@ -1081,9 +1061,10 @@ onMounted(() => {
 
                 <!-- Present Today Card -->
                 <button
+                    ref="presentCard"
                     @click="statusFilter = statusFilter === 'Present' ? null : 'Present'"
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d"
                     :class="statusFilter === 'Present' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
                     <UserCheck class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
@@ -1100,12 +1081,13 @@ onMounted(() => {
 
                 <!-- Late Today Card -->
                 <button
+                    ref="lateCard"
                     @click="statusFilter = statusFilter === 'Late' ? null : 'Late'"
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d"
                     :class="statusFilter === 'Late' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
-                    <Clock class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                    <Zap class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative w-full z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                             Late Today
@@ -1119,9 +1101,10 @@ onMounted(() => {
 
                 <!-- Absent Today Card -->
                 <button
+                    ref="absentCard"
                     @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'"
                     data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d"
                     :class="statusFilter === 'Absent' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
                 >
                     <UserX class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
@@ -2474,7 +2457,7 @@ onMounted(() => {
                             </div>
 
                             <DialogFooter class="mt-6 sm:mt-8 w-full sm:justify-center">
-                                <button @click="showWelcomeModal = false" class="w-full sm:w-auto px-8 sm:px-10 py-3 sm:py-4 rounded-[18px] sm:rounded-[20px] bg-foreground text-background font-bold text-sm sm:text-base shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                <button @click="closeWelcomeModal" class="w-full sm:w-auto px-8 sm:px-10 py-3 sm:py-4 rounded-[18px] sm:rounded-[20px] bg-foreground text-background font-bold text-sm sm:text-base shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
                                     Get Started
                                 </button>
                             </DialogFooter>

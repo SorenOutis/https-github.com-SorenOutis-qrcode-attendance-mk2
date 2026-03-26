@@ -536,43 +536,8 @@ onMounted(() => {
         });
         
         cards.forEach((card) => {
+            // Directive handles tilt now, but we keeps transformStyle for children
             gsap.set(card, { transformStyle: "preserve-3d" });
-
-            card.addEventListener('mousemove', (e: MouseEvent) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                
-                const rotateX = ((y - centerY) / centerY) * -10;
-                const rotateY = ((x - centerX) / centerX) * 10;
-                
-                gsap.to(card, {
-                    rotationX: rotateX,
-                    rotationY: rotateY,
-                    scale: 1.05,
-                    z: 30,
-                    zIndex: 50,
-                    boxShadow: '0 30px 40px -10px rgba(0, 0, 0, 0.3), 0 15px 15px -10px rgba(0, 0, 0, 0.1)',
-                    duration: 0.4,
-                    ease: 'power3.out'
-                });
-            });
-
-            card.addEventListener('mouseleave', () => {
-                gsap.to(card, {
-                    rotationX: 0,
-                    rotationY: 0,
-                    scale: 1,
-                    z: 0,
-                    zIndex: 0,
-                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-                    duration: 0.6,
-                    ease: 'elastic.out(1, 0.3)'
-                });
-            });
         });
     }
 
@@ -735,7 +700,11 @@ onMounted(() => {
             <!-- Stats Overview (Horizontal scroll on mobile) -->
             <div ref="cardsRef" class="flex sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 snap-x snap-mandatory no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 scroll-pl-3">
                 <!-- Total -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                <div 
+                    v-tilt
+                    data-card 
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
+                >
                     <Users class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Total</p>
@@ -744,16 +713,24 @@ onMounted(() => {
                 </div>
                 
                 <!-- Present -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                <div 
+                    v-tilt
+                    data-card 
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
+                >
                     <UserCheck class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Present</p>
-                        <p class="mt-0.5 sm:mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-zinc-100 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.present) }}</p>
+                        <p class="mt-0.5 sm:mt-1 text-3xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-100 drop-shadow-sm tabular-nums">{{ Math.round(animatedStats.present) }}</p>
                     </div>
                 </div>
 
                 <!-- Late -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                <div 
+                    v-tilt
+                    data-card 
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
+                >
                     <Clock class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Late</p>
@@ -762,7 +739,11 @@ onMounted(() => {
                 </div>
 
                 <!-- Absent -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                <div 
+                    v-tilt
+                    data-card 
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
+                >
                     <UserX class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Absent</p>
@@ -771,7 +752,11 @@ onMounted(() => {
                 </div>
 
                 <!-- Excused -->
-                <div data-card class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start">
+                <div 
+                    v-tilt
+                    data-card 
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[124px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
+                >
                     <Info class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Excused</p>

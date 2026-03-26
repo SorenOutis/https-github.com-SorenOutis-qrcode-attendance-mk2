@@ -64,13 +64,13 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/SorenOutis/qrcode-attendance-mk2',
-        icon: FolderGit2,
-    },
-];
+// const footerNavItems: NavItem[] = [
+//     {
+//         title: 'Repository',
+//         href: 'https://github.com/SorenOutis/qrcode-attendance-mk2',
+//         icon: FolderGit2,
+//     },
+// ];
 </script>
 
 <template>

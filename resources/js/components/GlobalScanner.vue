@@ -238,13 +238,26 @@ function handleClose() {
             </DialogHeader>
 
             <div class="space-y-6 px-6 pb-6 pt-2">
-                <div class="relative aspect-video overflow-hidden rounded-2xl border-4 border-zinc-100 dark:border-zinc-900 bg-black shadow-2xl ring-1 ring-zinc-950/10">
+                <div class="relative aspect-video overflow-hidden rounded-2xl border-4 border-zinc-100 dark:border-zinc-900 bg-black shadow-2xl ring-1 ring-zinc-950/10 preserve-3d">
                     <video
                         ref="videoRef"
                         class="h-full w-full object-cover scale-x-[-1] opacity-90"
                         playsinline
                         muted
                     ></video>
+
+                    <!-- 3D Grid Overlay -->
+                    <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+                        <div class="absolute inset-0 [background-image:linear-gradient(to_right,rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:40px_40px] [transform:perspective(500px)_rotateX(60deg)_translateY(-50%)]"></div>
+                    </div>
+
+                    <!-- Scanning Volume / Corners -->
+                    <div class="absolute inset-4 pointer-events-none opacity-40">
+                        <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white rounded-tl-lg shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
+                        <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white rounded-tr-lg shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
+                        <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white rounded-bl-lg shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
+                        <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white rounded-br-lg shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
+                    </div>
 
                     <!-- Cooldown Overlay -->
                     <div 
@@ -266,10 +279,10 @@ function handleClose() {
                             'bg-zinc-900/40 border-zinc-800': scanFeedback === 'error',
                         }"
                     >
-                        <!-- Scan Line -->
+                        <!-- Scan Line (Enhanced with brighter laser glow) -->
                         <div 
                             v-if="!scanFeedback"
-                            class="absolute left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-white/80 to-transparent shadow-[0_0_30px_rgba(255,255,255,0.6)] animate-scan-line-global"
+                            class="absolute left-0 right-0 h-[8px] bg-gradient-to-r from-transparent via-white/40 to-transparent shadow-[0_0_40px_rgba(255,255,255,0.8)] animate-scan-line-global after:content-[''] after:absolute after:inset-0 after:bg-white after:h-[1px] after:top-1/2 after:-translate-y-1/2 after:blur-[1px]"
                         ></div>
 
                         <div class="absolute inset-0 flex items-center justify-center">

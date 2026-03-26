@@ -31,7 +31,7 @@ const { isCurrentUrl } = useCurrentUrl();
                         <component :is="item.icon" v-if="item.icon" />
                         <span>{{ item.title }}</span>
                     </button>
-                    <Link v-else :href="item.href">
+                    <Link v-else :href="item.href" prefetch>
                         <component :is="item.icon" v-if="item.icon" />
                         <span>{{ item.title }}</span>
                     </Link>

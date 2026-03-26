@@ -1,8 +1,36 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import gsap from 'gsap';
 
-export function useTilt(target: any, options = { max: 10, perspective: 1000, scale: 1.02 }) {
+export function useTilt(target: any, options = { max: 10, perspective: 1000, scale: 1.02, shine: true }) {
     const el = ref<HTMLElement | null>(null);
+    let shineEl: HTMLElement | null = null;
+
+    const createShine = () => {
+        if (!el.value || !options.shine) return;
+        
+        // Ensure el has relative position for absolute shine
+        const computedStyle = window.getComputedStyle(el.value);
+        if (computedStyle.position === 'static') {
+            el.value.style.position = 'relative';
+        }
+        
+        shineEl = document.createElement('div');
+        shineEl.className = 'tilt-shine';
+        Object.assign(shineEl.style, {
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            zIndex: '1',
+            pointerEvents: 'none',
+            background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 80%)',
+            opacity: '0',
+            transition: 'opacity 0.3s ease'
+        });
+        
+        el.value.appendChild(shineEl);
+    };
 
     const onMouseMove = (e: MouseEvent) => {
         if (!el.value) return;
@@ -25,6 +53,18 @@ export function useTilt(target: any, options = { max: 10, perspective: 1000, sca
             ease: 'power2.out',
             overwrite: true
         });
+
+        if (shineEl) {
+            const shineX = (x / rect.width) * 100;
+            const shineY = (y / rect.height) * 100;
+            
+            gsap.to(shineEl, {
+                opacity: 1,
+                background: `radial-gradient(circle at ${shineX}% ${shineY}%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 60%)`,
+                duration: 0.2,
+                overwrite: 'auto'
+            });
+        }
     };
 
     const onMouseLeave = () => {
@@ -38,12 +78,21 @@ export function useTilt(target: any, options = { max: 10, perspective: 1000, sca
             ease: 'power2.out',
             overwrite: true
         });
+
+        if (shineEl) {
+            gsap.to(shineEl, {
+                opacity: 0,
+                duration: 0.5,
+                overwrite: 'auto'
+            });
+        }
     };
 
     onMounted(() => {
         el.value = target.value?.$el || target.value;
         if (el.value) {
             el.value.style.perspective = `${options.perspective}px`;
+            createShine();
             el.value.addEventListener('mousemove', onMouseMove);
             el.value.addEventListener('mouseleave', onMouseLeave);
         }
@@ -53,6 +102,9 @@ export function useTilt(target: any, options = { max: 10, perspective: 1000, sca
         if (el.value) {
             el.value.removeEventListener('mousemove', onMouseMove);
             el.value.removeEventListener('mouseleave', onMouseLeave);
+            if (shineEl && el.value.contains(shineEl)) {
+                el.value.removeChild(shineEl);
+            }
         }
     });
 

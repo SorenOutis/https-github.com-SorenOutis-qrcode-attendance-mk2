@@ -178,6 +178,7 @@ const animatedStats = ref({
 });
 
 watch(stats, (newStats) => {
+    // 1. Animate the counter numbers
     gsap.to(animatedStats.value, {
         total: newStats.total,
         present: newStats.present,
@@ -187,6 +188,26 @@ watch(stats, (newStats) => {
         ease: 'power3.out',
         snap: { total: 1, present: 1, late: 1, absent: 1 }
     });
+
+    // 2. 3D "Pop" animation for stat cards
+    const cards = document.querySelectorAll('[data-card]');
+    if (cards.length) {
+        gsap.to(cards, {
+            y: -10,
+            scale: 1.05,
+            duration: 0.2,
+            stagger: 0.05,
+            ease: 'back.out(2)',
+            onComplete: () => {
+                gsap.to(cards, {
+                    y: 0,
+                    scale: 1,
+                    duration: 0.6,
+                    ease: 'elastic.out(1, 0.3)'
+                });
+            }
+        });
+    }
 }, { deep: true, immediate: true });
 
 const recentActivity = computed(() => {

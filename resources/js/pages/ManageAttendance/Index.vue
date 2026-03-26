@@ -84,6 +84,7 @@ onMounted(() => {
                     :key="subject.id"
                     v-tilt
                     data-card
+                    @mouseenter="router.prefetch(`/manage-attendance/${subject.id}/${selectedDate}`, { method: 'get' })"
                     @click="router.get(`/manage-attendance/${subject.id}/${selectedDate}`)"
                     class="group relative overflow-hidden rounded-[1rem] p-3 sm:p-4 transition-colors duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-900 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm cursor-pointer h-28 sm:h-36 flex flex-col justify-between preserve-3d shadow-3d"
                 >

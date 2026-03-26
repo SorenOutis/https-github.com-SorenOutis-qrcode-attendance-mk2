@@ -19,9 +19,15 @@ withDefaults(defineProps<Props>(), {
 <template>
     <AppShell variant="sidebar">
         <AppSidebar />
-        <AppContent variant="sidebar" class="overflow-x-hidden pb-20 md:pb-0">
+        <AppContent variant="sidebar" class="overflow-x-hidden pb-20 md:pb-0 relative">
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
-            <slot />
+            <div class="relative w-full min-h-full">
+                <Transition name="spatial" mode="out-in">
+                    <div :key="($page.url as string)">
+                        <slot />
+                    </div>
+                </Transition>
+            </div>
         </AppContent>
         <GlobalScanner />
         <NavMobile />

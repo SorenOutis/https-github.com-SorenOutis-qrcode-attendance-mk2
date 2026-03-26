@@ -5,9 +5,9 @@ import type { BreadcrumbItem } from '@/types';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
 import { Doughnut } from 'vue-chartjs';
 import gsap from 'gsap';
-import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, RefreshCw, Trash2, Check, QrCode, Scan, Download, UserPlus, CheckCircle2, UserCheck, UserX, Zap } from 'lucide-vue-next';
+import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, AlertCircle, RefreshCw, Trash2, Check, QrCode, Scan, Download, UserPlus, CheckCircle2, UserCheck, UserX, Zap, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import QRCode from 'qrcode';
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch, toValue } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useScanner } from '@/composables/useScanner';
 import { Badge } from '@/components/ui/badge';
@@ -250,10 +250,15 @@ const atRiskStudents = computed(() => {
         .sort((a, b) => (a.attendance_percentage || 0) - (b.attendance_percentage || 0));
 });
 
+const viewMode = ref<'table' | 'grid'>('grid');
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
 const showOnlyScheduledToday = ref(false);
 const activeTab = ref<'active' | 'deleted'>('active');
+
+const itemsPerPage = ref(10);
+const currentPage = ref(1);
+
 const visibleStudents = computed(() => {
     const source = activeTab.value === 'active' ? filteredStudents.value : filteredTrashedStudents.value;
     if (showOnlyScheduledToday.value && activeTab.value === 'active') {
@@ -261,6 +266,27 @@ const visibleStudents = computed(() => {
     }
     return source;
 });
+
+const paginatedStudents = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return visibleStudents.value.slice(start, end);
+});
+
+const totalPages = computed(() => Math.ceil(visibleStudents.value.length / itemsPerPage.value));
+
+function nextPage() {
+    if (currentPage.value < totalPages.value) currentPage.value++;
+}
+
+function prevPage() {
+    if (currentPage.value > 1) currentPage.value--;
+}
+
+watch([searchQuery, activeTab, statusFilter, showOnlyScheduledToday, viewMode], () => {
+    currentPage.value = 1;
+});
+
 const selectedStudent = ref<Student | null>(null);
 const qrModalOpen = ref(false);
 
@@ -271,17 +297,16 @@ const historyExpanded = ref(false);
 const historyLoading = ref(false);
 const updatingRecordId = ref<number | null>(null);
 
-const el = ref<HTMLElement | null>(null);
-const { width: windowWidth, height: windowHeight } = useWindowSize();
-
-const viewMode = ref<'table' | 'grid'>('table');
 const importModalOpen = ref(false);
 const importFile = ref<File | null>(null);
 const importing = ref(false);
 
+const el = ref<HTMLElement | null>(null);
+const { width: windowWidth, height: windowHeight } = useWindowSize();
+
 // Automatic switching for mobile
-watch(windowWidth, (newWidth) => {
-    if (newWidth < 768) {
+watch(windowWidth, (w) => {
+    if (toValue(w) < 768) {
         viewMode.value = 'grid';
     }
 }, { immediate: true });
@@ -445,7 +470,7 @@ function animateStudents() {
     });
 }
 
-watch([searchQuery, activeTab, viewMode, statusFilter], () => {
+watch([searchQuery, activeTab, viewMode, statusFilter, currentPage], () => {
     animateStudents();
 });
 
@@ -1127,8 +1152,8 @@ onMounted(() => {
                         <div class="p-0">
                             <div class="divide-y divide-zinc-200 dark:divide-zinc-800 max-h-64 overflow-y-auto">
                                 <div v-for="student in atRiskStudents" :key="'risk-' + student.id" class="flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer" @click="openStudentInfoModal(student)">
-                                    <div class="flex flex-col overflow-hidden">
-                                        <span class="text-xs font-semibold text-zinc-900 dark:text-white truncate" :title="student.name">{{ student.name }}</span>
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="text-xs font-semibold text-zinc-900 dark:text-white" :title="student.name">{{ student.name }}</span>
                                         <span class="text-[10px] text-zinc-500">{{ student.student_number }}</span>
                                     </div>
                                     <div class="flex flex-col items-end gap-1 shrink-0">
@@ -1391,14 +1416,14 @@ onMounted(() => {
                                 </td>
                             </tr>
                             <tr
-                                v-for="student in visibleStudents"
+                                v-for="student in paginatedStudents"
                                 :key="student.id"
                                 class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer text-zinc-900 dark:text-zinc-100"
                                 @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                             >
                                 <td class="px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium">
                                     <span class="flex items-center gap-1.5 flex-wrap">
-                                        <span class="truncate max-w-[120px] lg:max-w-none">{{ student.name }}</span>
+                                        <span class="">{{ student.name }}</span>
                                         <div 
                                             v-if="activeTab === 'active'"
                                             class="h-1 w-1 lg:h-1.5 lg:w-1.5 rounded-full status-pulse shrink-0"
@@ -1539,7 +1564,7 @@ onMounted(() => {
                         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
                     >
                         <div 
-                            v-for="student in visibleStudents"
+                            v-for="student in paginatedStudents"
                             :key="student.id"
                             data-student-card
                             class="group relative overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4 transition-all hover:shadow-md cursor-pointer"
@@ -1553,7 +1578,7 @@ onMounted(() => {
                                             <span class="text-xs font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ student.name.charAt(0) }}</span>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <h4 class="font-serif font-bold text-sm line-clamp-1 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white">
+                                            <h4 class="font-serif font-bold text-sm group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white">
                                                 {{ student.name }}
                                             </h4>
                                             <p class="text-[10px] text-zinc-500 font-mono">
@@ -1625,9 +1650,45 @@ onMounted(() => {
                         </div>
                     </div>
                 </div>
+
+                        <!-- Pagination Footer -->
+                        <div v-if="totalPages > 1" class="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-3 sm:p-4 shrink-0">
+                            <div class="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+                                Showing <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ Math.min(currentPage * itemsPerPage, visibleStudents.length) }}</span> of <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ visibleStudents.length }}</span> results
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    :disabled="currentPage === 1"
+                                    @click="prevPage"
+                                    class="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-800"
+                                >
+                                    <ChevronLeft class="h-3 w-3 sm:mr-1" />
+                                    <span class="hidden sm:inline">Prev</span>
+                                </Button>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] sm:text-xs font-medium text-zinc-900 dark:text-zinc-100">
+                                        Page {{ currentPage }} of {{ totalPages }}
+                                    </span>
+                                </div>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    :disabled="currentPage === totalPages"
+                                    @click="nextPage"
+                                    class="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-800"
+                                >
+                                    <span class="hidden sm:inline">Next</span>
+                                    <ChevronRight class="h-3 w-3 sm:ml-1" />
+                                </Button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
     <Dialog v-model:open="createModalOpen">
                 <DialogContent class="max-w-sm flex flex-col max-h-[80dvh]">
@@ -2348,7 +2409,7 @@ onMounted(() => {
             </Dialog>
 
             <!-- Generic Confirmation Modal -->
-            <Dialog v-model:open="confirmModalOpen">
+            <Dialog :open="!!confirmModalOpen" @update:open="val => confirmModalOpen = val">
                 <DialogContent class="max-w-sm">
                     <DialogHeader>
                         <DialogTitle>{{ confirmTitle }}</DialogTitle>
@@ -2373,7 +2434,7 @@ onMounted(() => {
             </Dialog>
 
             <!-- Welcome Modal -->
-            <Dialog v-model:open="showWelcomeModal">
+            <Dialog :open="!!showWelcomeModal" @update:open="val => showWelcomeModal = val as any">
                 <DialogContent class="sm:max-w-[440px] max-w-[95vw] p-0 overflow-hidden border-none bg-transparent shadow-none">
                     <div class="relative bg-card rounded-[32px] overflow-hidden border border-border/50 shadow-2xl animate-in zoom-in-95 duration-300">
                         <!-- Background Glow -->
@@ -2421,7 +2482,6 @@ onMounted(() => {
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
     </AppLayout>
 </template>
 

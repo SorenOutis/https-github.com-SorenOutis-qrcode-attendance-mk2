@@ -825,8 +825,10 @@ onMounted(() => {
                 <!-- Unified Responsive Grid View -->
                 <!-- Unified 3-Column Grid View -->
                 <div ref="gridRef" class="grid grid-cols-3 gap-2.5 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <div v-for="student in filteredStudents" :key="student.id" 
+                    <div v-for="(student, index) in filteredStudents" :key="student.id" 
                         data-student-card
+                        v-reveal:[index%10*40]
+                        v-tilt
                         :class="[
                             'relative overflow-hidden bg-white dark:bg-black rounded-xl sm:rounded-[2rem] p-2 sm:p-5 shadow-sm border-2 transition-colors duration-200 cursor-pointer flex flex-col hover:bg-zinc-50 dark:hover:bg-zinc-900',
                             student.attendance?.status === 'Present' ? 'border-emerald-500/20' : 

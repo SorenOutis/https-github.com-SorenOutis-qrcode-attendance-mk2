@@ -82,6 +82,7 @@ onMounted(() => {
                     <div 
                     v-for="(subject, index) in subjects" 
                     :key="subject.id"
+                    v-reveal:[index%10*40]
                     v-tilt
                     data-card
                     @mouseenter="router.prefetch(`/manage-attendance/${subject.id}/${selectedDate}`, { method: 'get' })"

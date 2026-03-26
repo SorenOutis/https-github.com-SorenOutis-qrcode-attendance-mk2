@@ -7,6 +7,7 @@ import { initializeTheme } from '@/composables/useAppearance';
 import ToastContainer from '@/components/ToastContainer.vue';
 
 import { vTilt } from '@/directives/v-tilt';
+import { vReveal } from '@/directives/v-reveal';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -22,6 +23,7 @@ createInertiaApp({
             .use(plugin)
             .component('ToastContainer', ToastContainer)
             .directive('tilt', vTilt)
+            .directive('reveal', vReveal)
             .mount(el);
 
         // Mount the global toast container outside Inertia's root so it persists across page visits

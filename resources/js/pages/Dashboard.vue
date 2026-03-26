@@ -1420,8 +1420,9 @@ onMounted(() => {
                                 </td>
                             </tr>
                             <tr
-                                v-for="student in paginatedStudents"
+                                v-for="(student, index) in paginatedStudents"
                                 :key="student.id"
+                                v-reveal:[index%10*40]
                                 class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer text-zinc-900 dark:text-zinc-100"
                                 @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                             >
@@ -1568,9 +1569,10 @@ onMounted(() => {
                         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
                     >
                         <div 
-                            v-for="student in paginatedStudents"
+                            v-for="(student, index) in paginatedStudents"
                             :key="student.id"
                             data-student-card
+                            v-reveal:[index%10*40]
                             class="group relative overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4 transition-all hover:shadow-md cursor-pointer"
                             @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                         >

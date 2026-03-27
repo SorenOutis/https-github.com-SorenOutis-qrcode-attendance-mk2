@@ -93,7 +93,6 @@
 }
 
 :root {
-    scroll-behavior: smooth;
     --background: hsl(0 0% 100%);
     --foreground: hsl(0 0% 3.9%);
     --card: hsl(0 0% 100%);
@@ -174,18 +173,7 @@
         @apply bg-background text-foreground;
     }
 
-    /* Aggressively hide scrollbars on desktop for premium look */
-    @media (min-width: 1024px) {
-        * {
-            scrollbar-width: none !important;
-            -ms-overflow-style: none !important;
-        }
-        *::-webkit-scrollbar {
-            display: none !important;
-            width: 0 !important;
-            height: 0 !important;
-        }
-    }
+    /* Native scrollbars restored for better momentum and feedback */
 
     h1, h2, h3, h4, h5, h6 {
         font-family: var(--font-serif);
@@ -216,9 +204,12 @@
     .spatial-enter-active,
     .spatial-leave-active {
         transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        position: absolute;
         width: 100%;
         backface-visibility: hidden;
+    }
+
+    .spatial-leave-active {
+        position: absolute;
     }
 
     .spatial-enter-from {

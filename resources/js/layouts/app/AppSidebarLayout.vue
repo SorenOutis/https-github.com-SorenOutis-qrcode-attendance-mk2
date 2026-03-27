@@ -21,7 +21,7 @@ withDefaults(defineProps<Props>(), {
         <AppSidebar />
         <AppContent variant="sidebar" class="overflow-x-hidden pb-20 md:pb-0 relative">
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
-            <div class="relative w-full min-h-full">
+            <div class="w-full min-h-screen">
                 <Transition name="spatial" mode="out-in">
                     <div :key="($page.url as string)">
                         <slot />

@@ -15,6 +15,9 @@ export const vTilt: Directive<HTMLElement, TiltOptions | undefined> = {
             scale: binding.value?.scale ?? 1.02,
         };
 
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (isTouchDevice) return;
+
         el.style.perspective = `${options.perspective}px`;
         el.style.transformStyle = 'preserve-3d';
 

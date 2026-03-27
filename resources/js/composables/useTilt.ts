@@ -6,7 +6,8 @@ export function useTilt(target: any, options = { max: 10, perspective: 1000, sca
     let shineEl: HTMLElement | null = null;
 
     const createShine = () => {
-        if (!el.value || !options.shine) return;
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (!el.value || !options.shine || isTouchDevice) return;
         
         // Ensure el has relative position for absolute shine
         const computedStyle = window.getComputedStyle(el.value);
@@ -90,7 +91,9 @@ export function useTilt(target: any, options = { max: 10, perspective: 1000, sca
 
     onMounted(() => {
         el.value = target.value?.$el || target.value;
-        if (el.value) {
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        if (el.value && !isTouchDevice) {
             el.value.style.perspective = `${options.perspective}px`;
             createShine();
             el.value.addEventListener('mousemove', onMouseMove);

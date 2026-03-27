@@ -697,13 +697,13 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- Stats Overview (Grid layout for better fit on all screens) -->
-            <div ref="cardsRef" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            <!-- Stats Overview (Horizontal scroll on mobile) -->
+            <div ref="cardsRef" class="flex sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 snap-x no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 scroll-pl-3">
                 <!-- Total -->
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 w-full preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
                 >
                     <Users class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
@@ -716,7 +716,7 @@ onMounted(() => {
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 w-full preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
                 >
                     <UserCheck class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
@@ -729,7 +729,7 @@ onMounted(() => {
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 w-full preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
                 >
                     <Clock class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
@@ -742,7 +742,7 @@ onMounted(() => {
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 w-full preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
                 >
                     <UserX class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">
@@ -755,7 +755,7 @@ onMounted(() => {
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 w-full preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 transition-colors bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 min-w-[120px] sm:min-w-0 flex-shrink-0 snap-start preserve-3d shadow-3d"
                 >
                     <Info class="absolute right-[-10%] top-1/2 -translate-y-1/2 h-16 w-16 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10">

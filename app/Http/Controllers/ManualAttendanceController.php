@@ -64,9 +64,9 @@ class ManualAttendanceController extends Controller
         $dayOfWeek = $parsedDate->format('l');
 
         // Get all students (we filter by subject in the collection to bypass SQLite JSON array bugs)
-        // Include photo_path for premium avatars
+        // Include photo for premium avatars
         $enrolledStudents = Student::query()
-            ->select('id', 'name', 'student_number', 'schedule', 'qr_token', 'photo_path')
+            ->select('id', 'name', 'student_number', 'schedule', 'qr_token', 'photo')
             ->orderBy('name', 'asc')
             ->get();
 
@@ -120,7 +120,7 @@ class ManualAttendanceController extends Controller
                 'id' => $student->id,
                 'name' => $student->name,
                 'student_number' => $student->student_number,
-                'photo_path' => $student->photo_path,
+                'photo' => $student->photo,
                 'slot_start' => $todaySlot['start'] ?? null,
                 'slot_end' => $todaySlot['end'] ?? null,
                 'qr_token' => $student->qr_token,

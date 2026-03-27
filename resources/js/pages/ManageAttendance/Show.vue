@@ -62,7 +62,7 @@ type Student = {
     id: number;
     name: string;
     student_number: string;
-    photo_path: string | null;
+    photo: string | null;
     slot_start: string | null;
     slot_end: string | null;
     qr_token: string;
@@ -959,7 +959,11 @@ onMounted(() => {
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-3 min-w-0">
-                                        <div :class="['h-8 w-8 sm:h-10 sm:w-10 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', avatarGradient(student.name)]">
+                                        <!-- Photo/Avatar -->
+                                        <div v-if="student.photo" class="h-8 w-8 sm:h-10 sm:w-10 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                                            <img :src="student.photo" class="h-full w-full object-cover" />
+                                        </div>
+                                        <div v-else :class="['h-8 w-8 sm:h-10 sm:w-10 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', avatarGradient(student.name)]">
                                             <span class="text-xs sm:text-sm font-bold text-white drop-shadow-sm">{{ student.name.charAt(0) }}</span>
                                         </div>
                                         <div class="min-w-0 flex-1">
@@ -1061,12 +1065,12 @@ onMounted(() => {
                                 <!-- Enhanced Avatar with Photo Support -->
                                 <div class="relative">
                                     <div 
-                                        class="h-10 w-10 sm:h-14 sm:w-14 shrink-0 rounded-2xl flex items-center justify-center text-xs sm:text-lg font-black shadow-lg group-hover:scale-105 transition-transform duration-500 text-white border border-white/10 overflow-hidden bg-zinc-100 dark:bg-zinc-800"
-                                        :style="!student.photo_path ? { background: avatarGradient(student.name) } : {}"
+                                        class="h-10 w-10 sm:h-14 sm:w-14 shrink-0 rounded-2xl flex items-center justify-center text-xs sm:text-lg font-black shadow-lg group-hover:scale-105 transition-transform duration-500 text-white border border-white/10 overflow-hidden bg-zinc-100 dark:bg-zinc-800 shadow-3d"
+                                        :style="!student.photo ? { background: avatarGradient(student.name) } : {}"
                                     >
                                         <img 
-                                            v-if="student.photo_path" 
-                                            :src="student.photo_path" 
+                                            v-if="student.photo" 
+                                            :src="student.photo" 
                                             alt="" 
                                             class="h-full w-full object-cover"
                                         />
@@ -1257,7 +1261,10 @@ onMounted(() => {
 
                     <div v-if="selectedStudentForQr" class="space-y-4">
                         <div class="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 transition-all hover:bg-white dark:hover:bg-zinc-900 shadow-sm group">
-                            <div class="h-10 w-10 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-900 font-black text-lg italic group-hover:scale-110 transition-transform">
+                            <div v-if="selectedStudentForQr.photo" class="h-10 w-10 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm group-hover:scale-110 transition-transform">
+                                <img :src="selectedStudentForQr.photo" class="h-full w-full object-cover" />
+                            </div>
+                            <div v-else class="h-10 w-10 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-900 font-black text-lg italic group-hover:scale-110 transition-transform">
                                 {{ selectedStudentForQr.name.charAt(0) }}
                             </div>
                             <div class="min-w-0">
@@ -1362,12 +1369,12 @@ onMounted(() => {
                 <div class="max-w-xl w-full flex flex-col items-center gap-8 animate-in fade-in zoom-in duration-700">
                     <!-- Big Avatar -->
                     <div 
-                        class="h-48 w-48 sm:h-64 sm:w-64 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-none border-8 border-white dark:border-zinc-900 overflow-hidden flex items-center justify-center transition-all duration-1000"
-                        :style="!currentRollCallStudent.photo_path ? { background: avatarGradient(currentRollCallStudent.name) } : {}"
+                        class="h-48 w-48 sm:h-64 sm:w-64 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-none border-8 border-white dark:border-zinc-900 overflow-hidden bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center transition-all duration-1000"
+                        :style="!currentRollCallStudent.photo ? { background: avatarGradient(currentRollCallStudent.name) } : {}"
                     >
                         <img 
-                            v-if="currentRollCallStudent.photo_path" 
-                            :src="currentRollCallStudent.photo_path" 
+                            v-if="currentRollCallStudent.photo" 
+                            :src="currentRollCallStudent.photo" 
                             class="h-full w-full object-cover"
                         />
                         <span v-else class="text-7xl font-black text-white italic drop-shadow-2xl">

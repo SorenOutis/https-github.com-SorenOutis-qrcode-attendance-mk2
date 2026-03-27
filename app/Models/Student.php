@@ -18,7 +18,7 @@ class Student extends Model
         'section',
         'qr_token',
         'schedule',
-        'photo_path',
+        'photo',
     ];
 
     protected $casts = [

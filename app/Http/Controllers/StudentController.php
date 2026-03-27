@@ -33,6 +33,7 @@ class StudentController extends Controller
                 'section',
                 'qr_token',
                 'schedule',
+                'photo',
                 'created_at',
             ]);
 
@@ -46,6 +47,7 @@ class StudentController extends Controller
                 'section',
                 'qr_token',
                 'schedule',
+                'photo',
                 'created_at',
                 'deleted_at',
             ]);
@@ -97,6 +99,7 @@ class StudentController extends Controller
                 'section' => $student->section,
                 'qr_token' => $student->qr_token,
                 'schedule' => $student->schedule,
+                'photo' => $student->photo,
                 'created_at' => $student->created_at,
                 'deleted_at' => $student->deleted_at,
                 'attendance_percentage' => $attendancePercentage,
@@ -184,6 +187,7 @@ class StudentController extends Controller
             'section',
             'qr_token',
             'schedule',
+            'photo',
         ]);
 
         $now = CarbonImmutable::now();
@@ -261,6 +265,7 @@ class StudentController extends Controller
                 'email' => $student->email,
                 'section' => $student->section,
                 'qr_token' => $student->qr_token,
+                'photo' => $student->photo,
             ],
             'stats' => [
                 'percentage' => $attendancePercentage,
@@ -329,7 +334,13 @@ class StudentController extends Controller
             'schedule.*.subject_id' => ['required', 'exists:subjects,id'],
             'schedule.*.start' => ['required', 'date_format:H:i'],
             'schedule.*.end' => ['required', 'date_format:H:i'],
+            'photo' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $data['photo'] = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+        }
 
         // Ensure each slot has start < end
         $data['schedule'] = collect($data['schedule'])
@@ -381,7 +392,13 @@ class StudentController extends Controller
             'schedule.*.subject_id' => ['required', 'exists:subjects,id'],
             'schedule.*.start' => ['required', 'date_format:H:i'],
             'schedule.*.end' => ['required', 'date_format:H:i'],
+            'photo' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $data['photo'] = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+        }
 
         $data['schedule'] = collect($data['schedule'])
             ->filter(fn ($slot) => isset($slot['day'], $slot['subject_id'], $slot['start'], $slot['end']))

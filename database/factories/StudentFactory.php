@@ -25,7 +25,7 @@ class StudentFactory extends Factory
             'section' => 'BSIT-1A',
             'qr_token' => Str::random(32),
             'schedule' => [],
-            'photo_path' => 'https://api.dicebear.com/7.x/avataaars/svg?seed='.urlencode($this->faker->name()),
+            'photo' => null,
         ];
     }
 }

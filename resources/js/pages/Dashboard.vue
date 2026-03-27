@@ -63,6 +63,7 @@ type Student = {
     deleted_at?: string | null;
     attendance_percentage?: number;
     total_records?: number;
+    photo?: string | null;
 };
 
 const daysOfWeek = [
@@ -445,6 +446,8 @@ function isScheduledForToday(student: Student) {
 }
 
 const name = ref('');
+const photo = ref<File | null>(null);
+const photoPreview = ref<string | null>(null);
 const studentNumber = ref('');
 const email = ref('');
 const section = ref('');
@@ -460,6 +463,8 @@ const editSchedules = ref<{ day: string; start: string; end: string; subject_id:
     { day: 'Monday', start: '', end: '', subject_id: '' },
 ]);
 const editingStudentId = ref<number | null>(null);
+const editPhoto = ref<File | null>(null);
+const editPhotoPreview = ref<string | null>(null);
 
 const submitting = ref(false);
 const formErrors = ref<Record<string, string[]>>({});
@@ -468,6 +473,8 @@ const cardsRef = ref<HTMLDivElement | null>(null);
 const tableRef = ref<HTMLDivElement | null>(null);
 const studentsGridRef = ref<HTMLDivElement | null>(null);
 const studentsTableBodyRef = ref<HTMLTableSectionElement | null>(null);
+const photoInput = ref<HTMLInputElement | null>(null);
+const editPhotoInput = ref<HTMLInputElement | null>(null);
 
 function animateStudents() {
     nextTick(() => {
@@ -527,13 +534,25 @@ function showConfirm(title: string, description: string, action: () => void, isD
     confirmIsDestructive.value = isDestructive;
     confirmModalOpen.value = true;
 }
-
-function handleConfirm() {
+const handleConfirm = () => {
     if (confirmAction.value) {
         confirmAction.value();
     }
     confirmModalOpen.value = false;
-    confirmAction.value = null;
+};
+
+function handlePhotoChange(event: Event, type: 'create' | 'edit') {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+        const file = target.files[0];
+        if (type === 'create') {
+            photo.value = file;
+            photoPreview.value = URL.createObjectURL(file);
+        } else {
+            editPhoto.value = file;
+            editPhotoPreview.value = URL.createObjectURL(file);
+        }
+    }
 }
 function resetForm() {
     name.value = '';
@@ -541,6 +560,8 @@ function resetForm() {
     email.value = '';
     section.value = '';
     schedules.value = [{ day: 'Monday', start: '', end: '', subject_id: '' }];
+    photo.value = null;
+    photoPreview.value = null;
     formErrors.value = {};
 }
 
@@ -565,6 +586,7 @@ async function submitStudent() {
             email: email.value || null,
             section: section.value || null,
             schedule: schedules.value,
+            photo: photo.value,
         },
         {
             onSuccess: () => {
@@ -691,6 +713,8 @@ function openEditModal(student: Student) {
         student.schedule && student.schedule.length > 0
             ? student.schedule.map((s) => ({ day: s.day || 'Monday', start: s.start, end: s.end, subject_id: s.subject_id?.toString() || '' }))
             : [{ day: 'Monday', start: '', end: '', subject_id: '' }];
+    editPhoto.value = null;
+    editPhotoPreview.value = (student as any).photo || null;
     formErrors.value = {};
     editModalOpen.value = true;
 }
@@ -780,14 +804,16 @@ async function submitEditStudent() {
     submitting.value = true;
     formErrors.value = {};
 
-    router.put(
+    router.post(
         `/students/${editingStudentId.value}`,
         {
+            _method: 'PUT',
             name: editName.value,
             student_number: editStudentNumber.value,
             email: editEmail.value || null,
             section: editSection.value || null,
             schedule: editSchedules.value,
+            photo: editPhoto.value,
         },
         {
             onSuccess: () => {
@@ -1199,7 +1225,11 @@ onMounted(() => {
                             <div v-else class="divide-y divide-zinc-200 dark:divide-zinc-800">
                                 <div v-for="(act, i) in recentActivity" :key="i" class="flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors group">
                                     <div class="flex items-center gap-3">
-                                        <div :class="['h-8 w-8 rounded-full flex items-center justify-center shrink-0 border border-white/20 shadow-inner bg-gradient-to-br', getAvatarGradient(act.name)]">
+                                        <!-- Photo/Avatar -->
+                                        <div v-if="students.find(s => s.name === act.name)?.photo" class="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                                            <img :src="(students.find(s => s.name === act.name)?.photo ?? undefined)" class="h-full w-full object-cover" />
+                                        </div>
+                                        <div v-else :class="['h-8 w-8 rounded-full flex items-center justify-center shrink-0 border border-white/20 shadow-inner bg-gradient-to-br', getAvatarGradient(act.name)]">
                                             <span class="text-[10px] font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ act.name.charAt(0) }}</span>
                                         </div>
                                         <div class="flex flex-col overflow-hidden">
@@ -1427,19 +1457,28 @@ onMounted(() => {
                                 @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                             >
                                 <td class="px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium">
-                                    <span class="flex items-center gap-1.5 flex-wrap">
-                                        <span class="" :title="student.name">{{ student.name }}</span>
-                                        <div 
-                                            v-if="activeTab === 'active'"
-                                            class="h-1 w-1 lg:h-1.5 lg:w-1.5 rounded-full status-pulse shrink-0"
-                                            :class="[
-                                                student.latest_attendance?.status === 'Present'  ? 'bg-zinc-900 dark:bg-white shadow-sm' :
-                                                student.latest_attendance?.status === 'Late'     ? 'bg-zinc-500 dark:bg-zinc-400' :
-                                                student.latest_attendance?.status === 'Time Out' ? 'bg-zinc-300 dark:bg-zinc-600' :
-                                                'bg-zinc-200 dark:bg-zinc-800'
-                                            ]"
-                                        ></div>
-                                    </span>
+                                    <div class="flex items-center gap-2.5">
+                                        <!-- Photo/Avatar -->
+                                        <div v-if="student.photo" class="h-7 w-7 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                                            <img :src="student.photo" class="h-full w-full object-cover" />
+                                        </div>
+                                        <div v-else :class="['h-7 w-7 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', getAvatarGradient(student.name)]">
+                                            <span class="text-[10px] font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ student.name.charAt(0) }}</span>
+                                        </div>
+                                        <span class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="" :title="student.name">{{ student.name }}</span>
+                                            <div 
+                                                v-if="activeTab === 'active'"
+                                                class="h-1 w-1 lg:h-1.5 lg:w-1.5 rounded-full status-pulse shrink-0"
+                                                :class="[
+                                                    student.latest_attendance?.status === 'Present'  ? 'bg-zinc-900 dark:bg-white shadow-sm' :
+                                                    student.latest_attendance?.status === 'Late'     ? 'bg-zinc-500 dark:bg-zinc-400' :
+                                                    student.latest_attendance?.status === 'Time Out' ? 'bg-zinc-300 dark:bg-zinc-600' :
+                                                    'bg-zinc-200 dark:bg-zinc-800'
+                                                ]"
+                                            ></div>
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400">
                                     {{ student.student_number }}
@@ -1579,8 +1618,11 @@ onMounted(() => {
                             <div class="flex flex-col mb-3">
                                 <div class="flex items-start justify-between gap-3 w-full">
                                     <div class="flex items-center gap-3 min-w-0">
-                                        <!-- Gradient Avatar -->
-                                        <div :class="['h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', getAvatarGradient(student.name)]">
+                                        <!-- Photo/Avatar -->
+                                        <div v-if="student.photo" class="h-10 w-10 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                                            <img :src="student.photo" class="h-full w-full object-cover" />
+                                        </div>
+                                        <div v-else :class="['h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', getAvatarGradient(student.name)]">
                                             <span class="text-xs font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ student.name.charAt(0) }}</span>
                                         </div>
                                         <div class="min-w-0 flex-1">
@@ -1706,6 +1748,37 @@ onMounted(() => {
 
                     <form class="flex flex-col flex-1 min-h-0" @submit.prevent="submitStudent">
                         <div class="flex-1 overflow-y-auto space-y-3 pr-0.5">
+                            <!-- Photo Upload -->
+                            <div class="flex flex-col items-center justify-center py-4 border-b border-zinc-100 dark:border-zinc-800/50 mb-2">
+                                <div class="relative group cursor-pointer" @click="photoInput?.click()">
+                                    <div class="h-24 w-24 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-all group-hover:border-zinc-400 dark:group-hover:border-zinc-600 shadow-inner">
+                                        <img v-if="photoPreview" :src="photoPreview" class="h-full w-full object-cover" />
+                                        <div v-else class="flex flex-col items-center text-zinc-400">
+                                            <Plus class="h-6 w-6 mb-1 opacity-50" />
+                                            <span class="text-[10px] font-bold uppercase tracking-tighter">Photo</span>
+                                        </div>
+                                        <!-- Overlay -->
+                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Scan class="h-5 w-5 text-white" />
+                                        </div>
+                                    </div>
+                                    <input 
+                                        type="file" 
+                                        ref="photoInput" 
+                                        class="hidden" 
+                                        accept="image/*" 
+                                        @change="e => handlePhotoChange(e, 'create')"
+                                    />
+                                    <div class="absolute -bottom-1 -right-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full p-1.5 shadow-md border border-white dark:border-zinc-900">
+                                        <Plus class="h-3 w-3" />
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-zinc-500 mt-2 font-medium uppercase tracking-widest">Student Portrait</p>
+                                <p v-if="formErrors.photo" class="text-xs text-destructive mt-1">
+                                    {{ Array.isArray(formErrors.photo) ? formErrors.photo[0] : formErrors.photo }}
+                                </p>
+                            </div>
+
                         <div class="space-y-1.5">
                             <label class="text-xs font-medium">
                                 Full name
@@ -1876,39 +1949,46 @@ onMounted(() => {
 
                     <div v-if="infoStudent" class="space-y-4">
                         <!-- Profile card -->
-                        <div class="rounded-lg border bg-muted/30 p-4 space-y-2">
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <p class="text-base font-semibold leading-tight">
-                                        {{ infoStudent.name }}
-                                    </p>
-                                    <p class="text-xs text-muted-foreground mt-0.5">
-                                        {{ infoStudent.student_number }}
-                                        <span v-if="infoStudent.section"> · {{ infoStudent.section }}</span>
-                                    </p>
-                                    <p v-if="infoStudent.email" class="text-xs text-muted-foreground">
+                        <div class="rounded-lg border bg-muted/30 p-4 space-y-4">
+                            <div class="flex items-center gap-4">
+                                <!-- Student Photo -->
+                                <div class="shrink-0">
+                                    <div v-if="infoStudent.photo" class="h-16 w-16 rounded-full overflow-hidden border-2 border-white dark:border-zinc-800 shadow-sm">
+                                        <img :src="infoStudent.photo" class="h-full w-full object-cover" />
+                                    </div>
+                                    <div v-else :class="['h-16 w-16 rounded-full flex items-center justify-center bg-gradient-to-br border-2 border-white dark:border-zinc-800 shadow-sm text-lg font-bold text-zinc-900 dark:text-white', getAvatarGradient(infoStudent.name)]">
+                                        {{ infoStudent.name.charAt(0) }}
+                                    </div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <p class="text-lg font-bold leading-tight truncate" :title="infoStudent.name">
+                                                {{ infoStudent.name }}
+                                            </p>
+                                            <p class="text-xs text-muted-foreground mt-0.5 font-medium tracking-tight">
+                                                {{ infoStudent.student_number }}
+                                                <span v-if="infoStudent.section"> · {{ infoStudent.section }}</span>
+                                            </p>
+                                        </div>
+                                        <!-- Today's status badge -->
+                                        <span
+                                            v-if="infoStudent.latest_attendance"
+                                            :class="[
+                                                'shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                                                infoStudent.latest_attendance.status === 'Present' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' :
+                                                infoStudent.latest_attendance.status === 'Late'    ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white' :
+                                                infoStudent.latest_attendance.status === 'Absent'  ? 'bg-rose-500 text-white' :
+                                                                                                     'bg-muted text-muted-foreground'
+                                            ]"
+                                        >
+                                            {{ infoStudent.latest_attendance.status }}
+                                        </span>
+                                    </div>
+                                    <p v-if="infoStudent.email" class="text-xs text-muted-foreground mt-1 truncate">
                                         {{ infoStudent.email }}
                                     </p>
                                 </div>
-                                <!-- Today's status badge -->
-                                <span
-                                    v-if="infoStudent.latest_attendance"
-                                    :class="[
-                                        'shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
-                                        infoStudent.latest_attendance.status === 'Present' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
-                                        infoStudent.latest_attendance.status === 'Late'    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                                        infoStudent.latest_attendance.status === 'Absent'  ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
-                                                                                             'bg-muted text-muted-foreground'
-                                    ]"
-                                >
-                                    {{ infoStudent.latest_attendance.status }}
-                                </span>
-                                <span
-                                    v-else
-                                    class="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold bg-muted text-muted-foreground"
-                                >
-                                    No record today
-                                </span>
                             </div>
 
                             <!-- Schedule -->
@@ -2110,6 +2190,37 @@ onMounted(() => {
 
                     <form class="flex flex-col flex-1 min-h-0" @submit.prevent="submitEditStudent">
                         <div class="flex-1 overflow-y-auto space-y-3 pr-0.5">
+                            <!-- Photo Upload -->
+                            <div class="flex flex-col items-center justify-center py-4 border-b border-zinc-100 dark:border-zinc-800/50 mb-2">
+                                <div class="relative group cursor-pointer" @click="editPhotoInput?.click()">
+                                    <div class="h-24 w-24 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-all group-hover:border-zinc-400 dark:group-hover:border-zinc-600 shadow-inner">
+                                        <img v-if="editPhotoPreview" :src="editPhotoPreview" class="h-full w-full object-cover" />
+                                        <div v-else class="flex flex-col items-center text-zinc-400">
+                                            <Plus class="h-6 w-6 mb-1 opacity-50" />
+                                            <span class="text-[10px] font-bold uppercase tracking-tighter">Photo</span>
+                                        </div>
+                                        <!-- Overlay -->
+                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Scan class="h-5 w-5 text-white" />
+                                        </div>
+                                    </div>
+                                    <input 
+                                        type="file" 
+                                        ref="editPhotoInput" 
+                                        class="hidden" 
+                                        accept="image/*" 
+                                        @change="e => handlePhotoChange(e, 'edit')"
+                                    />
+                                    <div class="absolute -bottom-1 -right-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full p-1.5 shadow-md border border-white dark:border-zinc-900">
+                                        <RefreshCw class="h-3 w-3" />
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-zinc-500 mt-2 font-medium uppercase tracking-widest">Update Portrait</p>
+                                <p v-if="formErrors.photo" class="text-xs text-destructive mt-1">
+                                    {{ Array.isArray(formErrors.photo) ? formErrors.photo[0] : formErrors.photo }}
+                                </p>
+                            </div>
+
                         <div class="space-y-1.5">
                             <label class="text-xs font-medium">
                                 Full name

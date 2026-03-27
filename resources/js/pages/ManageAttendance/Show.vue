@@ -2,6 +2,8 @@
 import { Head, router } from '@inertiajs/vue3';
 import gsap from 'gsap';
 import { 
+    LayoutGrid,
+    Table as TableIcon,
     ChevronLeft, 
     Save, 
     CheckCircle2, 
@@ -79,6 +81,7 @@ const selectedDate = ref(props.date);
 const toast = useToast();
 
 const selectedStudents = ref<number[]>([]);
+const viewMode = ref<'grid' | 'table'>('grid');
 const isBulkSaving = ref(false);
 
 const allSelected = computed(() => {
@@ -800,6 +803,26 @@ onMounted(() => {
                     />
                 </div>
                 
+                <!-- View Switcher -->
+                <div class="hidden sm:flex rounded-full bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 border border-zinc-200 dark:border-zinc-800 mr-1 sm:mr-3">
+                    <button
+                        class="rounded-full p-1.5 transition-all outline-none"
+                        :class="viewMode === 'table' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                        title="Table View"
+                        @click="viewMode = 'table'"
+                    >
+                        <TableIcon class="h-4 w-4" />
+                    </button>
+                    <button
+                        class="rounded-full p-1.5 transition-all outline-none"
+                        :class="viewMode === 'grid' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                        title="Grid View"
+                        @click="viewMode = 'grid'"
+                    >
+                        <LayoutGrid class="h-4 w-4" />
+                    </button>
+                </div>
+                
                 <div class="flex items-center gap-1 sm:gap-3 bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shrink-0 overflow-x-auto no-scrollbar sm:w-auto">
                     <div class="flex items-center px-2 sm:px-3 border-r border-zinc-300 dark:border-zinc-700 mr-0.5 sm:mr-1 shrink-0">
                         <input 
@@ -847,8 +870,121 @@ onMounted(() => {
             <!-- Content Area -->
             <div class="space-y-4">
                 <!-- Unified Responsive Grid View -->
+                <!-- Table View -->
+                <div v-if="viewMode === 'table'" class="overflow-x-auto w-full rounded-[1.5rem] sm:rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm animate-in fade-in zoom-in duration-700 pb-20 sm:pb-0">
+                    <table class="min-w-full text-left text-sm whitespace-nowrap">
+                        <thead class="bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider w-10">
+                                    <input 
+                                        type="checkbox" 
+                                        :checked="allSelected" 
+                                        @change="toggleSelectAll"
+                                        class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:bg-zinc-900 dark:border-zinc-700 h-4 w-4 cursor-pointer"
+                                    />
+                                </th>
+                                <th class="px-4 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider">Student</th>
+                                <th class="px-4 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider">Schedule</th>
+                                <th class="px-4 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-center">Status</th>
+                                <th class="px-4 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
+                            <tr v-if="filteredStudents.length === 0">
+                                <td colspan="5" class="py-12 text-center text-zinc-500 dark:text-zinc-400 text-sm">
+                                    No students found for this filter/search.
+                                </td>
+                            </tr>
+                            <tr 
+                                v-for="(student, index) in filteredStudents" 
+                                :key="student.id"
+                                v-reveal:[index%10*40]
+                                @click="toggleStudentSelection(student.id)"
+                                class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer"
+                                :class="{'bg-zinc-50 dark:bg-zinc-900/30': selectedStudents.includes(student.id)}"
+                            >
+                                <td class="px-4 py-3 w-10" @click.stop>
+                                    <input 
+                                        type="checkbox" 
+                                        :value="student.id" 
+                                        v-model="selectedStudents"
+                                        class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:bg-zinc-900 dark:border-zinc-700 h-4 w-4 cursor-pointer"
+                                    />
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div :class="['h-8 w-8 sm:h-10 sm:w-10 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', avatarGradient(student.name)]">
+                                            <span class="text-xs sm:text-sm font-bold text-white drop-shadow-sm">{{ student.name.charAt(0) }}</span>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <h4 class="font-bold text-xs sm:text-sm line-clamp-1 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white" :title="student.name">
+                                                {{ student.name }}
+                                            </h4>
+                                            <p class="text-[9px] sm:text-[10px] text-zinc-500 font-mono tracking-widest mt-0.5">
+                                                {{ student.student_number || 'NO ID' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                                        <Clock class="w-3.5 h-3.5 text-zinc-400" />
+                                        <span v-if="student.slot_start" class="tracking-widest">{{ student.slot_start }} - {{ student.slot_end }}</span>
+                                        <span v-else class="text-zinc-400/60 uppercase text-[10px] tracking-widest flex items-center gap-1">
+                                            <AlertTriangle class="w-3 h-3" /> No slot
+                                        </span>
+                                    </div>
+                                    <div v-if="student.attendance?.scanned_at" class="mt-1 text-[10px] text-zinc-500 dark:text-zinc-500 font-semibold uppercase tracking-widest flex items-center gap-1">
+                                        Scanned @ <span class="text-zinc-900 dark:text-zinc-300">{{ new Date(student.attendance.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span v-if="student.attendance?.status" :class="[
+                                        'inline-flex items-center rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 text-[8px] sm:text-[9px] uppercase font-black tracking-widest shadow-sm border backdrop-blur-md',
+                                        student.attendance?.status.toLowerCase() === 'present' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                                        student.attendance?.status.toLowerCase() === 'late' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                        student.attendance?.status.toLowerCase() === 'absent' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+                                        'bg-zinc-100 text-zinc-500 border-zinc-200 dark:bg-zinc-800'
+                                    ]">
+                                        {{ student.attendance.status }}
+                                    </span>
+                                    <span v-else class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">—</span>
+                                </td>
+                                <td class="px-4 py-3 w-10 text-center" @click.stop>
+                                    <div :class="['flex items-center justify-center gap-1', student.slot_start ? '' : 'opacity-30 grayscale pointer-events-none']">
+                                        <button 
+                                            v-for="status in ['Present', 'Late', 'Absent', 'Excused']"
+                                            :key="status"
+                                            @click="updateAttendance(student, status)"
+                                            :disabled="!student.slot_start"
+                                            :title="'Mark ' + status"
+                                            :class="[
+                                                'h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg border transition-all active:scale-95 group/btn',
+                                                student.attendance?.status === status 
+                                                    ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-900 shadow-sm' 
+                                                    : 'bg-white dark:bg-zinc-900/40 border-zinc-100 dark:border-zinc-800 text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-900 dark:hover:text-white'
+                                            ]"
+                                        >
+                                            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-tighter">{{ status.charAt(0) }}</span>
+                                        </button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon-sm" 
+                                            class="ml-1 h-7 w-7 sm:h-8 sm:w-8 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 group/qr"
+                                            @click.stop="openQrModal(student)"
+                                            title="View QR Code"
+                                        >
+                                            <QrCode class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 group-hover/qr:text-zinc-900 dark:group-hover/qr:text-zinc-100" />
+                                        </Button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
                 <!-- Unified 3-Column Grid View -->
-                <div ref="gridRef" class="grid grid-cols-3 gap-2.5 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div v-else ref="gridRef" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <div v-for="(student, index) in filteredStudents" :key="student.id" 
                         data-student-card
                         v-reveal:[index%10*40]

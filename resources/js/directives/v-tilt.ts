@@ -38,7 +38,7 @@ export const vTilt: Directive<HTMLElement, TiltOptions | undefined> = {
                 scale: options.scale,
                 duration: 0.5,
                 ease: 'power2.out',
-                overwrite: true
+                overwrite: 'auto'
             });
         };
 
@@ -49,7 +49,7 @@ export const vTilt: Directive<HTMLElement, TiltOptions | undefined> = {
                 scale: 1,
                 duration: 0.5,
                 ease: 'power2.out',
-                overwrite: true
+                overwrite: 'auto'
             });
         };
 

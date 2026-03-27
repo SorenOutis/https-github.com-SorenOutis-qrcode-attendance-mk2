@@ -24,7 +24,7 @@ class CalendarController extends Controller
             ->map(function ($attendance) {
                 return [
                     'id' => $attendance->id,
-                    'student_name' => $attendance->student->name,
+                    'student_name' => $attendance->student?->name ?? 'Unknown Student',
                     'status' => $attendance->status,
                     'scanned_at' => $attendance->scanned_at->toIso8601String(),
                     'subject_name' => $attendance->subject?->name ?? 'N/A',

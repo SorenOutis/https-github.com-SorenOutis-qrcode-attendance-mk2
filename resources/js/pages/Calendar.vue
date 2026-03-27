@@ -168,7 +168,7 @@ onMounted(() => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head title="Attendance Calendar" />
 
-        <div class="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8 pt-0 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div class="flex min-h-full flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8 pt-0 pb-20 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-4 border-b border-zinc-100 dark:border-zinc-900 mt-4 stagger-animate">
                 <div>
                     <div class="flex items-center gap-2 mb-1">
@@ -194,7 +194,7 @@ onMounted(() => {
                 </div>
             </div>
 
-            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm overflow-hidden flex flex-col h-full min-h-[600px] stagger-animate relative">
+            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm overflow-hidden flex flex-col min-h-[600px] stagger-animate relative">
                 <CalendarIcon class="absolute right-[-10%] top-[-5%] h-64 w-64 text-zinc-900/[0.02] dark:text-white/[0.02] pointer-events-none" />
                 
                 <div class="flex items-center justify-between p-3 sm:p-6 border-b border-zinc-100 dark:border-zinc-800 relative z-10 bg-zinc-50/50 dark:bg-zinc-900/50 backdrop-blur-sm">

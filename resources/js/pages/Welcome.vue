@@ -352,7 +352,7 @@ onUnmounted(() => {
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
     </Head>
     
-    <div ref="containerRef" class="min-h-screen relative flex flex-col bg-background text-foreground font-sans overflow-hidden">
+    <div ref="containerRef" class="min-h-screen relative flex flex-col bg-background text-foreground font-sans overflow-x-hidden">
         <!-- Abstract gradient background matching Dashboard feel -->
         <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             <!-- These classes match the gradients used in Dashboard cards -->

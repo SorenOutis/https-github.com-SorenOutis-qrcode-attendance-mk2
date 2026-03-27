@@ -30,7 +30,7 @@ onMounted(() => {
     <AppLayout :breadcrumbs="[{ title: 'Manage Attendance', href: '/manage-attendance' }]">
         <Head title="Manage Attendance" />
 
-        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-hidden p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 bg-zinc-50 dark:bg-black">
+        <div class="flex min-h-full flex-1 flex-col gap-6 overflow-x-hidden p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 bg-zinc-50 dark:bg-black">
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 px-1">
                 <div class="flex flex-col gap-1">

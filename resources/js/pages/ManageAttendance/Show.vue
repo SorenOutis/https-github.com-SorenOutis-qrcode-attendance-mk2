@@ -603,7 +603,7 @@ onMounted(() => {
     ]">
         <Head :title="`Attendance: ${subject.name}`" />
 
-        <div class="flex h-full flex-col gap-3 sm:gap-5 p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div class="flex min-h-full flex-col gap-3 sm:gap-5 p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div class="flex items-center justify-between gap-2 sm:gap-6 pb-4 border-b border-zinc-100 dark:border-zinc-900">
                 <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                     <Button variant="ghost" size="icon" @click="goBack" class="-ml-1 sm:-ml-2 h-9 w-9 sm:h-12 sm:w-12 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 shadow-sm active:scale-90 shrink-0">

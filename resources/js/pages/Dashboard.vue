@@ -1026,7 +1026,7 @@ onMounted(() => {
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 sm:gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
+        <div class="flex min-h-full flex-1 flex-col gap-4 sm:gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
             <!-- Welcome Header -->
             <div class="flex items-center justify-between gap-4 px-1">
                 <div class="flex flex-col gap-0.5 sm:gap-1">
@@ -1046,13 +1046,13 @@ onMounted(() => {
                 <Button 
                     variant="outline" 
                     size="lg" 
-                    class="hidden h-12 items-center gap-3 rounded-2xl border-zinc-200/50 bg-white px-5 text-sm font-bold shadow-sm transition-all hover:bg-zinc-50 hover:text-zinc-900 hover:shadow-md active:scale-95 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 sm:flex group"
+                    class="flex h-10 sm:h-12 items-center gap-2 sm:gap-3 rounded-2xl border-zinc-200/50 bg-white px-3 sm:px-5 text-sm font-bold shadow-sm transition-all hover:bg-zinc-50 hover:text-zinc-900 hover:shadow-md active:scale-95 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 group shrink-0"
                     @click="openScanner"
                 >
                     <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 group-hover:scale-110 transition-transform">
                         <QrCode class="size-4" />
                     </div>
-                    <span>Scan QR Code</span>
+                    <span class="hidden sm:inline">Scan QR Code</span>
                 </Button>
             </div>
 
@@ -1245,35 +1245,35 @@ onMounted(() => {
                             </div>
 
                             <!-- Filter controls: stacks on mobile -->
-                            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex flex-row flex-wrap items-center gap-2 sm:gap-4">
                                 <!-- Checkbox filter -->
-                                <div class="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 self-start">
+                                <div class="flex items-center gap-1.5 sm:gap-2 bg-muted/50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 shrink-0">
                                     <input 
                                         type="checkbox" 
                                         id="today-toggle" 
                                         v-model="showOnlyScheduledToday" 
-                                        class="w-3.5 h-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 shrink-0"
+                                        class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 shrink-0"
                                     />
-                                    <label for="today-toggle" class="text-[10px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 cursor-pointer whitespace-nowrap">
-                                        Only Scheduled Today
+                                    <label for="today-toggle" class="text-[8px] sm:text-[10px] font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400 cursor-pointer whitespace-nowrap">
+                                        Scheduled Today
                                     </label>
                                 </div>
-
+ 
                                 <!-- Tabs -->
-                                <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-1 border border-zinc-200 dark:border-zinc-800 self-start overflow-x-auto max-w-full">
+                                <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-0.5 sm:p-1 border border-zinc-200 dark:border-zinc-800 overflow-x-auto max-w-full shrink-0">
                                     <button
-                                        class="rounded-md px-3 py-1 text-xs font-medium transition-all whitespace-nowrap shrink-0"
+                                        class="rounded-md px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap shrink-0"
                                         :class="activeTab === 'active' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                         @click="activeTab = 'active'"
                                     >
-                                        Active Students
+                                        Active
                                     </button>
                                     <button
-                                        class="rounded-md px-3 py-1 text-xs font-medium transition-all whitespace-nowrap shrink-0"
+                                        class="rounded-md px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap shrink-0"
                                         :class="activeTab === 'deleted' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                         @click="activeTab = 'deleted'"
                                     >
-                                        Deleted ({{ props.trashedStudents.length }})
+                                        Trash ({{ props.trashedStudents.length }})
                                     </button>
                                 </div>
                             </div>

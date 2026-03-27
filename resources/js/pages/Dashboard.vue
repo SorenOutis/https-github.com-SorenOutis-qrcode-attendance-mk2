@@ -1155,6 +1155,7 @@ onMounted(() => {
                             class="rounded-xl border p-2 text-left text-xs font-semibold transition-all"
                             :class="statusFilter === 'Present' ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100'"
                         >
+                            <CheckCircle2 class="absolute -right-1 -top-1 h-16 w-16 text-emerald-900/10 dark:text-emerald-100/10 pointer-events-none" />
                             <div class="flex items-center justify-between">
                                 <span>Present</span>
                                 <span class="text-lg font-bold">{{ Math.round(animatedStats.present) }}</span>
@@ -1166,6 +1167,7 @@ onMounted(() => {
                             class="rounded-xl border p-2 text-left text-xs font-semibold transition-all"
                             :class="statusFilter === 'Late' ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 text-amber-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100'"
                         >
+                            <Zap class="absolute -right-1 -top-1 h-16 w-16 text-amber-900/10 dark:text-amber-100/10 pointer-events-none" />
                             <div class="flex items-center justify-between">
                                 <span>Late</span>
                                 <span class="text-lg font-bold">{{ Math.round(animatedStats.late) }}</span>
@@ -1177,6 +1179,7 @@ onMounted(() => {
                             class="rounded-xl border p-2 text-left text-xs font-semibold transition-all"
                             :class="statusFilter === 'Absent' ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/30 text-rose-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100'"
                         >
+                            <UserX class="absolute -right-1 -top-1 h-16 w-16 text-rose-900/10 dark:text-rose-100/10 pointer-events-none" />
                             <div class="flex items-center justify-between">
                                 <span>Absent</span>
                                 <span class="text-lg font-bold">{{ Math.round(animatedStats.absent) }}</span>
@@ -1184,6 +1187,7 @@ onMounted(() => {
                         </button>
 
                         <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 p-2 text-left text-xs font-semibold bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+                            <PieChart class="absolute -right-1 -top-1 h-16 w-16 text-zinc-900/10 dark:text-zinc-100/10 pointer-events-none" />
                             <div class="flex items-center justify-between mb-1">
                                 <span>Attendance Rate</span>
                                 <span class="text-lg font-bold">{{ attendanceRate.toFixed(1) }}%</span>
@@ -1901,7 +1905,7 @@ onMounted(() => {
                                         accept="image/*" 
                                         @change="e => handlePhotoChange(e, 'create')"
                                     />
-                                    <div class="absolute -bottom-1 -right-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full p-1.5 shadow-md border border-white dark:border-zinc-900">
+                                    <div class="absolute -bottom-1 -right-1 bg-foreground text-background p-1.5 sm:p-2 rounded-2xl shadow-lg animate-bounce">
                                         <Plus class="h-3 w-3" />
                                     </div>
                                 </div>
@@ -2343,7 +2347,7 @@ onMounted(() => {
                                         accept="image/*" 
                                         @change="e => handlePhotoChange(e, 'edit')"
                                     />
-                                    <div class="absolute -bottom-1 -right-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full p-1.5 shadow-md border border-white dark:border-zinc-900">
+                                    <div class="absolute -bottom-1 -right-1 bg-foreground text-background p-1.5 sm:p-2 rounded-2xl shadow-lg animate-bounce">
                                         <RefreshCw class="h-3 w-3" />
                                     </div>
                                 </div>
@@ -2461,8 +2465,8 @@ onMounted(() => {
                                                 <SelectValue placeholder="Subject" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem v-for="subj in props.subjects" :key="subj.id" :value="subj.id.toString()">
-                                                    {{ subj.name }}
+                                                <SelectItem v-for="subject in props.subjects" :key="subject.id" :value="String(subject.id)">
+                                                    {{ subject.name }}
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>

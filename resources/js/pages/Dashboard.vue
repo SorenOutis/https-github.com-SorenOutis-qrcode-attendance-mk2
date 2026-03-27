@@ -84,6 +84,7 @@ type PageProps = {
     trashedStudents: Student[];
     subjects: { id: number; name: string }[];
     attendanceStats?: { Present: number; Late: number; Absent: number; Excused: number; };
+    attendanceRate?: number;
     atRiskCount: number;
 };
 
@@ -172,6 +173,17 @@ const stats = computed(() => {
         absent: statsAbsent.value,
         trashed: props.trashedStudents?.length || 0
     };
+});
+
+const attendanceRate = computed(() => {
+    const rate = props.attendanceRate ?? 0;
+    return Number.isFinite(rate) ? rate : 0;
+});
+
+const attendanceRateClass = computed(() => {
+    if (attendanceRate.value >= 90) return 'bg-emerald-500 text-white';
+    if (attendanceRate.value >= 75) return 'bg-amber-500 text-white';
+    return 'bg-rose-500 text-white';
 });
 
 // Since we use pagination, we need the overall status counts from props
@@ -1127,9 +1139,64 @@ onMounted(() => {
                 </Button>
             </div>
 
+            <!-- Mobile consolidated stats card -->
+            <div class="md:hidden">
+                <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl p-4">
+                    <div class="mb-4">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Total Students</p>
+                        <p class="mt-2 text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-white">{{ searchQuery ? filteredStudents.length : Math.round(animatedStats.total) }}</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button
+                            @click="statusFilter = statusFilter === 'Present' ? null : 'Present'"
+                            class="rounded-xl border p-2 text-left text-xs font-semibold transition-all"
+                            :class="statusFilter === 'Present' ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100'"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span>Present</span>
+                                <span class="text-lg font-bold">{{ Math.round(animatedStats.present) }}</span>
+                            </div>
+                        </button>
+
+                        <button
+                            @click="statusFilter = statusFilter === 'Late' ? null : 'Late'"
+                            class="rounded-xl border p-2 text-left text-xs font-semibold transition-all"
+                            :class="statusFilter === 'Late' ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 text-amber-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100'"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span>Late</span>
+                                <span class="text-lg font-bold">{{ Math.round(animatedStats.late) }}</span>
+                            </div>
+                        </button>
+
+                        <button
+                            @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'"
+                            class="rounded-xl border p-2 text-left text-xs font-semibold transition-all"
+                            :class="statusFilter === 'Absent' ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/30 text-rose-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100'"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span>Absent</span>
+                                <span class="text-lg font-bold">{{ Math.round(animatedStats.absent) }}</span>
+                            </div>
+                        </button>
+
+                        <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 p-2 text-left text-xs font-semibold bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+                            <div class="flex items-center justify-between mb-1">
+                                <span>Attendance Rate</span>
+                                <span class="text-lg font-bold">{{ attendanceRate.toFixed(1) }}%</span>
+                            </div>
+                            <div class="h-1 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                                <div :class="['h-full', attendanceRateClass]" :style="{ width: Math.min(attendanceRate, 100) + '%' }"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div
                 ref="cardsRef"
-                class="grid gap-3 sm:gap-4 lg:gap-6 grid-cols-2 lg:grid-cols-4"
+                class="hidden md:grid gap-3 sm:gap-4 lg:gap-6 grid-cols-2 lg:grid-cols-4"
             >
                 <!-- Total Students Card -->
                 <button
@@ -1210,6 +1277,24 @@ onMounted(() => {
                         </p>
                     </div>
                 </button>
+
+                <!-- Attendance Rate Card -->
+                <div
+                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white"
+                >
+                    <UserPlus class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                    <div class="relative w-full z-10">
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                            Attendance Rate
+                        </p>
+                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
+                            {{ attendanceRate.toFixed(1) }}%
+                        </p>
+                        <div class="mt-2 h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                            <div :class="['h-full transition-all duration-500', attendanceRateClass]" :style="{ width: Math.min(attendanceRate, 100) + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">

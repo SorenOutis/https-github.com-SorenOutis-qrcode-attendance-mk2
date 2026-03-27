@@ -21,6 +21,7 @@ class StudentController extends Controller
     public function index(): Response
     {
         $date = CarbonImmutable::now()->toDateString();
+        $dayOfWeek = CarbonImmutable::now()->format('l');
         $subjects = Subject::orderBy('name')->get(['id', 'name']);
 
         $search = request('search');
@@ -31,8 +32,8 @@ class StudentController extends Controller
         if ($search) {
             $studentsQuery->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('student_number', 'like', "%{$search}%")
-                  ->orWhere('section', 'like', "%{$search}%");
+                    ->orWhere('student_number', 'like', "%{$search}%")
+                    ->orWhere('section', 'like', "%{$search}%");
             });
         }
 
@@ -141,6 +142,10 @@ class StudentController extends Controller
             ->get()
             ->pluck('count', 'status');
 
+        $totalAttendance = (int) $attendanceStats->sum();
+        $positiveAttendance = (int) ($attendanceStats->get('Present', 0) + $attendanceStats->get('present', 0) + $attendanceStats->get('Late', 0) + $attendanceStats->get('late', 0) + $attendanceStats->get('Excused', 0) + $attendanceStats->get('excused', 0));
+        $attendanceRate = $totalAttendance > 0 ? round(($positiveAttendance / $totalAttendance) * 100, 1) : 100;
+
         $studentsData = $students->getCollection()->map($mapStudent);
         $students->setCollection($studentsData);
 
@@ -155,6 +160,7 @@ class StudentController extends Controller
             'students' => $students,
             'trashedStudents' => $trashedStudents->map($mapStudent),
             'atRiskCount' => $atRiskCount,
+            'attendanceRate' => $attendanceRate,
             'attendanceStats' => [
                 'Present' => (int) ($attendanceStats->get('Present', 0) + $attendanceStats->get('present', 0)),
                 'Late' => (int) ($attendanceStats->get('Late', 0) + $attendanceStats->get('late', 0)),
@@ -258,7 +264,7 @@ class StudentController extends Controller
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->get();
-            
+
         $totalRecords = $historyStats->sum('count');
         $presentCount = $historyStats->whereIn('status', ['Present', 'present'])->sum('count');
         $lateCount = $historyStats->whereIn('status', ['Late', 'late'])->sum('count');
@@ -272,7 +278,7 @@ class StudentController extends Controller
             ->where('student_id', $student->id)
             ->orderByDesc('scanned_at')
             ->pluck('status');
-            
+
         foreach ($attendancesDesc as $s) {
             if (in_array(strtolower($s), ['present', 'late', 'excused'])) {
                 $streak++;
@@ -364,12 +370,12 @@ class StudentController extends Controller
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
             $imagePath = $file->getRealPath();
-            
+
             // Create a small optimized version using GD
             $info = getimagesize($imagePath);
             $mime = $info['mime'];
-            
-            $src = match($mime) {
+
+            $src = match ($mime) {
                 'image/jpeg' => imagecreatefromjpeg($imagePath),
                 'image/png' => imagecreatefrompng($imagePath),
                 'image/webp' => imagecreatefromwebp($imagePath),
@@ -380,7 +386,7 @@ class StudentController extends Controller
                 $width = imagesx($src);
                 $height = imagesy($src);
                 $maxSize = 300;
-                
+
                 if ($width > $maxSize || $height > $maxSize) {
                     if ($width > $height) {
                         $newWidth = $maxSize;
@@ -398,18 +404,18 @@ class StudentController extends Controller
                 imagealphablending($dst, false);
                 imagesavealpha($dst, true);
                 imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                
+
                 ob_start();
                 imagejpeg($dst, null, 80);
                 $imageData = ob_get_clean();
-                
-                $data['photo'] = 'data:image/jpeg;base64,' . base64_encode($imageData);
-                
+
+                $data['photo'] = 'data:image/jpeg;base64,'.base64_encode($imageData);
+
                 imagedestroy($src);
                 imagedestroy($dst);
             } else {
                 // Fallback to original if GD fails
-                $data['photo'] = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($imagePath));
+                $data['photo'] = 'data:'.$file->getMimeType().';base64,'.base64_encode(file_get_contents($imagePath));
             }
         }
 
@@ -469,11 +475,11 @@ class StudentController extends Controller
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
             $imagePath = $file->getRealPath();
-            
+
             $info = getimagesize($imagePath);
             $mime = $info['mime'];
-            
-            $src = match($mime) {
+
+            $src = match ($mime) {
                 'image/jpeg' => imagecreatefromjpeg($imagePath),
                 'image/png' => imagecreatefrompng($imagePath),
                 'image/webp' => imagecreatefromwebp($imagePath),
@@ -484,7 +490,7 @@ class StudentController extends Controller
                 $width = imagesx($src);
                 $height = imagesy($src);
                 $maxSize = 300;
-                
+
                 if ($width > $maxSize || $height > $maxSize) {
                     if ($width > $height) {
                         $newWidth = $maxSize;
@@ -502,17 +508,17 @@ class StudentController extends Controller
                 imagealphablending($dst, false);
                 imagesavealpha($dst, true);
                 imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                
+
                 ob_start();
                 imagejpeg($dst, null, 80);
                 $imageData = ob_get_clean();
-                
-                $data['photo'] = 'data:image/jpeg;base64,' . base64_encode($imageData);
-                
+
+                $data['photo'] = 'data:image/jpeg;base64,'.base64_encode($imageData);
+
                 imagedestroy($src);
                 imagedestroy($dst);
             } else {
-                $data['photo'] = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($imagePath));
+                $data['photo'] = 'data:'.$file->getMimeType().';base64,'.base64_encode(file_get_contents($imagePath));
             }
         }
 

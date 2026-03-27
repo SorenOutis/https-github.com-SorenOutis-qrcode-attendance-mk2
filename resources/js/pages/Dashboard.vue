@@ -1139,9 +1139,11 @@ onMounted(() => {
                 </Button>
             </div>
 
-            <!-- Mobile consolidated stats card -->
-            <div class="md:hidden">
+            <!-- Consolidated stats card (mobile + desktop) -->
+            <div class="">
                 <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl p-4">
+                    <Users class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-24 w-24 sm:h-28 sm:w-28 text-zinc-900/10 dark:text-white/10 pointer-events-none" />
+                    <div class="relative z-10">
                     <div class="mb-4">
                         <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Total Students</p>
                         <p class="mt-2 text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-white">{{ searchQuery ? filteredStudents.length : Math.round(animatedStats.total) }}</p>
@@ -1188,16 +1190,16 @@ onMounted(() => {
                             </div>
                             <div class="h-1 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                                 <div :class="['h-full', attendanceRateClass]" :style="{ width: Math.min(attendanceRate, 100) + '%' }"></div>
-                            </div>
+                                </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div
-                ref="cardsRef"
-                class="hidden md:grid gap-3 sm:gap-4 lg:gap-6 grid-cols-2 lg:grid-cols-4"
-            >
+                <div
+                    ref="cardsRef"
+                    class="hidden"
+                >
                 <!-- Total Students Card -->
                 <button
                     ref="totalStudentsCard"
@@ -2729,6 +2731,7 @@ onMounted(() => {
                     </div>
                 </DialogContent>
             </Dialog>
+        </div>
     </AppLayout>
 </template>
 

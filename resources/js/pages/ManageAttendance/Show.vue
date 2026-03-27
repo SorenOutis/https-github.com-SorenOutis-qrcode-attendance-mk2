@@ -601,32 +601,32 @@ onMounted(() => {
         <Head :title="`Attendance: ${subject.name}`" />
 
         <div class="flex h-full flex-col gap-3 sm:gap-5 p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 pb-4 border-b border-zinc-100 dark:border-zinc-900">
-                <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                    <Button variant="ghost" size="icon" @click="goBack" class="-ml-1 sm:-ml-2 h-10 w-10 sm:h-12 sm:w-12 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 shadow-sm active:scale-90 shrink-0">
-                        <ChevronLeft class="h-5 w-5 sm:h-6 sm:w-6 text-zinc-600 dark:text-zinc-400" />
+            <div class="flex items-center justify-between gap-2 sm:gap-6 pb-4 border-b border-zinc-100 dark:border-zinc-900">
+                <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                    <Button variant="ghost" size="icon" @click="goBack" class="-ml-1 sm:-ml-2 h-9 w-9 sm:h-12 sm:w-12 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 shadow-sm active:scale-90 shrink-0">
+                        <ChevronLeft class="h-4 w-4 sm:h-6 sm:w-6 text-zinc-600 dark:text-zinc-400" />
                     </Button>
                     <div class="min-w-0">
-                        <div class="flex items-center gap-2 mb-0.5 sm:mb-1">
+                        <div class="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
                             <span class="h-1 w-1 rounded-full bg-zinc-400 animate-pulse shrink-0"></span>
-                            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-400 truncate">Attendance Roster</span>
+                            <span class="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-400 truncate">Attendance Roster</span>
                         </div>
-                        <h1 class="text-2xl sm:text-4xl font-serif font-bold tracking-tighter text-foreground leading-none truncate">{{ subject.name }}</h1>
+                        <h1 class="text-xl sm:text-4xl font-serif font-bold tracking-tighter text-foreground leading-none truncate">{{ subject.name }}</h1>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
+                <div class="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0">
                     <!-- Date Selector Revamp -->
-                    <div class="flex-1 sm:flex-none inline-flex items-center w-full sm:w-auto bg-white dark:bg-black rounded-[1rem] sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden group/picker h-11 sm:h-14 transition-all hover:shadow-2xl">
+                    <div class="inline-flex items-center bg-white dark:bg-black rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden group/picker h-10 sm:h-14 transition-all hover:shadow-2xl">
                         <button 
                             @click="goToPrevDay"
-                            class="h-full px-3 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 transition-colors group/prev shrink-0"
+                            class="h-full px-2 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 transition-colors group/prev shrink-0"
                         >
-                            <ChevronLeft class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 group-hover/prev:text-zinc-900 dark:group-hover/prev:text-white transition-colors" />
+                            <ChevronLeft class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-zinc-400 group-hover/prev:text-zinc-900 dark:group-hover/prev:text-white transition-colors" />
                         </button>
                         
-                        <div class="relative flex-1 px-3 sm:px-6 flex flex-col justify-center min-w-[140px] sm:min-w-[200px]">
-                            <div class="flex items-center justify-between mb-0.5 gap-2">
+                        <div class="relative px-2 sm:px-6 flex flex-col justify-center min-w-[70px] sm:min-w-[200px]">
+                            <div class="hidden sm:flex items-center justify-between mb-0.5 gap-2">
                                 <span class="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400 block truncate">Selected Date</span>
                                 <button 
                                     @click="goToToday"
@@ -643,27 +643,28 @@ onMounted(() => {
                                     class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
                                 />
                                 <div class="flex items-center justify-between w-full group-hover/input:translate-x-1 transition-transform pointer-events-none">
-                                    <span class="font-black text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 tracking-tight truncate mr-2">
-                                        {{ new Date(props.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                                    <span class="font-black text-[10px] sm:text-sm text-zinc-900 dark:text-zinc-100 tracking-tight truncate mr-1 sm:mr-2">
+                                        <span class="sm:hidden">{{ new Date(props.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
+                                        <span class="hidden sm:inline">{{ new Date(props.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</span>
                                     </span>
-                                    <CalendarDays class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 shrink-0" />
+                                    <CalendarDays class="w-3 h-3 sm:w-4 sm:h-4 text-zinc-400 shrink-0" />
                                 </div>
                             </div>
                         </div>
 
                         <button 
                             @click="goToNextDay"
-                            class="h-full px-3 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-l border-zinc-100 dark:border-zinc-800 transition-colors group/next shrink-0"
+                            class="h-full px-2 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-l border-zinc-100 dark:border-zinc-800 transition-colors group/next shrink-0"
                         >
-                            <ChevronRight class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 group-hover/next:text-zinc-900 dark:group-hover/next:text-white transition-colors" />
+                            <ChevronRight class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-zinc-400 group-hover/next:text-zinc-900 dark:group-hover/next:text-white transition-colors" />
                         </button>
                     </div>
 
                     <!-- Mobile Action Menu -->
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" class="sm:hidden h-11 w-11 rounded-[1rem] border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl shrink-0">
-                                <MoreHorizontal class="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+                            <Button variant="outline" size="icon" class="sm:hidden h-10 w-10 rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl shrink-0">
+                                <MoreHorizontal class="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56 rounded-xl">

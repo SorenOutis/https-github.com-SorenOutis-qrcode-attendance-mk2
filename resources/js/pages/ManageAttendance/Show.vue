@@ -600,32 +600,32 @@ onMounted(() => {
     ]">
         <Head :title="`Attendance: ${subject.name}`" />
 
-        <div class="flex h-full flex-col gap-5 p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between pb-4 border-b border-zinc-100 dark:border-zinc-900">
-                <div class="space-y-4">
-                    <div class="flex items-center gap-3 sm:gap-4">
-                        <Button variant="ghost" size="icon" @click="goBack" class="-ml-1 sm:-ml-2 h-10 w-10 sm:h-12 sm:w-12 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 shadow-sm active:scale-90 shrink-0">
-                            <ChevronLeft class="h-5 w-5 sm:h-6 sm:w-6 text-zinc-600 dark:text-zinc-400" />
-                        </Button>
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-2 mb-0.5 sm:mb-1">
-                                <span class="h-1 w-1 rounded-full bg-zinc-400 animate-pulse"></span>
-                                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-400 truncate">Attendance Roster</span>
-                            </div>
-                            <h1 class="text-2xl sm:text-4xl font-serif font-bold tracking-tighter text-foreground leading-none truncate">{{ subject.name }}</h1>
+        <div class="flex h-full flex-col gap-3 sm:gap-5 p-3 sm:p-6 lg:p-10 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 pb-4 border-b border-zinc-100 dark:border-zinc-900">
+                <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                    <Button variant="ghost" size="icon" @click="goBack" class="-ml-1 sm:-ml-2 h-10 w-10 sm:h-12 sm:w-12 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 shadow-sm active:scale-90 shrink-0">
+                        <ChevronLeft class="h-5 w-5 sm:h-6 sm:w-6 text-zinc-600 dark:text-zinc-400" />
+                    </Button>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 mb-0.5 sm:mb-1">
+                            <span class="h-1 w-1 rounded-full bg-zinc-400 animate-pulse shrink-0"></span>
+                            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-400 truncate">Attendance Roster</span>
                         </div>
+                        <h1 class="text-2xl sm:text-4xl font-serif font-bold tracking-tighter text-foreground leading-none truncate">{{ subject.name }}</h1>
                     </div>
+                </div>
 
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
                     <!-- Date Selector Revamp -->
-                    <div class="inline-flex items-center bg-white dark:bg-black rounded-[1rem] sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden group/picker h-11 sm:h-14 transition-all hover:shadow-2xl">
+                    <div class="flex-1 sm:flex-none inline-flex items-center w-full sm:w-auto bg-white dark:bg-black rounded-[1rem] sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden group/picker h-11 sm:h-14 transition-all hover:shadow-2xl">
                         <button 
                             @click="goToPrevDay"
-                            class="h-full px-3 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 transition-colors group/prev"
+                            class="h-full px-3 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 transition-colors group/prev shrink-0"
                         >
                             <ChevronLeft class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 group-hover/prev:text-zinc-900 dark:group-hover/prev:text-white transition-colors" />
                         </button>
                         
-                        <div class="relative px-3 sm:px-6 flex flex-col justify-center min-w-[160px] sm:min-w-[200px]">
+                        <div class="relative flex-1 px-3 sm:px-6 flex flex-col justify-center min-w-[140px] sm:min-w-[200px]">
                             <div class="flex items-center justify-between mb-0.5 gap-2">
                                 <span class="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400 block truncate">Selected Date</span>
                                 <button 
@@ -642,44 +642,67 @@ onMounted(() => {
                                     v-model="selectedDate"
                                     class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
                                 />
-                                <div class="flex items-center gap-1.5 sm:gap-2 pointer-events-none group-hover/input:translate-x-1 transition-transform">
-                                    <span class="font-black text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 tracking-tight">
-                                        {{ new Date(props.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }}
+                                <div class="flex items-center justify-between w-full group-hover/input:translate-x-1 transition-transform pointer-events-none">
+                                    <span class="font-black text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 tracking-tight truncate mr-2">
+                                        {{ new Date(props.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
                                     </span>
-                                    <CalendarDays class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
+                                    <CalendarDays class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 shrink-0" />
                                 </div>
                             </div>
                         </div>
 
                         <button 
                             @click="goToNextDay"
-                            class="h-full px-3 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-l border-zinc-100 dark:border-zinc-800 transition-colors group/next"
+                            class="h-full px-3 sm:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-l border-zinc-100 dark:border-zinc-800 transition-colors group/next shrink-0"
                         >
                             <ChevronRight class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 group-hover/next:text-zinc-900 dark:group-hover/next:text-white transition-colors" />
                         </button>
                     </div>
-                </div>
 
-                <div class="flex items-center gap-2 sm:gap-3 self-stretch sm:self-auto shrink-0 w-full sm:w-auto">
-                    <Button 
-                        variant="outline"
-                        as-child
-                        class="h-9 sm:h-10 px-3 flex-1 sm:flex-none sm:px-6 rounded-full font-bold text-zinc-600 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-xs sm:text-sm"
-                    >
-                        <a :href="`/manage-attendance/${subject.id}/${date}/export`" target="_blank" class="flex items-center justify-center">
-                            <Download class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                            Export CSV
-                        </a>
-                    </Button>
-                    <Button 
-                        variant="outline"
-                        class="h-9 sm:h-10 px-3 flex-1 sm:flex-none sm:px-6 rounded-full font-bold text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-black hover:border-zinc-300 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-[10px] sm:text-sm"
-                        @click="markAllAbsent"
-                        :disabled="isMarkingAllAbsent || students.every(s => s.attendance)"
-                    >
-                        <XCircle v-if="!isMarkingAllAbsent" class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
-                        {{ isMarkingAllAbsent ? 'Marking...' : 'Mark Remaining Absent' }}
-                    </Button>
+                    <!-- Mobile Action Menu -->
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" class="sm:hidden h-11 w-11 rounded-[1rem] border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl shrink-0">
+                                <MoreHorizontal class="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-56 rounded-xl">
+                            <DropdownMenuItem asChild>
+                                <a :href="`/manage-attendance/${subject.id}/${date}/export`" target="_blank" class="w-full flex items-center cursor-pointer">
+                                    <Download class="w-4 h-4 mr-2" />
+                                    Export CSV
+                                </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem @click="markAllAbsent" :disabled="isMarkingAllAbsent || students.every(s => s.attendance)" class="cursor-pointer text-rose-600 focus:text-rose-600 dark:text-rose-400 dark:focus:text-rose-400">
+                                <XCircle class="w-4 h-4 mr-2" />
+                                {{ isMarkingAllAbsent ? 'Marking...' : 'Mark Remaining Absent' }}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <!-- Desktop Actions -->
+                    <div class="hidden sm:flex items-center gap-2 sm:gap-3">
+                        <Button 
+                            variant="outline"
+                            as-child
+                            class="h-10 px-6 rounded-full font-bold text-zinc-600 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-sm"
+                        >
+                            <a :href="`/manage-attendance/${subject.id}/${date}/export`" target="_blank" class="flex items-center justify-center">
+                                <Download class="w-4 h-4 mr-2" />
+                                Export CSV
+                            </a>
+                        </Button>
+                        <Button 
+                            variant="outline"
+                            class="h-10 px-6 rounded-full font-bold text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-black hover:border-zinc-300 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-sm"
+                            @click="markAllAbsent"
+                            :disabled="isMarkingAllAbsent || students.every(s => s.attendance)"
+                        >
+                            <XCircle v-if="!isMarkingAllAbsent" class="w-4 h-4 mr-2 shrink-0" />
+                            {{ isMarkingAllAbsent ? 'Marking...' : 'Mark Remaining Absent' }}
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -766,17 +789,17 @@ onMounted(() => {
             </div>
 
             <!-- Toolbar: Search & Filters (Sticky) -->
-            <div class="sticky top-0 z-20 flex flex-col md:flex-row gap-2 sm:gap-4 items-center bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-lg p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                <div class="relative w-full md:max-w-md">
-                    <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500 dark:text-zinc-400" />
+            <div class="sticky top-[env(safe-area-inset-top)] z-20 flex gap-2 sm:gap-4 items-center bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-lg p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm w-full overflow-hidden mt-0 sm:mt-2">
+                <div class="relative w-full sm:max-w-md flex-1 min-w-[120px]">
+                    <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500 dark:text-zinc-400 shrink-0" />
                     <Input 
                         v-model="searchQuery" 
-                        placeholder="Search student name or number..." 
-                        class="pl-9 sm:pl-10 h-9 sm:h-10 text-xs sm:text-sm rounded-full bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 shadow-sm"
+                        placeholder="Search..." 
+                        class="pl-9 sm:pl-10 h-9 sm:h-10 text-xs sm:text-sm rounded-full bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 shadow-sm w-full"
                     />
                 </div>
                 
-                <div class="flex items-center gap-1 sm:gap-3 bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full md:w-auto overflow-x-auto no-scrollbar">
+                <div class="flex items-center gap-1 sm:gap-3 bg-zinc-200/50 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shrink-0 overflow-x-auto no-scrollbar sm:w-auto">
                     <div class="flex items-center px-2 sm:px-3 border-r border-zinc-300 dark:border-zinc-700 mr-0.5 sm:mr-1 shrink-0">
                         <input 
                             type="checkbox" 

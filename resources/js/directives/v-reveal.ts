@@ -8,7 +8,7 @@ export const vReveal: Directive = {
             distance: 40,
             rotation: -5,
             scale: 0.95,
-            delay: Number(binding.arg) || 0,
+            delay: (Number(binding.arg) || 0) / 1000,
             ...binding.value
         };
 

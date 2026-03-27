@@ -20,22 +20,8 @@ const cardsRef = ref<HTMLElement | null>(null);
 
 onMounted(() => {
     if (cardsRef.value) {
-        const cards = cardsRef.value.querySelectorAll('[data-card]');
-        
         // Setup perspective
         gsap.set(cardsRef.value, { perspective: 1000 });
-
-        // Entrance animation with 3D feel
-        gsap.from(cards, {
-            opacity: 0,
-            y: 30,
-            rotationX: -15,
-            z: -20,
-            stagger: 0.1,
-            duration: 0.8,
-            ease: 'power2.out',
-            clearProps: 'all'
-        });
     }
 });
 </script>

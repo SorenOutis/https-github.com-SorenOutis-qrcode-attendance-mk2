@@ -708,6 +708,11 @@ onMounted(() => {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56 rounded-xl">
+                            <DropdownMenuItem @click="startRollCall" :disabled="rollCallStudents.length === 0" class="cursor-pointer">
+                                <Users class="w-4 h-4 mr-2" />
+                                Roll Call
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
                                 <a :href="`/manage-attendance/${subject.id}/${date}/export`" target="_blank" class="w-full flex items-center cursor-pointer">
                                     <Download class="w-4 h-4 mr-2" />
@@ -1344,7 +1349,7 @@ onMounted(() => {
                 <!-- Close Button -->
                 <button 
                     @click="isRollCallMode = false"
-                    class="absolute top-8 right-8 h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-95"
+                    class="absolute top-4 right-4 h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-95"
                 >
                     <X class="w-6 h-6" />
                 </button>
@@ -1369,7 +1374,7 @@ onMounted(() => {
                 <div class="max-w-xl w-full flex flex-col items-center gap-8 animate-in fade-in zoom-in duration-700">
                     <!-- Big Avatar -->
                     <div 
-                        class="h-48 w-48 sm:h-64 sm:w-64 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-none border-8 border-white dark:border-zinc-900 overflow-hidden bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center transition-all duration-1000"
+                        class="h-28 w-28 sm:h-40 sm:w-40 rounded-2xl shadow-[0_24px_48px_-16px_rgba(0,0,0,0.2)] dark:shadow-none border-6 border-white dark:border-zinc-900 overflow-hidden bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center transition-all duration-500"
                         :style="!currentRollCallStudent.photo ? { background: avatarGradient(currentRollCallStudent.name) } : {}"
                     >
                         <img 
@@ -1383,21 +1388,21 @@ onMounted(() => {
                     </div>
 
                     <div class="space-y-2">
-                        <h2 class="text-4xl sm:text-6xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase italic leading-none">
+                        <h2 class="text-2xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-white uppercase italic leading-none">
                             {{ currentRollCallStudent.name }}
                         </h2>
-                        <p class="text-sm font-black uppercase tracking-[0.2em] text-zinc-400">
+                        <p class="text-[10px] sm:text-sm font-black uppercase tracking-[0.2em] text-zinc-400">
                             {{ currentRollCallStudent.student_number || 'NO ID' }}
                         </p>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full mt-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full mt-3">
                         <button 
                             v-for="status in ['Present', 'Late', 'Absent', 'Excused']"
                             :key="status"
                             @click="updateAttendance(currentRollCallStudent, status); nextRollCall()"
-                            class="h-24 sm:h-32 rounded-[2rem] border-2 flex flex-col items-center justify-center gap-2 group/btn transition-all active:scale-95 shadow-lg shadow-inherit"
+                            class="h-16 sm:h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-1 group/btn transition-all active:scale-95 shadow-lg shadow-inherit"
                             :class="[
                                 status === 'Present' ? 'border-emerald-500/20 hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-500/10 dark:hover:text-emerald-500 text-emerald-600' :
                                 status === 'Late' ? 'border-amber-500/20 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500/10 dark:hover:text-amber-500 text-amber-600' :
@@ -1405,8 +1410,8 @@ onMounted(() => {
                                 'border-zinc-200 hover:bg-zinc-900 hover:text-white dark:border-zinc-800 dark:hover:bg-white dark:hover:text-zinc-900 text-zinc-500'
                             ]"
                         >
-                            <span class="text-xs font-black uppercase tracking-widest">{{ status }}</span>
-                            <span class="text-[10px] opacity-40 font-bold hidden sm:block">Press {{ ['1', '2', '3', '4'][['Present', 'Late', 'Absent', 'Excused'].indexOf(status)] }}</span>
+                            <span class="text-[11px] sm:text-xs font-black uppercase tracking-widest">{{ status }}</span>
+                            <span class="text-[9px] opacity-40 font-bold hidden sm:block">Press {{ ['1', '2', '3', '4'][['Present', 'Late', 'Absent', 'Excused'].indexOf(status)] }}</span>
                         </button>
                     </div>
 
@@ -1415,14 +1420,14 @@ onMounted(() => {
                         <button 
                             @click="prevRollCall"
                             :disabled="currentRollCallIndex === 0"
-                            class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-0 transition-all"
+                            class="flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.18em] text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-0 transition-all"
                         >
                             <ChevronLeft class="w-4 h-4" />
                             Previous
                         </button>
                         <button 
                             @click="nextRollCall"
-                            class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all"
+                            class="flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.18em] text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all"
                         >
                             Skip
                             <ChevronRight class="w-4 h-4" />

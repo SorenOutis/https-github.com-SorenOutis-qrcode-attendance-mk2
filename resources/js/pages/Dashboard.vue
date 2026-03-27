@@ -70,8 +70,17 @@ const daysOfWeek = [
     'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
 ];
 
+type Paginator<T> = {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: { url: string | null; label: string; active: boolean }[];
+};
+
 type PageProps = {
-    students: Student[];
+    students: Paginator<Student>;
     trashedStudents: Student[];
     subjects: { id: number; name: string }[];
     attendanceStats?: { Present: number; Late: number; Absent: number; Excused: number; };
@@ -89,7 +98,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const page = usePage();
 
-const students = computed(() => props.students ?? []);
+const students = computed(() => props.students?.data ?? []);
 const searchQuery = ref('');
 const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
 const searchInputRef = ref<{ $el: HTMLInputElement } | null>(null);
@@ -101,14 +110,9 @@ const statusFilter = ref<'Present' | 'Late' | 'Absent' | null>(null);
 const filteredStudents = computed(() => {
     let result = students.value;
     
-    if (searchQuery.value) {
-        const q = searchQuery.value.toLowerCase();
-        result = result.filter(s => 
-            s.name.toLowerCase().includes(q) || 
-            s.student_number.toLowerCase().includes(q) ||
-            (s.section && s.section.toLowerCase().includes(q))
-        );
-    }
+    // Note: Search and filtering for active students should now ideally happen 
+    // on the server for better performance, but we'll keep the client-side logic 
+    // for the currently loaded page of students for now.
     
     if (statusFilter.value) {
         result = result.filter(s => s.today_statuses?.some(ts => ts.status === statusFilter.value));
@@ -161,15 +165,19 @@ const formattedCurrentDate = computed(() => {
 });
 
 const stats = computed(() => {
-    const activeStudents = students.value;
     return {
-        total: activeStudents.length,
-        present: activeStudents.filter(s => s.today_statuses?.some(ts => ts.status === 'Present')).length,
-        late: activeStudents.filter(s => s.today_statuses?.some(ts => ts.status === 'Late')).length,
-        absent: activeStudents.filter(s => s.today_statuses?.some(ts => ts.status === 'Absent')).length,
+        total: props.students?.total ?? 0,
+        present: statsPresent.value,
+        late: statsLate.value,
+        absent: statsAbsent.value,
         trashed: props.trashedStudents?.length || 0
     };
 });
+
+// Since we use pagination, we need the overall status counts from props
+const statsPresent = computed(() => props.attendanceStats?.Present ?? 0);
+const statsLate = computed(() => props.attendanceStats?.Late ?? 0);
+const statsAbsent = computed(() => props.attendanceStats?.Absent ?? 0);
 
 const animatedStats = ref({
     total: 0,
@@ -283,31 +291,70 @@ const itemsPerPage = ref(10);
 const currentPage = ref(1);
 
 const visibleStudents = computed(() => {
-    const source = activeTab.value === 'active' ? filteredStudents.value : filteredTrashedStudents.value;
-    if (showOnlyScheduledToday.value && activeTab.value === 'active') {
-        return source.filter(s => isScheduledForToday(s));
-    }
-    return source;
+    return activeTab.value === 'active' ? filteredStudents.value : filteredTrashedStudents.value;
 });
 
 const paginatedStudents = computed(() => {
+    // For active tab, we use server-side pagination
+    if (activeTab.value === 'active') {
+        return visibleStudents.value;
+    }
+    
+    // For trashed tab, we still use client-side pagination as it's not paginated on server yet
     const start = (currentPage.value - 1) * itemsPerPage.value;
     const end = start + itemsPerPage.value;
     return visibleStudents.value.slice(start, end);
 });
 
-const totalPages = computed(() => Math.ceil(visibleStudents.value.length / itemsPerPage.value));
+const totalPages = computed(() => {
+    if (activeTab.value === 'active') {
+        return props.students?.last_page ?? 1;
+    }
+    return Math.ceil(visibleStudents.value.length / itemsPerPage.value);
+});
 
 function nextPage() {
-    if (currentPage.value < totalPages.value) currentPage.value++;
+    if (activeTab.value === 'active') {
+        if (props.students.last_page > props.students.current_page) {
+            router.get(dashboard(), { page: props.students.current_page + 1 }, { preserveScroll: true });
+        }
+    } else {
+        if (currentPage.value < totalPages.value) currentPage.value++;
+    }
 }
 
 function prevPage() {
-    if (currentPage.value > 1) currentPage.value--;
+    if (activeTab.value === 'active') {
+        if (props.students.current_page > 1) {
+            router.get(dashboard(), { page: props.students.current_page - 1 }, { preserveScroll: true });
+        }
+    } else {
+        if (currentPage.value > 1) currentPage.value--;
+    }
 }
 
-watch([searchQuery, activeTab, statusFilter, showOnlyScheduledToday, viewMode], () => {
-    currentPage.value = 1;
+watch(searchQuery, (q) => {
+    // We'll use router.get to sync with the server, with a small debounce conceptually
+    // though here we'll just trigger it. Inertia handles standard request cancellation.
+    router.get(dashboard(), 
+        { search: q, only_scheduled: showOnlyScheduledToday.value }, 
+        { preserveState: true, preserveScroll: true, replace: true }
+    );
+});
+
+watch(showOnlyScheduledToday, (val) => {
+    router.get(dashboard(), 
+        { search: searchQuery.value, only_scheduled: val }, 
+        { preserveState: true, preserveScroll: true, replace: true }
+    );
+});
+
+watch([activeTab, statusFilter, viewMode, currentPage], () => {
+    // Only reset currentPage if it's not a server-side pagination change
+    if (activeTab.value !== 'active') {
+        currentPage.value = 1;
+    }
+    animateStudents();
 });
 
 const selectedStudent = ref<Student | null>(null);
@@ -488,28 +535,26 @@ function animateStudents() {
         
         if (viewMode.value === 'grid') {
             gsap.fromTo(targets, 
-                { opacity: 0, y: 30, scale: 0.9, filter: 'blur(8px)' },
+                { opacity: 0, y: 15, scale: 0.98 },
                 { 
                     opacity: 1, 
                     y: 0, 
                     scale: 1, 
-                    filter: 'blur(0px)',
-                    duration: 0.6, 
-                    stagger: 0.05, 
-                    ease: 'back.out(1.2)',
+                    duration: 0.4, 
+                    stagger: 0.03, 
+                    ease: 'power2.out',
                     clearProps: 'all'
                 }
             );
         } else {
             gsap.fromTo(targets,
-                { opacity: 0, x: -20, filter: 'blur(4px)' },
+                { opacity: 0, x: -10 },
                 { 
                     opacity: 1, 
                     x: 0, 
-                    filter: 'blur(0px)',
-                    duration: 0.5, 
-                    stagger: 0.03, 
-                    ease: 'power2.out',
+                    duration: 0.3, 
+                    stagger: 0.02, 
+                    ease: 'power1.out',
                     clearProps: 'all'
                 }
             );

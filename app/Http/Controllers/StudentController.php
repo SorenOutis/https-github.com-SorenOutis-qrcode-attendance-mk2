@@ -23,9 +23,26 @@ class StudentController extends Controller
         $date = CarbonImmutable::now()->toDateString();
         $subjects = Subject::orderBy('name')->get(['id', 'name']);
 
-        $students = Student::query()
+        $search = request('search');
+        $onlyScheduled = request('only_scheduled') === 'true';
+
+        $studentsQuery = Student::query();
+
+        if ($search) {
+            $studentsQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('student_number', 'like', "%{$search}%")
+                  ->orWhere('section', 'like', "%{$search}%");
+            });
+        }
+
+        if ($onlyScheduled) {
+            $studentsQuery->where('schedule', 'like', "%{$dayOfWeek}%");
+        }
+
+        $students = $studentsQuery
             ->orderBy('name')
-            ->get([
+            ->paginate(12, [
                 'id',
                 'name',
                 'student_number',
@@ -35,7 +52,8 @@ class StudentController extends Controller
                 'schedule',
                 'photo',
                 'created_at',
-            ]);
+            ])
+            ->withQueryString();
 
         $trashedStudents = Student::onlyTrashed()
             ->orderBy('name')
@@ -89,7 +107,7 @@ class StudentController extends Controller
 
             // Calculate attendance percentage (Present + Late + Excused / Total)
             $positiveRecords = $presentCount + $lateCount + $excusedCount;
-            $attendancePercentage = $totalRecords > 0 ? round(($positiveRecords / $totalRecords) * 100) : 100;
+            $attendancePercentage = $totalRecords > 0 ? (int) round(($positiveRecords / $totalRecords) * 100) : 100;
 
             return [
                 'id' => $student->id,
@@ -123,19 +141,25 @@ class StudentController extends Controller
             ->get()
             ->pluck('count', 'status');
 
-        $studentsData = $students->map($mapStudent);
-        $atRiskCount = $studentsData->filter(fn ($s) => $s['attendance_percentage'] < 80)->count();
+        $studentsData = $students->getCollection()->map($mapStudent);
+        $students->setCollection($studentsData);
+
+        $atRiskCount = Student::query()
+            ->get(['id', 'name'])
+            ->map($mapStudent)
+            ->filter(fn ($s) => $s['attendance_percentage'] < 80)
+            ->count();
 
         return Inertia::render('Dashboard', [
             'subjects' => $subjects,
-            'students' => $studentsData,
+            'students' => $students,
             'trashedStudents' => $trashedStudents->map($mapStudent),
             'atRiskCount' => $atRiskCount,
             'attendanceStats' => [
-                'Present' => $attendanceStats->get('Present', 0) + $attendanceStats->get('present', 0),
-                'Late' => $attendanceStats->get('Late', 0) + $attendanceStats->get('late', 0),
-                'Absent' => $attendanceStats->get('Absent', 0) + $attendanceStats->get('absent', 0),
-                'Excused' => $attendanceStats->get('Excused', 0) + $attendanceStats->get('excused', 0),
+                'Present' => (int) ($attendanceStats->get('Present', 0) + $attendanceStats->get('present', 0)),
+                'Late' => (int) ($attendanceStats->get('Late', 0) + $attendanceStats->get('late', 0)),
+                'Absent' => (int) ($attendanceStats->get('Absent', 0) + $attendanceStats->get('absent', 0)),
+                'Excused' => (int) ($attendanceStats->get('Excused', 0) + $attendanceStats->get('excused', 0)),
             ],
         ]);
     }
@@ -339,7 +363,54 @@ class StudentController extends Controller
 
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
-            $data['photo'] = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            $imagePath = $file->getRealPath();
+            
+            // Create a small optimized version using GD
+            $info = getimagesize($imagePath);
+            $mime = $info['mime'];
+            
+            $src = match($mime) {
+                'image/jpeg' => imagecreatefromjpeg($imagePath),
+                'image/png' => imagecreatefrompng($imagePath),
+                'image/webp' => imagecreatefromwebp($imagePath),
+                default => null,
+            };
+
+            if ($src) {
+                $width = imagesx($src);
+                $height = imagesy($src);
+                $maxSize = 300;
+                
+                if ($width > $maxSize || $height > $maxSize) {
+                    if ($width > $height) {
+                        $newWidth = $maxSize;
+                        $newHeight = (int) ($height * ($maxSize / $width));
+                    } else {
+                        $newHeight = $maxSize;
+                        $newWidth = (int) ($width * ($maxSize / $height));
+                    }
+                } else {
+                    $newWidth = $width;
+                    $newHeight = $height;
+                }
+
+                $dst = imagecreatetruecolor($newWidth, $newHeight);
+                imagealphablending($dst, false);
+                imagesavealpha($dst, true);
+                imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                
+                ob_start();
+                imagejpeg($dst, null, 80);
+                $imageData = ob_get_clean();
+                
+                $data['photo'] = 'data:image/jpeg;base64,' . base64_encode($imageData);
+                
+                imagedestroy($src);
+                imagedestroy($dst);
+            } else {
+                // Fallback to original if GD fails
+                $data['photo'] = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($imagePath));
+            }
         }
 
         // Ensure each slot has start < end
@@ -397,7 +468,52 @@ class StudentController extends Controller
 
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
-            $data['photo'] = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            $imagePath = $file->getRealPath();
+            
+            $info = getimagesize($imagePath);
+            $mime = $info['mime'];
+            
+            $src = match($mime) {
+                'image/jpeg' => imagecreatefromjpeg($imagePath),
+                'image/png' => imagecreatefrompng($imagePath),
+                'image/webp' => imagecreatefromwebp($imagePath),
+                default => null,
+            };
+
+            if ($src) {
+                $width = imagesx($src);
+                $height = imagesy($src);
+                $maxSize = 300;
+                
+                if ($width > $maxSize || $height > $maxSize) {
+                    if ($width > $height) {
+                        $newWidth = $maxSize;
+                        $newHeight = (int) ($height * ($maxSize / $width));
+                    } else {
+                        $newHeight = $maxSize;
+                        $newWidth = (int) ($width * ($maxSize / $height));
+                    }
+                } else {
+                    $newWidth = $width;
+                    $newHeight = $height;
+                }
+
+                $dst = imagecreatetruecolor($newWidth, $newHeight);
+                imagealphablending($dst, false);
+                imagesavealpha($dst, true);
+                imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                
+                ob_start();
+                imagejpeg($dst, null, 80);
+                $imageData = ob_get_clean();
+                
+                $data['photo'] = 'data:image/jpeg;base64,' . base64_encode($imageData);
+                
+                imagedestroy($src);
+                imagedestroy($dst);
+            } else {
+                $data['photo'] = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($imagePath));
+            }
         }
 
         $data['schedule'] = collect($data['schedule'])

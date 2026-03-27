@@ -26,17 +26,19 @@ class ManualAttendanceController extends Controller
             ->get()
             ->map(function ($subject) use ($date) {
                 // Get all students who have this subject in their schedule
-                $enrolledStudents = Student::query()
-                    ->whereJsonContains('schedule', [['subject_id' => $subject->id]])
-                    ->get();
+                // We fetch IDs and schedules first to be robust against SQLite JSON issues
+                $enrolledStudentIds = Student::query()
+                    ->get(['id', 'schedule'])
+                    ->filter(fn ($s) => collect($s->schedule ?? [])->contains('subject_id', $subject->id))
+                    ->pluck('id');
 
-                $enrolledCount = $enrolledStudents->count();
+                $enrolledCount = $enrolledStudentIds->count();
 
                 // Get attendance for these students on this specific date
                 $presentCount = Attendance::query()
                     ->where('subject_id', $subject->id)
                     ->whereDate('scanned_at', $date)
-                    ->whereIn('student_id', $enrolledStudents->pluck('id'))
+                    ->whereIn('student_id', $enrolledStudentIds)
                     ->count();
 
                 $subject->stats = [
@@ -63,16 +65,22 @@ class ManualAttendanceController extends Controller
         $parsedDate = CarbonImmutable::parse($date);
         $dayOfWeek = $parsedDate->format('l');
 
-        // Get all students (we filter by subject in the collection to bypass SQLite JSON array bugs)
-        // Include photo for premium avatars
-        $enrolledStudents = Student::query()
-            ->select('id', 'name', 'student_number', 'schedule', 'qr_token', 'photo')
+        // Get students who have THIS subject in their schedule (on any day)
+        // We use a two-step approach for SQLite robustness and performance
+        $enrolledIds = Student::query()
+            ->get(['id', 'schedule'])
+            ->filter(fn ($s) => collect($s->schedule ?? [])->contains('subject_id', $subject->id))
+            ->pluck('id');
+
+        $students = Student::query()
+            ->select(['id', 'name', 'student_number', 'schedule', 'qr_token', 'photo'])
+            ->whereIn('id', $enrolledIds)
             ->orderBy('name', 'asc')
             ->get();
 
         // Get past attendance sessions for trend analysis (last 5 dates with records for this subject)
         $pastDates = Attendance::query()
-            ->where('subject_id', '=', $subject->id)
+            ->where('subject_id', $subject->id)
             ->whereDate('scanned_at', '<', $parsedDate->toDateString())
             ->distinct()
             ->orderBy('scanned_at', 'desc')
@@ -82,37 +90,32 @@ class ManualAttendanceController extends Controller
             ->reverse()
             ->values();
 
-        // Filter students who actually have this subject on the specified day
-        // And extract their schedule slot for this specific subject and day
-        $students = $enrolledStudents->map(function ($student) use ($subject, $dayOfWeek, $parsedDate, $pastDates) {
+        // Bulk fetch today's attendance
+        $todayAttendances = Attendance::query()
+            ->where('subject_id', $subject->id)
+            ->whereDate('scanned_at', $parsedDate->toDateString())
+            ->whereIn('student_id', $students->pluck('id'))
+            ->get(['id', 'student_id', 'status', 'is_manual', 'remarks', 'scanned_at'])
+            ->keyBy('student_id');
+
+        // Bulk fetch historical attendance for trends
+        $historicalAttendances = Attendance::query()
+            ->where('subject_id', $subject->id)
+            ->whereIn('scanned_at', $pastDates)
+            ->whereIn('student_id', $students->pluck('id'))
+            ->get(['student_id', 'status', 'scanned_at'])
+            ->groupBy('student_id');
+
+        $mappedStudents = $students->map(function ($student) use ($subject, $dayOfWeek, $todayAttendances, $historicalAttendances, $pastDates) {
             $allSlots = collect($student->schedule ?? []);
+            $todaySlot = $allSlots->first(fn ($s) => isset($s['subject_id'], $s['day']) && $s['subject_id'] == $subject->id && $s['day'] === $dayOfWeek);
 
-            // Check if they have THIS subject anywhere in their schedule
-            $subjectSlots = $allSlots->filter(fn ($s) => isset($s['subject_id']) && $s['subject_id'] == $subject->id);
-
-            if ($subjectSlots->isEmpty()) {
-                return null;
-            }
-
-            // Find slot for today if it exists
-            $todaySlot = $subjectSlots->firstWhere('day', $dayOfWeek);
-
-            // Find existing attendance for this student on this day for this subject
-            $attendance = Attendance::query()
-                ->select('id', 'status', 'is_manual', 'remarks', 'scanned_at')
-                ->where('student_id', '=', $student->id)
-                ->where('subject_id', '=', $subject->id)
-                ->whereDate('scanned_at', '=', $parsedDate->toDateString())
-                ->first();
+            $attendance = $todayAttendances->get($student->id);
+            $studentHistory = $historicalAttendances->get($student->id, collect());
 
             // Calculate trend (status for last 5 sessions)
-            $trend = $pastDates->map(function ($date) use ($student, $subject) {
-                $record = Attendance::query()
-                    ->where('student_id', '=', $student->id)
-                    ->where('subject_id', '=', $subject->id)
-                    ->whereDate('scanned_at', '=', $date)
-                    ->first();
-
+            $trend = $pastDates->map(function ($date) use ($studentHistory) {
+                $record = $studentHistory->first(fn ($h) => $h->scanned_at->toDateString() === $date);
                 return $record ? $record->status : 'Unmarked';
             });
 
@@ -127,12 +130,12 @@ class ManualAttendanceController extends Controller
                 'attendance' => $attendance,
                 'trend' => $trend,
             ];
-        })->filter()->values();
+        });
 
         return Inertia::render('ManageAttendance/Show', [
             'subject' => ['id' => $subject->id, 'name' => $subject->name],
             'date' => $parsedDate->toDateString(),
-            'students' => $students,
+            'students' => $mappedStudents,
         ]);
     }
 

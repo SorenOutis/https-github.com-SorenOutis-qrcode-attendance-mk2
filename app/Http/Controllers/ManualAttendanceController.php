@@ -14,12 +14,46 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ManualAttendanceController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $subjects = Subject::query()->select('id', 'name')->orderBy('name', 'asc')->get();
+        $date = $request->input('date', now()->toDateString());
+        $parsedDate = CarbonImmutable::parse($date);
+        $dayOfWeek = $parsedDate->format('l');
+
+        $subjects = Subject::query()
+            ->select('id', 'name', 'icon', 'color', 'description')
+            ->orderBy('name', 'asc')
+            ->get()
+            ->map(function ($subject) use ($date) {
+                // Get all students who have this subject in their schedule
+                $enrolledStudents = Student::query()
+                    ->whereJsonContains('schedule', [['subject_id' => $subject->id]])
+                    ->get();
+
+                $enrolledCount = $enrolledStudents->count();
+
+                // Get attendance for these students on this specific date
+                $presentCount = Attendance::query()
+                    ->where('subject_id', $subject->id)
+                    ->whereDate('scanned_at', $date)
+                    ->whereIn('student_id', $enrolledStudents->pluck('id'))
+                    ->count();
+
+                $subject->stats = [
+                    'enrolled' => $enrolledCount,
+                    'present' => $presentCount,
+                    'absent' => max(0, $enrolledCount - $presentCount),
+                    'attendance_rate' => $enrolledCount > 0 ? round(($presentCount / $enrolledCount) * 100) : 0,
+                ];
+
+                return $subject;
+            });
 
         return Inertia::render('ManageAttendance/Index', [
             'subjects' => $subjects,
+            'filters' => [
+                'date' => $date,
+            ],
         ]);
     }
 
@@ -30,14 +64,27 @@ class ManualAttendanceController extends Controller
         $dayOfWeek = $parsedDate->format('l');
 
         // Get all students (we filter by subject in the collection to bypass SQLite JSON array bugs)
+        // Include photo_path for premium avatars
         $enrolledStudents = Student::query()
-            ->select('id', 'name', 'student_number', 'schedule', 'qr_token')
+            ->select('id', 'name', 'student_number', 'schedule', 'qr_token', 'photo_path')
             ->orderBy('name', 'asc')
             ->get();
 
+        // Get past attendance sessions for trend analysis (last 5 dates with records for this subject)
+        $pastDates = Attendance::query()
+            ->where('subject_id', '=', $subject->id)
+            ->whereDate('scanned_at', '<', $parsedDate->toDateString())
+            ->distinct()
+            ->orderBy('scanned_at', 'desc')
+            ->limit(5)
+            ->pluck('scanned_at')
+            ->map(fn ($date) => CarbonImmutable::parse($date)->toDateString())
+            ->reverse()
+            ->values();
+
         // Filter students who actually have this subject on the specified day
         // And extract their schedule slot for this specific subject and day
-        $students = $enrolledStudents->map(function ($student) use ($subject, $dayOfWeek, $parsedDate) {
+        $students = $enrolledStudents->map(function ($student) use ($subject, $dayOfWeek, $parsedDate, $pastDates) {
             $allSlots = collect($student->schedule ?? []);
 
             // Check if they have THIS subject anywhere in their schedule
@@ -58,14 +105,27 @@ class ManualAttendanceController extends Controller
                 ->whereDate('scanned_at', '=', $parsedDate->toDateString())
                 ->first();
 
+            // Calculate trend (status for last 5 sessions)
+            $trend = $pastDates->map(function ($date) use ($student, $subject) {
+                $record = Attendance::query()
+                    ->where('student_id', '=', $student->id)
+                    ->where('subject_id', '=', $subject->id)
+                    ->whereDate('scanned_at', '=', $date)
+                    ->first();
+
+                return $record ? $record->status : 'Unmarked';
+            });
+
             return [
                 'id' => $student->id,
                 'name' => $student->name,
                 'student_number' => $student->student_number,
+                'photo_path' => $student->photo_path,
                 'slot_start' => $todaySlot['start'] ?? null,
                 'slot_end' => $todaySlot['end'] ?? null,
                 'qr_token' => $student->qr_token,
                 'attendance' => $attendance,
+                'trend' => $trend,
             ];
         })->filter()->values();
 

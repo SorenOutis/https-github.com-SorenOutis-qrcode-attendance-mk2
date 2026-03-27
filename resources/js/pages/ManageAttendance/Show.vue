@@ -62,10 +62,12 @@ type Student = {
     id: number;
     name: string;
     student_number: string;
+    photo_path: string | null;
     slot_start: string | null;
     slot_end: string | null;
     qr_token: string;
     attendance: Attendance | null;
+    trend: string[];
 };
 
 const props = defineProps<{
@@ -83,6 +85,41 @@ const toast = useToast();
 const selectedStudents = ref<number[]>([]);
 const viewMode = ref<'grid' | 'table'>('grid');
 const isBulkSaving = ref(false);
+
+// Roll Call Mode State
+const isRollCallMode = ref(false);
+const currentRollCallIndex = ref(0);
+
+const rollCallStudents = computed(() => {
+    // Only mark students who are NOT marked yet
+    return filteredStudents.value.filter(s => !s.attendance);
+});
+
+const currentRollCallStudent = computed(() => rollCallStudents.value[currentRollCallIndex.value]);
+
+function startRollCall() {
+    if (rollCallStudents.value.length === 0) {
+        toast.info('All students are already marked!');
+        return;
+    }
+    currentRollCallIndex.value = 0;
+    isRollCallMode.value = true;
+}
+
+function nextRollCall() {
+    if (currentRollCallIndex.value < rollCallStudents.value.length - 1) {
+        currentRollCallIndex.value++;
+    } else {
+        isRollCallMode.value = false;
+        toast.success('Roll call completed!');
+    }
+}
+
+function prevRollCall() {
+    if (currentRollCallIndex.value > 0) {
+        currentRollCallIndex.value--;
+    }
+}
 
 const allSelected = computed(() => {
     return filteredStudents.value.length > 0 && selectedStudents.value.length === filteredStudents.value.length;
@@ -689,6 +726,15 @@ onMounted(() => {
                     <div class="hidden sm:flex items-center gap-2 sm:gap-3">
                         <Button 
                             variant="outline"
+                            class="h-10 px-6 rounded-full font-bold text-zinc-900 border-zinc-200 bg-white dark:bg-zinc-900 dark:border-zinc-800 dark:text-white transition-all active:scale-95 shadow-sm text-sm"
+                            @click="startRollCall"
+                            :disabled="rollCallStudents.length === 0"
+                        >
+                            <Users class="w-4 h-4 mr-2 shrink-0" />
+                            Roll Call
+                        </Button>
+                        <Button 
+                            variant="outline"
                             as-child
                             class="h-10 px-6 rounded-full font-bold text-zinc-600 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm text-sm"
                         >
@@ -1012,15 +1058,51 @@ onMounted(() => {
                         <!-- Header Area: Stacked on mobile, side-by-side on desktop -->
                         <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between mb-2 sm:mb-4 relative z-20 gap-2 sm:gap-0">
                             <div class="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-4 text-center sm:text-left">
-                                <div 
-                                    class="h-8 w-8 sm:h-12 sm:w-12 shrink-0 rounded-xl sm:rounded-2xl flex items-center justify-center text-xs sm:text-lg font-black shadow-inner group-hover:scale-110 transition-transform duration-500 text-white border border-white/10"
-                                    :style="{ background: avatarGradient(student.name) }"
-                                >
-                                    {{ student.name.charAt(0) }}
+                                <!-- Enhanced Avatar with Photo Support -->
+                                <div class="relative">
+                                    <div 
+                                        class="h-10 w-10 sm:h-14 sm:w-14 shrink-0 rounded-2xl flex items-center justify-center text-xs sm:text-lg font-black shadow-lg group-hover:scale-105 transition-transform duration-500 text-white border border-white/10 overflow-hidden bg-zinc-100 dark:bg-zinc-800"
+                                        :style="!student.photo_path ? { background: avatarGradient(student.name) } : {}"
+                                    >
+                                        <img 
+                                            v-if="student.photo_path" 
+                                            :src="student.photo_path" 
+                                            alt="" 
+                                            class="h-full w-full object-cover"
+                                        />
+                                        <span v-else>{{ student.name.charAt(0) }}</span>
+                                    </div>
+                                    
+                                    <!-- Status Indicator Dot -->
+                                    <div 
+                                        v-if="student.attendance"
+                                        class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white dark:border-black shadow-sm"
+                                        :class="[
+                                            student.attendance.status.toLowerCase() === 'present' ? 'bg-emerald-500' :
+                                            student.attendance.status.toLowerCase() === 'late' ? 'bg-amber-500' :
+                                            student.attendance.status.toLowerCase() === 'absent' ? 'bg-rose-500' : 'bg-zinc-400'
+                                        ]"
+                                    ></div>
                                 </div>
-                                <div class="w-full max-w-[80px] sm:max-w-[140px]">
-                                    <h4 class="font-black text-[9px] sm:text-base tracking-tight truncate sm:line-clamp-1 text-zinc-900 dark:text-zinc-100 leading-tight">{{ student.name }}</h4>
-                                    <p class="hidden sm:block text-[10px] font-bold font-mono text-zinc-400 dark:text-zinc-500 mt-1 tracking-wider uppercase">{{ student.student_number || 'No ID' }}</p>
+
+                                <div class="w-full max-w-[100px] sm:max-w-[140px]">
+                                    <h4 class="font-black text-[10px] sm:text-base tracking-tight truncate sm:line-clamp-1 text-zinc-900 dark:text-zinc-100 leading-tight">{{ student.name }}</h4>
+                                    <p class="text-[8px] sm:text-[10px] font-bold font-mono text-zinc-400 dark:text-zinc-500 mt-0.5 tracking-wider uppercase truncate">{{ student.student_number || 'No ID' }}</p>
+                                    
+                                    <!-- Attendance Trend Dots -->
+                                    <div class="flex gap-1 mt-1.5 justify-center sm:justify-start">
+                                        <div 
+                                            v-for="(status, tIdx) in student.trend" 
+                                            :key="tIdx"
+                                            class="h-1.5 w-1.5 rounded-full"
+                                            :class="[
+                                                status.toLowerCase() === 'present' ? 'bg-emerald-500' :
+                                                status.toLowerCase() === 'late' ? 'bg-amber-500' :
+                                                status.toLowerCase() === 'absent' ? 'bg-rose-500' : 'bg-zinc-200 dark:bg-zinc-800'
+                                            ]"
+                                            :title="status"
+                                        ></div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1241,5 +1323,106 @@ onMounted(() => {
                 </div>
             </DialogContent>
         </Dialog>
+
+        <!-- Roll Call Mode Overlay -->
+        <Transition
+            enter-active-class="transition-all duration-500 ease-out"
+            enter-from-class="opacity-0 scale-110"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="transition-all duration-300 ease-in"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-110"
+        >
+            <div v-if="isRollCallMode && currentRollCallStudent" class="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+                <!-- Close Button -->
+                <button 
+                    @click="isRollCallMode = false"
+                    class="absolute top-8 right-8 h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-95"
+                >
+                    <X class="w-6 h-6" />
+                </button>
+
+                <!-- Progress Header -->
+                <div class="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+                    <span class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Roll Call Progress</span>
+                    <div class="flex items-center gap-4">
+                        <div class="h-1.5 w-48 bg-zinc-100 dark:bg-zinc-900 rounded-full overflow-hidden">
+                            <div 
+                                class="h-full bg-zinc-900 dark:bg-white transition-all duration-500"
+                                :style="{ width: `${((currentRollCallIndex + 1) / rollCallStudents.length) * 100}%` }"
+                            ></div>
+                        </div>
+                        <span class="text-xs font-black text-zinc-900 dark:text-white tabular-nums">
+                            {{ currentRollCallIndex + 1 }} / {{ rollCallStudents.length }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Student Content -->
+                <div class="max-w-xl w-full flex flex-col items-center gap-8 animate-in fade-in zoom-in duration-700">
+                    <!-- Big Avatar -->
+                    <div 
+                        class="h-48 w-48 sm:h-64 sm:w-64 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-none border-8 border-white dark:border-zinc-900 overflow-hidden flex items-center justify-center transition-all duration-1000"
+                        :style="!currentRollCallStudent.photo_path ? { background: avatarGradient(currentRollCallStudent.name) } : {}"
+                    >
+                        <img 
+                            v-if="currentRollCallStudent.photo_path" 
+                            :src="currentRollCallStudent.photo_path" 
+                            class="h-full w-full object-cover"
+                        />
+                        <span v-else class="text-7xl font-black text-white italic drop-shadow-2xl">
+                            {{ currentRollCallStudent.name.charAt(0) }}
+                        </span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h2 class="text-4xl sm:text-6xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase italic leading-none">
+                            {{ currentRollCallStudent.name }}
+                        </h2>
+                        <p class="text-sm font-black uppercase tracking-[0.2em] text-zinc-400">
+                            {{ currentRollCallStudent.student_number || 'NO ID' }}
+                        </p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full mt-4">
+                        <button 
+                            v-for="status in ['Present', 'Late', 'Absent', 'Excused']"
+                            :key="status"
+                            @click="updateAttendance(currentRollCallStudent, status); nextRollCall()"
+                            class="h-24 sm:h-32 rounded-[2rem] border-2 flex flex-col items-center justify-center gap-2 group/btn transition-all active:scale-95 shadow-lg shadow-inherit"
+                            :class="[
+                                status === 'Present' ? 'border-emerald-500/20 hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-500/10 dark:hover:text-emerald-500 text-emerald-600' :
+                                status === 'Late' ? 'border-amber-500/20 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500/10 dark:hover:text-amber-500 text-amber-600' :
+                                status === 'Absent' ? 'border-rose-500/20 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500/10 dark:hover:text-rose-500 text-rose-600' :
+                                'border-zinc-200 hover:bg-zinc-900 hover:text-white dark:border-zinc-800 dark:hover:bg-white dark:hover:text-zinc-900 text-zinc-500'
+                            ]"
+                        >
+                            <span class="text-xs font-black uppercase tracking-widest">{{ status }}</span>
+                            <span class="text-[10px] opacity-40 font-bold hidden sm:block">Press {{ ['1', '2', '3', '4'][['Present', 'Late', 'Absent', 'Excused'].indexOf(status)] }}</span>
+                        </button>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="flex items-center gap-8 mt-4">
+                        <button 
+                            @click="prevRollCall"
+                            :disabled="currentRollCallIndex === 0"
+                            class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-0 transition-all"
+                        >
+                            <ChevronLeft class="w-4 h-4" />
+                            Previous
+                        </button>
+                        <button 
+                            @click="nextRollCall"
+                            class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all"
+                        >
+                            Skip
+                            <ChevronRight class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
     </AppLayout>
 </template>

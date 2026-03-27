@@ -18,7 +18,6 @@ import { dashboard } from '@/routes';
 import { edit as profileEdit } from '@/routes/profile';
 import { index as reportsIndex } from '@/routes/reports';
 import { index as backupsIndex } from '@/routes/backups';
-import { index as subjectsIndex } from '@/routes/subjects';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -31,11 +30,6 @@ const mainNavItems: NavItem[] = [
         title: 'Attendance',
         href: '/manage-attendance',
         icon: UserCheck,
-    },
-    {
-        title: 'Subjects',
-        href: subjectsIndex().url,
-        icon: BookOpen,
     },
     {
         title: 'Reports',

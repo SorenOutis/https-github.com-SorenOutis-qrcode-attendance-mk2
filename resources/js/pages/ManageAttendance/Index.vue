@@ -43,19 +43,30 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- Minimal Date Picker in Header -->
-                <div class="inline-flex items-center gap-3 p-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md self-start md:self-auto">
-                    <div class="pl-3 pr-1">
-                        <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block -mb-0.5">Reference Date</span>
-                        <Input 
-                            id="header-date"
-                            type="date" 
-                            v-model="selectedDate" 
-                            class="h-7 w-32 bg-transparent border-0 p-0 focus-visible:ring-0 font-bold text-xs"
-                        />
-                    </div>
-                    <div class="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0">
-                        <CalendarDays class="w-4 h-4" />
+                <!-- Header Actions -->
+                <div class="flex items-center gap-2 sm:gap-3 self-start md:self-auto shrink-0 flex-wrap sm:flex-nowrap">
+                    <button 
+                        @click="router.get('/subjects')"
+                        class="inline-flex items-center justify-center gap-2 h-10 px-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-900 dark:text-zinc-100 group"
+                    >
+                        <BookOpen class="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors" />
+                        Manage Subjects
+                    </button>
+
+                    <!-- Minimal Date Picker in Header -->
+                    <div class="inline-flex items-center gap-3 p-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
+                        <div class="pl-3 pr-1">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block -mb-0.5">Reference Date</span>
+                            <Input 
+                                id="header-date"
+                                type="date" 
+                                v-model="selectedDate" 
+                                class="h-7 w-32 bg-transparent border-0 p-0 focus-visible:ring-0 font-bold text-xs"
+                            />
+                        </div>
+                        <div class="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0">
+                            <CalendarDays class="w-4 h-4" />
+                        </div>
                     </div>
                 </div>
             </div>

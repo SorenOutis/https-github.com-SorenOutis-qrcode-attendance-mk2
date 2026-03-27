@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import gsap from 'gsap';
-import { Plus, BookOpen, Trash2, Edit2, Users } from 'lucide-vue-next';
+import { Plus, BookOpen, Trash2, Edit2, Users, CalendarDays } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -215,6 +215,15 @@ onMounted(() => {
                 </p>
                 <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="h-10 px-5 rounded-full border-sidebar-border/50 bg-background/50 backdrop-blur-sm hover:bg-muted/50 transition-all gap-2 text-xs font-semibold tracking-wide"
+                            @click="router.get('/manage-attendance')"
+                        >
+                            <CalendarDays class="h-3.5 w-3.5" />
+                            Attendance Sheets
+                        </Button>
                         <Button
                             variant="outline"
                             size="sm"

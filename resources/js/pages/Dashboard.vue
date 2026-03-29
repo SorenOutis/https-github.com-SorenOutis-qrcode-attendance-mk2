@@ -1192,56 +1192,56 @@ onMounted(() => {
             </div>
 
             <!-- Quick Actions Row -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="grid grid-cols-4 gap-2 sm:gap-3">
                 <button
                     @click="openScanner"
-                    class="flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-3 sm:p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm group"
+                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
                 >
-                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 group-hover:scale-110 transition-transform">
-                        <Scan class="h-4 w-4" />
+                    <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xl shadow-zinc-900/10 sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
+                        <Scan class="h-5 w-5 sm:h-4 sm:w-4" />
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-xs font-bold text-zinc-900 dark:text-white truncate">Scan QR</p>
-                        <p class="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">Record attendance</p>
+                    <div class="flex flex-col min-w-0 items-center sm:items-start w-full">
+                        <p class="text-[9px] sm:text-xs font-bold text-zinc-900 dark:text-white truncate w-full">Scan QR</p>
+                        <p class="hidden sm:block text-[10px] text-zinc-500 dark:text-zinc-400 truncate w-full">Record attendance</p>
                     </div>
                 </button>
 
                 <a
                     href="/reports"
-                    class="flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-3 sm:p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm group"
+                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
                 >
-                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 group-hover:scale-110 transition-transform">
-                        <PieChart class="h-4 w-4" />
+                    <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
+                        <PieChart class="h-5 w-5 sm:h-4 sm:w-4" />
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-xs font-bold text-zinc-900 dark:text-white truncate">Reports</p>
-                        <p class="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">View summaries</p>
+                    <div class="flex flex-col min-w-0 items-center sm:items-start w-full">
+                        <p class="text-[9px] sm:text-xs font-bold text-zinc-700 sm:text-zinc-900 dark:text-zinc-300 dark:sm:text-white truncate w-full">Reports</p>
+                        <p class="hidden sm:block text-[10px] text-zinc-500 dark:text-zinc-400 truncate w-full">View summaries</p>
                     </div>
                 </a>
 
                 <a
                     href="/calendar"
-                    class="flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-3 sm:p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm group"
+                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
                 >
-                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 group-hover:scale-110 transition-transform">
-                        <Calendar class="h-4 w-4" />
+                    <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
+                        <Calendar class="h-5 w-5 sm:h-4 sm:w-4" />
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-xs font-bold text-zinc-900 dark:text-white truncate">Calendar</p>
-                        <p class="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">Schedule view</p>
+                    <div class="flex flex-col min-w-0 items-center sm:items-start w-full">
+                        <p class="text-[9px] sm:text-xs font-bold text-zinc-700 sm:text-zinc-900 dark:text-zinc-300 dark:sm:text-white truncate w-full">Calendar</p>
+                        <p class="hidden sm:block text-[10px] text-zinc-500 dark:text-zinc-400 truncate w-full">Schedule view</p>
                     </div>
                 </a>
 
                 <button
                     @click="openCreateModal"
-                    class="flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-3 sm:p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm group"
+                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
                 >
-                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 group-hover:scale-110 transition-transform">
-                        <UserPlus class="h-4 w-4" />
+                    <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
+                        <UserPlus class="h-5 w-5 sm:h-4 sm:w-4" />
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-xs font-bold text-zinc-900 dark:text-white truncate">Add Student</p>
-                        <p class="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">Register new</p>
+                    <div class="flex flex-col min-w-0 items-center sm:items-start w-full">
+                        <p class="text-[9px] sm:text-xs font-bold text-zinc-700 sm:text-zinc-900 dark:text-zinc-300 dark:sm:text-white truncate w-full">Add Student</p>
+                        <p class="hidden sm:block text-[10px] text-zinc-500 dark:text-zinc-400 truncate w-full">Register new</p>
                     </div>
                 </button>
             </div>

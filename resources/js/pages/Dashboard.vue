@@ -1140,174 +1140,118 @@ onMounted(() => {
             </div>
 
             <!-- Consolidated stats card (mobile + desktop) -->
-            <div class="">
-                <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl p-4">
-                    <Users class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-24 w-24 sm:h-28 sm:w-28 text-zinc-900/10 dark:text-white/10 pointer-events-none" />
-                    <div class="relative z-10">
+            <div class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm p-4 sm:p-5">
+                <Users class="absolute right-[-2%] top-1/2 -translate-y-1/2 h-24 w-24 sm:h-28 sm:w-28 text-zinc-900/[0.04] dark:text-white/[0.04] pointer-events-none" />
+                <div class="relative z-10">
                     <div class="mb-4">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Total Students</p>
-                        <p class="mt-2 text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-white">{{ searchQuery ? filteredStudents.length : Math.round(animatedStats.total) }}</p>
+                        <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Total Students</p>
+                        <p class="mt-1.5 text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-white">{{ searchQuery ? filteredStudents.length : Math.round(animatedStats.total) }}</p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-3">
                         <button
                             @click="statusFilter = statusFilter === 'Present' ? null : 'Present'"
-                            class="rounded-xl border p-2 text-left text-xs font-semibold transition-all"
-                            :class="statusFilter === 'Present' ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100'"
+                            class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
+                            :class="statusFilter === 'Present' ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20'"
                         >
-                            <CheckCircle2 class="absolute -right-1 -top-1 h-16 w-16 text-emerald-900/10 dark:text-emerald-100/10 pointer-events-none" />
-                            <div class="flex items-center justify-between">
-                                <span>Present</span>
-                                <span class="text-lg font-bold">{{ Math.round(animatedStats.present) }}</span>
-                            </div>
+                            <CheckCircle2 class="absolute -right-2 -bottom-2 h-14 w-14 text-emerald-400/10 pointer-events-none" />
+                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Present</p>
+                            <p class="text-2xl font-bold">{{ Math.round(animatedStats.present) }}</p>
                         </button>
 
                         <button
                             @click="statusFilter = statusFilter === 'Late' ? null : 'Late'"
-                            class="rounded-xl border p-2 text-left text-xs font-semibold transition-all"
-                            :class="statusFilter === 'Late' ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 text-amber-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100'"
+                            class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
+                            :class="statusFilter === 'Late' ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 text-amber-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 hover:border-amber-300 hover:bg-amber-50/50 dark:hover:bg-amber-950/20'"
                         >
-                            <Zap class="absolute -right-1 -top-1 h-16 w-16 text-amber-900/10 dark:text-amber-100/10 pointer-events-none" />
-                            <div class="flex items-center justify-between">
-                                <span>Late</span>
-                                <span class="text-lg font-bold">{{ Math.round(animatedStats.late) }}</span>
-                            </div>
+                            <Zap class="absolute -right-2 -bottom-2 h-14 w-14 text-amber-400/10 pointer-events-none" />
+                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Late</p>
+                            <p class="text-2xl font-bold">{{ Math.round(animatedStats.late) }}</p>
                         </button>
 
                         <button
                             @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'"
-                            class="rounded-xl border p-2 text-left text-xs font-semibold transition-all"
-                            :class="statusFilter === 'Absent' ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/30 text-rose-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100'"
+                            class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
+                            :class="statusFilter === 'Absent' ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/30 text-rose-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 hover:border-rose-300 hover:bg-rose-50/50 dark:hover:bg-rose-950/20'"
                         >
-                            <UserX class="absolute -right-1 -top-1 h-16 w-16 text-rose-900/10 dark:text-rose-100/10 pointer-events-none" />
-                            <div class="flex items-center justify-between">
-                                <span>Absent</span>
-                                <span class="text-lg font-bold">{{ Math.round(animatedStats.absent) }}</span>
-                            </div>
+                            <UserX class="absolute -right-2 -bottom-2 h-14 w-14 text-rose-400/10 pointer-events-none" />
+                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Absent</p>
+                            <p class="text-2xl font-bold">{{ Math.round(animatedStats.absent) }}</p>
                         </button>
 
-                        <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 p-2 text-left text-xs font-semibold bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-                            <PieChart class="absolute -right-1 -top-1 h-16 w-16 text-zinc-900/10 dark:text-zinc-100/10 pointer-events-none" />
-                            <div class="flex items-center justify-between mb-1">
-                                <span>Attendance Rate</span>
-                                <span class="text-lg font-bold">{{ attendanceRate.toFixed(1) }}%</span>
+                        <div class="relative rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 text-left text-xs font-semibold bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-hidden">
+                            <PieChart class="absolute -right-2 -bottom-2 h-14 w-14 text-zinc-400/10 pointer-events-none" />
+                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Attendance Rate</p>
+                            <p class="text-2xl font-bold">{{ attendanceRate.toFixed(1) }}%</p>
+                            <div class="mt-2 h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                                <div :class="['h-full transition-all duration-700', attendanceRateClass]" :style="{ width: Math.min(attendanceRate, 100) + '%' }"></div>
                             </div>
-                            <div class="h-1 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
-                                <div :class="['h-full', attendanceRateClass]" :style="{ width: Math.min(attendanceRate, 100) + '%' }"></div>
-                                </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-                <div
-                    ref="cardsRef"
-                    class="hidden"
-                >
-                <!-- Total Students Card -->
+            <!-- Quick Actions Row -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <button
-                    ref="totalStudentsCard"
-                    @click="statusFilter = null"
-                    data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d"
-                    :class="!statusFilter ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
+                    @click="openScanner"
+                    class="flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-3 sm:p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm group"
                 >
-                    <Users class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
-                    <div class="relative w-full z-10">
-                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                            Total Students
-                        </p>
-                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
-                            {{ searchQuery ? filteredStudents.length : Math.round(animatedStats.total) }}
-                            <CheckCircle2 v-if="!statusFilter" class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-900 dark:text-white opacity-50" />
-                        </p>
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 group-hover:scale-110 transition-transform">
+                        <Scan class="h-4 w-4" />
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-zinc-900 dark:text-white truncate">Scan QR</p>
+                        <p class="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">Record attendance</p>
                     </div>
                 </button>
 
-                <!-- Present Today Card -->
-                <button
-                    ref="presentCard"
-                    @click="statusFilter = statusFilter === 'Present' ? null : 'Present'"
-                    data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d"
-                    :class="statusFilter === 'Present' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
+                <a
+                    href="/reports"
+                    class="flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-3 sm:p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm group"
                 >
-                    <UserCheck class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
-                    <div class="relative w-full z-10">
-                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                            Present Today
-                        </p>
-                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
-                            {{ Math.round(animatedStats.present) }}
-                            <CheckCircle2 v-if="statusFilter === 'Present'" class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-900 dark:text-white opacity-50" />
-                        </p>
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 group-hover:scale-110 transition-transform">
+                        <PieChart class="h-4 w-4" />
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-zinc-900 dark:text-white truncate">Reports</p>
+                        <p class="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">View summaries</p>
+                    </div>
+                </a>
+
+                <a
+                    href="/calendar"
+                    class="flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-3 sm:p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm group"
+                >
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 group-hover:scale-110 transition-transform">
+                        <Calendar class="h-4 w-4" />
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-zinc-900 dark:text-white truncate">Calendar</p>
+                        <p class="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">Schedule view</p>
+                    </div>
+                </a>
+
+                <button
+                    @click="openCreateModal"
+                    class="flex items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-3 sm:p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm group"
+                >
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 group-hover:scale-110 transition-transform">
+                        <UserPlus class="h-4 w-4" />
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-zinc-900 dark:text-white truncate">Add Student</p>
+                        <p class="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">Register new</p>
                     </div>
                 </button>
-
-                <!-- Late Today Card -->
-                <button
-                    ref="lateCard"
-                    @click="statusFilter = statusFilter === 'Late' ? null : 'Late'"
-                    data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d"
-                    :class="statusFilter === 'Late' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
-                >
-                    <Zap class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
-                    <div class="relative w-full z-10">
-                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                            Late Today
-                        </p>
-                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
-                            {{ Math.round(animatedStats.late) }}
-                            <CheckCircle2 v-if="statusFilter === 'Late'" class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-900 dark:text-white opacity-50" />
-                        </p>
-                    </div>
-                </button>
-
-                <!-- Absent Today Card -->
-                <button
-                    ref="absentCard"
-                    @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'"
-                    data-card
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d"
-                    :class="statusFilter === 'Absent' ? 'bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-900 dark:border-white text-zinc-900 dark:text-white ring-2 ring-zinc-900/20 dark:ring-white/20' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900'"
-                >
-                    <UserX class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
-                    <div class="relative w-full z-10">
-                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                            Absent Today
-                        </p>
-                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
-                            {{ Math.round(animatedStats.absent) }}
-                            <CheckCircle2 v-if="statusFilter === 'Absent'" class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-900 dark:text-white opacity-50" />
-                        </p>
-                    </div>
-                </button>
-
-                <!-- Attendance Rate Card -->
-                <div
-                    class="group relative overflow-hidden rounded-2xl p-3 sm:p-5 text-left shadow-sm w-full transition-colors flex items-center justify-between preserve-3d shadow-3d bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white"
-                >
-                    <UserPlus class="absolute right-[-5%] top-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
-                    <div class="relative w-full z-10">
-                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                            Attendance Rate
-                        </p>
-                        <p class="mt-1 text-2xl sm:text-4xl font-light tracking-tight text-zinc-900 dark:text-white drop-shadow-sm flex items-center justify-between">
-                            {{ attendanceRate.toFixed(1) }}%
-                        </p>
-                        <div class="mt-2 h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                            <div :class="['h-full transition-all duration-500', attendanceRateClass]" :style="{ width: Math.min(attendanceRate, 100) + '%' }"></div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
-                <div class="xl:col-span-1 flex flex-col gap-6 order-last">
-                    
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 items-start">
+                <!-- Sidebar: 1/4 width on desktop, right side aligned with Add Student -->
+                <div class="lg:col-span-1 flex flex-col gap-4 order-last lg:order-last">
+
                     <!-- Students at Risk -->
-                    <div v-if="atRiskStudents.length > 0" class="overflow-hidden rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-white dark:bg-black shadow-xl">
+                    <div v-if="atRiskStudents.length > 0" class="overflow-hidden rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-white dark:bg-black shadow-sm">
                         <div class="border-b border-rose-100 dark:border-rose-900/30 p-4 flex items-center justify-between bg-rose-50 dark:bg-rose-950/20">
                             <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-rose-600 dark:text-rose-400">
                                 <AlertTriangle class="h-3.5 w-3.5" />
@@ -1397,7 +1341,8 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <div class="xl:col-span-3 order-first">
+                <!-- Main: 3/4 width on desktop, left side aligned Scan QR→Calendar -->
+                <div class="lg:col-span-3 order-first lg:order-first">
                     <div
                         ref="tableRef"
                         class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl"
@@ -2735,7 +2680,6 @@ onMounted(() => {
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
     </AppLayout>
 </template>
 

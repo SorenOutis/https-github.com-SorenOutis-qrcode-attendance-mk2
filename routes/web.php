@@ -5,11 +5,15 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\ExcuseController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ManualAttendanceController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StudentAnalyticsController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentImportController;
+use App\Http\Controllers\SubjectAttendanceController;
 use App\Http\Controllers\SubjectController;
 use App\Models\Attendance;
 use App\Models\Comment;
@@ -40,6 +44,11 @@ Route::get('portal/{token}', [StudentController::class, 'portal'])
 Route::post('comments', [CommentController::class, 'store'])->name('comments.store');
 Route::post('ratings', [RatingController::class, 'store'])->name('ratings.store');
 
+// Student excuse submission (token-based, no auth required)
+Route::post('excuses', [ExcuseController::class, 'store'])
+    ->middleware(['throttle:30,1'])
+    ->name('excuses.store');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [StudentController::class, 'index'])->name('dashboard');
     Route::resource('subjects', SubjectController::class)->except(['create', 'show', 'edit']);
@@ -55,6 +64,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('students/{student}/attendance', [StudentController::class, 'attendance'])->name('students.attendance');
     Route::post('students/import', [StudentImportController::class, 'store'])->name('students.import');
     Route::get('students/sample', [StudentImportController::class, 'downloadSample'])->name('students.sample');
+
+    // Student Analytics
+    Route::get('students/{student}/analytics', [StudentAnalyticsController::class, 'show'])->name('students.analytics');
 
     Route::post('attendance/scan', [AttendanceController::class, 'scan'])->name('attendance.scan');
     Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
@@ -76,6 +88,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('manage-attendance/toggle', [ManualAttendanceController::class, 'toggle'])->name('manage-attendance.toggle');
     Route::post('manage-attendance/mark-all-absent', [ManualAttendanceController::class, 'markAllAbsent'])->name('manage-attendance.mark-all-absent');
     Route::get('manage-attendance/{subject}/{date}/export', [ManualAttendanceController::class, 'exportCsv'])->name('manage-attendance.export');
+
+    // Subject Attendance
+    Route::get('subject-attendance', [SubjectAttendanceController::class, 'index'])->name('subject-attendance.index');
+    Route::get('subject-attendance/{subject}', [SubjectAttendanceController::class, 'show'])->name('subject-attendance.show');
+
+    // Exports
+    Route::get('exports/attendance', [ExportController::class, 'attendancePdf'])->name('exports.attendance');
+    Route::get('exports/students', [ExportController::class, 'studentListCsv'])->name('exports.students');
+    Route::get('exports/student-analytics/{student}', [ExportController::class, 'studentAnalyticsCsv'])->name('exports.student-analytics');
+
+    // Excuses (teacher management)
+    Route::get('excuses', [ExcuseController::class, 'index'])->name('excuses.index');
+    Route::put('excuses/{excuse}', [ExcuseController::class, 'update'])->name('excuses.update');
 
     Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('backups', [BackupController::class, 'store'])->name('backups.store');

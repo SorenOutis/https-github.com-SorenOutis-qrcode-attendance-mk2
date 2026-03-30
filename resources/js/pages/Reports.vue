@@ -25,6 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import SkeletonCard from '@/components/SkeletonCard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 
 ChartJS.register(
@@ -162,7 +163,30 @@ onMounted(async () => {
 });
 
 function exportCsv() {
-    window.location.href = '/reports/export';
+    const params = new URLSearchParams({
+        start: startDate.value,
+        end: endDate.value,
+        subject_id: selectedSubject.value
+    });
+    window.location.href = `/reports/export/csv?${params.toString()}`;
+}
+
+function exportExcel() {
+    const params = new URLSearchParams({
+        start: startDate.value,
+        end: endDate.value,
+        subject_id: selectedSubject.value
+    });
+    window.location.href = `/reports/export/excel?${params.toString()}`;
+}
+
+function exportPdf() {
+    const params = new URLSearchParams({
+        start: startDate.value,
+        end: endDate.value,
+        subject_id: selectedSubject.value
+    });
+    window.location.href = `/reports/export/pdf?${params.toString()}`;
 }
 </script>
 
@@ -181,10 +205,28 @@ function exportCsv() {
                     </h1>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <Button variant="outline" @click="exportCsv" class="rounded-full h-9 sm:h-11 px-4 sm:px-6 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm font-bold text-[10px] sm:text-xs uppercase tracking-widest">
-                        <Download class="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" stroke-width="2.5" />
-                        Export
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <Button variant="outline" class="rounded-full h-9 sm:h-11 px-4 sm:px-6 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm font-bold text-[10px] sm:text-xs uppercase tracking-widest">
+                                <Download class="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" stroke-width="2.5" />
+                                Export
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-48 rounded-xl">
+                            <DropdownMenuItem @select="exportCsv" class="flex items-center gap-2 py-2.5">
+                                <Table class="h-4 w-4 text-zinc-400" />
+                                <span>Export as CSV</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem @select="exportExcel" class="flex items-center gap-2 py-2.5">
+                                <LayoutGrid class="h-4 w-4 text-zinc-400" />
+                                <span>Export as Excel</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem @select="exportPdf" class="flex items-center gap-2 py-2.5">
+                                <Download class="h-4 w-4 text-zinc-400" />
+                                <span>Export as PDF</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 
@@ -231,10 +273,7 @@ function exportCsv() {
             </div>
 
             <div v-if="loading && !stats" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <div v-for="i in 3" :key="i" class="h-[350px] rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 animate-pulse">
-                    <div class="h-4 w-32 bg-zinc-100 dark:bg-zinc-900 rounded mb-4"></div>
-                    <div class="h-full w-full bg-zinc-50 dark:bg-zinc-900/50 rounded"></div>
-                </div>
+                <SkeletonCard variant="chart" v-for="i in 3" :key="i" />
             </div>
 
             <div v-else class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">

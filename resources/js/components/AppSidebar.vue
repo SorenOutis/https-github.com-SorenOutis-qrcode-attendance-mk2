@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Activity, BookOpen, Calendar, ChartBar, Database, FolderGit2, LayoutGrid, MessagesSquare, Star, User, UserCheck } from 'lucide-vue-next';
+import { Activity, BookOpen, Calendar, ChartBar, Database, LayoutGrid, MessageCircle, User, UserCheck } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -32,9 +32,19 @@ const mainNavItems: NavItem[] = [
         icon: UserCheck,
     },
     {
+        title: 'Subject Attendance',
+        href: '/subject-attendance',
+        icon: BookOpen,
+    },
+    {
         title: 'Reports',
         href: reportsIndex().url,
         icon: ChartBar,
+    },
+    {
+        title: 'Excuses',
+        href: '/excuses',
+        icon: MessageCircle,
     },
     {
         title: 'Profile',
@@ -58,13 +68,7 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
-// const footerNavItems: NavItem[] = [
-//     {
-//         title: 'Repository',
-//         href: 'https://github.com/SorenOutis/qrcode-attendance-mk2',
-//         icon: FolderGit2,
-//     },
-// ];
+const footerNavItems: NavItem[] = [];
 </script>
 
 <template>

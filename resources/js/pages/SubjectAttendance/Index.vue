@@ -240,8 +240,8 @@ onMounted(() => {
                     v-for="subject in sortedSubjects"
                     :key="subject.id"
                     :href="`/subject-attendance/${subject.id}`"
-                    data-subject-card
-                    class="group rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-5 sm:p-8 shadow-xl sm:shadow-2xl text-zinc-900 dark:text-white isolate transition-all hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99]"
+                    data-card
+                    class="group relative overflow-hidden rounded-2xl border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-5 transition-all text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:shadow-md transform-gpu hover:-translate-y-0.5 active:translate-y-0.5"
                 >
                     <div class="flex items-start justify-between mb-4 sm:mb-6">
                         <div class="flex items-center gap-2 sm:gap-3">

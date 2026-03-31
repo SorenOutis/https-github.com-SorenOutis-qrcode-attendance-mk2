@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -152,6 +153,19 @@ class SubjectAttendanceController extends Controller
             ->sortBy('attendance_rate')
             ->values();
 
+        $perPage = 25;
+        $currentPage = max(1, (int) $request->integer('page', 1));
+        $paginatedStudents = new LengthAwarePaginator(
+            $studentStats->forPage($currentPage, $perPage)->values(),
+            $studentStats->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path' => $request->url(),
+                'query' => $request->except('page'),
+            ],
+        );
+
         return Inertia::render('SubjectAttendance/Show', [
             'subject' => [
                 'id' => $subject->id,
@@ -162,7 +176,7 @@ class SubjectAttendanceController extends Controller
             ],
             'daily' => $daily,
             'statusDistribution' => $statusDistribution,
-            'students' => $studentStats,
+            'students' => $paginatedStudents,
             'enrolled' => $enrolledIds->count(),
             'filters' => [
                 'start' => $startDate->toDateString(),

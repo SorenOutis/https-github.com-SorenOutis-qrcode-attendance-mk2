@@ -12,7 +12,7 @@ import {
     Legend,
     ArcElement,
 } from 'chart.js';
-import gsap from 'gsap';
+import { gsap } from 'gsap';
 import { ArrowLeft, BookOpen, TrendingUp, Users, Clock } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { Line, Pie, Bar } from 'vue-chartjs';

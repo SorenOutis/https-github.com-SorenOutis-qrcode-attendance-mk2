@@ -1045,11 +1045,22 @@ const startOnboardingTour = () => {
                     title: 'Detailed Reports', 
                     description: 'Access and export comprehensive attendance data for your classes.',
                     side: "bottom",
-                    align: 'center'
+                    align: 'center',
+                    nextBtnText: 'Done',
+                    onNextClick: () => {
+                        hasSeenTour.value = true;
+                        driverObj.destroy();
+                    }
                 } 
             },
         ],
         onDestroyStarted: () => {
+            hasSeenTour.value = true;
+        },
+        onDismis: () => {
+            hasSeenTour.value = true;
+        },
+        onCloseClick: () => {
             hasSeenTour.value = true;
         }
     });

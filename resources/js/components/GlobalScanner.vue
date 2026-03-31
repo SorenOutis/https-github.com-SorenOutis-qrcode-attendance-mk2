@@ -178,6 +178,7 @@ async function handleCodeDetected(token: string) {
 
         setTimeout(() => { scanFeedback.value = null; }, 1500);
     } catch (error: any) {
+        scanError.value = error.message || 'An unexpected error occurred during scanning.';
         scanFeedback.value = 'error';
         scanResultModalOpen.value = true;
         
@@ -185,7 +186,7 @@ async function handleCodeDetected(token: string) {
             navigator.vibrate(200);
         }
 
-        toast.error(scanError.value);
+        toast.error(scanError.value || 'An error occurred');
         setTimeout(() => { scanFeedback.value = null; }, 1500);
     }
 }

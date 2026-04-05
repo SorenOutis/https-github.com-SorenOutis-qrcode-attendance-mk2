@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\ActivityLogger;
 use App\Models\Attendance;
+use App\Models\Excuse;
 use App\Models\Student;
 use App\Models\StudentQrToken;
 use App\Models\Subject;
@@ -39,6 +40,14 @@ class StudentController extends Controller
 
         if ($onlyScheduled) {
             $studentsQuery->where('schedule', 'like', "%{$dayOfWeek}%");
+        }
+
+        $status = request('status');
+        if ($status) {
+            // Filter students who have at least one attendance with this status today
+            $studentsQuery->whereHas('attendances', function ($q) use ($status, $date) {
+                $q->whereDate('scanned_at', $date)->where('status', $status);
+            });
         }
 
         $students = $studentsQuery
@@ -135,6 +144,21 @@ class StudentController extends Controller
             ];
         };
 
+        $recentActivity = Attendance::query()
+            ->whereHas('student')
+            ->with(['student:id,name,photo', 'subject:id,name'])
+            ->orderByDesc('scanned_at')
+            ->limit(5)
+            ->get()
+            ->map(fn ($item) => [
+                'name' => $item->student?->name ?? 'Unknown Student',
+                'photo' => $item->student?->photo,
+                'status' => $item->status,
+                'time' => $item->scanned_at->format('h:i A'),
+                'subject_id' => $item->subject_id,
+                'subject_name' => $item->subject?->name,
+            ]);
+
         // Overall stats for the Chart
         $attendanceStats = DB::table('attendances')
             ->select('status', DB::raw('count(*) as count'))
@@ -143,30 +167,51 @@ class StudentController extends Controller
             ->pluck('count', 'status');
 
         $totalAttendance = (int) $attendanceStats->sum();
-        $positiveAttendance = (int) ($attendanceStats->get('Present', 0) + $attendanceStats->get('present', 0) + $attendanceStats->get('Late', 0) + $attendanceStats->get('late', 0) + $attendanceStats->get('Excused', 0) + $attendanceStats->get('excused', 0));
+        $positiveAttendance = (int) (($attendanceStats['Present'] ?? 0) + ($attendanceStats['present'] ?? 0) + ($attendanceStats['Late'] ?? 0) + ($attendanceStats['late'] ?? 0) + ($attendanceStats['Excused'] ?? 0) + ($attendanceStats['excused'] ?? 0));
         $attendanceRate = $totalAttendance > 0 ? round(($positiveAttendance / $totalAttendance) * 100, 1) : 100;
 
         $studentsData = $students->getCollection()->map($mapStudent);
         $students->setCollection($studentsData);
 
-        $atRiskCount = Student::query()
-            ->get(['id', 'name'])
-            ->map($mapStudent)
+        // High-performance at-risk calculation using SQL for global data
+        // We calculate counts directly in SQL to avoid loading all student-attendance relations
+        $allAtRisk = Student::query()
+            ->select('students.*')
+            ->selectRaw('(SELECT COUNT(*) FROM attendances WHERE student_id = students.id) as total_attendance_count')
+            ->selectRaw('(SELECT COUNT(*) FROM attendances WHERE student_id = students.id AND status IN ("Present", "present", "Late", "late", "Excused", "excused")) as positive_attendance_count')
+            ->get()
+            ->map(function ($student) use ($mapStudent) {
+                // Manually calculate percentage to match mapStudent logic or reuse mapStudent if possible
+                $total = $student->total_attendance_count;
+                $positive = $student->positive_attendance_count;
+                $percentage = $total > 0 ? (int) round(($positive / $total) * 100) : 100;
+                
+                $mapped = $mapStudent($student);
+                $mapped['attendance_percentage'] = $percentage;
+                return $mapped;
+            })
             ->filter(fn ($s) => $s['attendance_percentage'] < 80)
-            ->count();
+            ->sortBy('attendance_percentage');
 
         return Inertia::render('Dashboard', [
             'subjects' => $subjects,
             'students' => $students,
-            'trashedStudents' => $trashedStudents->map($mapStudent),
-            'atRiskCount' => $atRiskCount,
-            'attendanceRate' => $attendanceRate,
-            'attendanceStats' => [
-                'Present' => (int) ($attendanceStats->get('Present', 0) + $attendanceStats->get('present', 0)),
-                'Late' => (int) ($attendanceStats->get('Late', 0) + $attendanceStats->get('late', 0)),
-                'Absent' => (int) ($attendanceStats->get('Absent', 0) + $attendanceStats->get('absent', 0)),
-                'Excused' => (int) ($attendanceStats->get('Excused', 0) + $attendanceStats->get('excused', 0)),
+            'filters' => [
+                'search' => request('search'),
+                'status' => request('status'),
+                'only_scheduled' => request('only_scheduled') === 'true',
             ],
+            'trashedStudents' => Inertia::defer(fn () => $trashedStudents->map($mapStudent)),
+            'atRiskCount' => Inertia::defer(fn () => $allAtRisk->count()),
+            'topAtRiskStudents' => Inertia::defer(fn () => $allAtRisk->take(5)->values()->all()),
+            'recentActivity' => Inertia::defer(fn () => $recentActivity),
+            'attendanceRate' => Inertia::defer(fn () => $attendanceRate),
+            'attendanceStats' => Inertia::defer(fn () => [
+                'Present' => (int) (($attendanceStats['Present'] ?? 0) + ($attendanceStats['present'] ?? 0)),
+                'Late' => (int) (($attendanceStats['Late'] ?? 0) + ($attendanceStats['late'] ?? 0)),
+                'Absent' => (int) (($attendanceStats['Absent'] ?? 0) + ($attendanceStats['absent'] ?? 0)),
+                'Excused' => (int) (($attendanceStats['Excused'] ?? 0) + ($attendanceStats['excused'] ?? 0)),
+            ]),
         ]);
     }
 
@@ -287,6 +332,21 @@ class StudentController extends Controller
             }
         }
 
+        $excuses = Excuse::query()
+            ->where('student_id', '=', $student->id)
+            ->latest()
+            ->limit(10)
+            ->get(['id', 'attendance_id', 'date', 'reason', 'status', 'teacher_notes', 'created_at'])
+            ->map(fn ($e) => [
+                'id' => $e->id,
+                'attendance_id' => $e->attendance_id,
+                'date' => $e->date?->toDateString() ?? $e->created_at->toDateString(),
+                'reason' => $e->reason,
+                'status' => $e->status,
+                'teacher_notes' => $e->teacher_notes,
+                'created_at' => $e->created_at->toISOString(),
+            ]);
+
         return Inertia::render('StudentPortal', [
             'student' => [
                 'id' => $student->id,
@@ -305,6 +365,7 @@ class StudentController extends Controller
             'todaySchedule' => $todaySchedule,
             'todayStatuses' => $todayStatuses,
             'history' => $history,
+            'excuses' => $excuses,
         ]);
     }
 

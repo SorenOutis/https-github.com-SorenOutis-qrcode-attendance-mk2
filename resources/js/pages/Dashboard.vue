@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { useDraggable, useWindowSize, useStorage } from '@vueuse/core';
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
 import type { BreadcrumbItem } from '@/types';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
 import { Doughnut } from 'vue-chartjs';
@@ -32,6 +34,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import SkeletonCard from '@/components/SkeletonCard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import commentsRoutes from '@/routes/comments';
@@ -86,6 +89,13 @@ type PageProps = {
     attendanceStats?: { Present: number; Late: number; Absent: number; Excused: number; };
     attendanceRate?: number;
     atRiskCount: number;
+    topAtRiskStudents?: Student[];
+    recentActivity?: { name: string; photo?: string | null; status: string; time: string; subject_id?: string | number; subject_name?: string }[];
+    filters: {
+        search: string | null;
+        status: string | null;
+        only_scheduled: boolean;
+    };
 };
 
 const props = defineProps<PageProps>();
@@ -100,26 +110,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 const page = usePage();
 
 const students = computed(() => props.students?.data ?? []);
-const searchQuery = ref('');
+const searchQuery = ref(props.filters.search ?? '');
 const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
 const searchInputRef = ref<{ $el: HTMLInputElement } | null>(null);
 const toast = useToast();
 const { open: openScanner } = useScanner();
 
-const statusFilter = ref<'Present' | 'Late' | 'Absent' | null>(null);
+const statusFilter = ref<'Present' | 'Late' | 'Absent' | null>(props.filters.status as any);
+const showOnlyScheduledToday = ref(props.filters.only_scheduled);
 
 const filteredStudents = computed(() => {
-    let result = students.value;
-    
-    // Note: Search and filtering for active students should now ideally happen 
-    // on the server for better performance, but we'll keep the client-side logic 
-    // for the currently loaded page of students for now.
-    
-    if (statusFilter.value) {
-        result = result.filter(s => s.today_statuses?.some(ts => ts.status === statusFilter.value));
-    }
-    
-    return result;
+    return students.value;
 });
 
 const filteredTrashedStudents = computed(() => {
@@ -232,27 +233,7 @@ watch(stats, (newStats) => {
 }, { deep: true, immediate: true });
 
 const recentActivity = computed(() => {
-    const activity: { name: string; status: string; time: string; subject_id?: string | number; sortTime: number }[] = [];
-    
-    students.value.forEach(s => {
-        s.today_statuses?.forEach(ts => {
-            const [time, period] = ts.time.split(' ');
-            let [hours, minutes] = time.split(':').map(Number);
-            if (period === 'PM' && hours !== 12) hours += 12;
-            if (period === 'AM' && hours === 12) hours = 0;
-            const sortTime = hours * 60 + minutes;
-            
-            activity.push({
-                name: s.name,
-                status: ts.status,
-                time: ts.time,
-                subject_id: ts.subject_id,
-                sortTime: sortTime
-            });
-        });
-    });
-    
-    return activity.sort((a, b) => b.sortTime - a.sortTime).slice(0, 5);
+    return props.recentActivity || [];
 });
 
 const chartData = computed(() => {
@@ -288,15 +269,12 @@ const chartOptions = {
 };
 
 const atRiskStudents = computed(() => {
-    return students.value
-        .filter(s => s.attendance_percentage !== undefined && s.attendance_percentage < 80)
-        .sort((a, b) => (a.attendance_percentage || 0) - (b.attendance_percentage || 0));
+    return props.topAtRiskStudents || [];
 });
 
 const viewMode = ref<'table' | 'grid'>('grid');
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
-const showOnlyScheduledToday = ref(false);
 const activeTab = ref<'active' | 'deleted'>('active');
 
 const itemsPerPage = ref(10);
@@ -346,17 +324,15 @@ function prevPage() {
 }
 
 watch(searchQuery, (q) => {
-    // We'll use router.get to sync with the server, with a small debounce conceptually
-    // though here we'll just trigger it. Inertia handles standard request cancellation.
     router.get(dashboard(), 
-        { search: q, only_scheduled: showOnlyScheduledToday.value }, 
+        { search: q, only_scheduled: showOnlyScheduledToday.value, status: statusFilter.value }, 
         { preserveState: true, preserveScroll: true, replace: true }
     );
 });
 
 watch(showOnlyScheduledToday, (val) => {
     router.get(dashboard(), 
-        { search: searchQuery.value, only_scheduled: val }, 
+        { search: searchQuery.value, only_scheduled: val, status: statusFilter.value }, 
         { preserveState: true, preserveScroll: true, replace: true }
     );
 });
@@ -472,6 +448,7 @@ async function submitImport() {
 
 function closeWelcomeModal() {
     showWelcomeModal.value = false;
+    startOnboardingTour();
 }
 
 // Group attendance records by local date (most-recent date first)
@@ -912,8 +889,8 @@ function regenerateQr() {
                     preserveScroll: true,
                     onSuccess: (page) => {
                         const updated = (page.props as unknown as PageProps)
-                            .students.find(
-                                (s) => s.id === selectedStudent.value?.id,
+                            .students.data.find(
+                                (s: Student) => s.id === selectedStudent.value?.id,
                             );
                         if (updated) {
                             selectedStudent.value = updated;
@@ -1008,6 +985,89 @@ function getAvatarGradient(name: string) {
     return colors[Math.abs(hash) % colors.length];
 }
 
+// Onboarding Tour
+const hasSeenTour = useStorage('has-seen-onboarding-tour-v1', false);
+
+const startOnboardingTour = () => {
+    if (hasSeenTour.value) return;
+
+    const driverObj = driver({
+        showProgress: true,
+        steps: [
+            { 
+                element: '#dashboard-welcome', 
+                popover: { 
+                    title: 'Welcome!', 
+                    description: 'Welcome to your new Attendance Portal. Let\'s take a quick look around.',
+                    side: "bottom",
+                    align: 'start'
+                } 
+            },
+            { 
+                element: '[data-tour="stats"]', 
+                popover: { 
+                    title: 'Real-time Stats', 
+                    description: 'Monitor attendance rates and student counts at a glance.',
+                    side: "bottom",
+                    align: 'start'
+                } 
+            },
+            { 
+                element: '[data-tour="search"]', 
+                popover: { 
+                    title: 'Quick Search', 
+                    description: 'Find any student instantly. Use Ctrl+K to focus here anytime.',
+                    side: "bottom",
+                    align: 'start'
+                } 
+            },
+            { 
+                element: '[data-tour="scan"]', 
+                popover: { 
+                    title: 'QR Scanner', 
+                    description: 'Record attendance instantly by scanning student QR codes.',
+                    side: "left",
+                    align: 'center'
+                } 
+            },
+            { 
+                element: '[data-tour="add-student"]', 
+                popover: { 
+                    title: 'Add Students', 
+                    description: 'Enroll new students manually or import them in bulk.',
+                    side: "bottom",
+                    align: 'end'
+                } 
+            },
+            { 
+                element: '[data-tour="reports"]', 
+                popover: { 
+                    title: 'Detailed Reports', 
+                    description: 'Access and export comprehensive attendance data for your classes.',
+                    side: "bottom",
+                    align: 'center',
+                    nextBtnText: 'Done',
+                    onNextClick: () => {
+                        hasSeenTour.value = true;
+                        driverObj.destroy();
+                    }
+                } 
+            },
+        ],
+        onDestroyStarted: () => {
+            hasSeenTour.value = true;
+        },
+        onDismis: () => {
+            hasSeenTour.value = true;
+        },
+        onCloseClick: () => {
+            hasSeenTour.value = true;
+        }
+    });
+
+    driverObj.drive();
+};
+
 onMounted(() => {
     // 1. Entrance Animations for Cards
     if (cardsRef.value) {
@@ -1069,7 +1129,7 @@ onMounted(() => {
         ease: 'sine.inOut'
     });
 
-    // 3. Button Press Micro-interactions
+    // 4. Button Press Micro-interactions
     const buttons = document.querySelectorAll('button');
     buttons.forEach((btn) => {
         gsap.set(btn, { transformStyle: "preserve-3d" });
@@ -1102,6 +1162,13 @@ onMounted(() => {
 
     // Initial student animation
     animateStudents();
+
+    // Trigger tour only if we don't show the welcome modal
+    if (!showWelcomeModal.value && !hasSeenTour.value) {
+        setTimeout(() => {
+            startOnboardingTour();
+        }, 500); // Small delay for visual comfort after loading screen fades
+    }
 });
 </script>
 
@@ -1112,7 +1179,7 @@ onMounted(() => {
         <div class="flex min-h-full flex-1 flex-col gap-4 sm:gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
             <!-- Welcome Header -->
             <div class="flex items-center justify-between gap-4 px-1">
-                <div class="flex flex-col gap-0.5 sm:gap-1">
+                <div id="dashboard-welcome" class="flex flex-col gap-0.5 sm:gap-1">
                     <h1 class="text-xl sm:text-3xl font-serif font-bold tracking-tight">
                         {{ greeting }}, {{ userName }}!
                     </h1>
@@ -1129,6 +1196,7 @@ onMounted(() => {
                 <Button 
                     variant="outline" 
                     size="lg" 
+                    data-tour="scan"
                     class="flex h-10 sm:h-12 items-center gap-2 sm:gap-3 rounded-2xl border-zinc-200/50 bg-white px-3 sm:px-5 text-sm font-bold shadow-sm transition-all hover:bg-zinc-50 hover:text-zinc-900 hover:shadow-md active:scale-95 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 group shrink-0"
                     @click="openScanner"
                 >
@@ -1140,7 +1208,7 @@ onMounted(() => {
             </div>
 
             <!-- Consolidated stats card (mobile + desktop) -->
-            <div class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm p-4 sm:p-5">
+            <div data-tour="stats" class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm p-4 sm:p-5">
                 <Users class="absolute right-[-2%] top-1/2 -translate-y-1/2 h-24 w-24 sm:h-28 sm:w-28 text-zinc-900/[0.04] dark:text-white/[0.04] pointer-events-none" />
                 <div class="relative z-10">
                     <div class="mb-4">
@@ -1148,9 +1216,12 @@ onMounted(() => {
                         <p class="mt-1.5 text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-white">{{ searchQuery ? filteredStudents.length : Math.round(animatedStats.total) }}</p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div v-if="!props.attendanceStats" class="grid grid-cols-2 gap-3">
+                        <SkeletonCard variant="stat" v-for="i in 4" :key="i" />
+                    </div>
+                    <div v-else class="grid grid-cols-2 gap-3">
                         <button
-                            @click="statusFilter = statusFilter === 'Present' ? null : 'Present'"
+                            @click="statusFilter = statusFilter === 'Present' ? null : 'Present'; router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })"
                             class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
                             :class="statusFilter === 'Present' ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20'"
                         >
@@ -1160,7 +1231,7 @@ onMounted(() => {
                         </button>
 
                         <button
-                            @click="statusFilter = statusFilter === 'Late' ? null : 'Late'"
+                            @click="statusFilter = statusFilter === 'Late' ? null : 'Late'; router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })"
                             class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
                             :class="statusFilter === 'Late' ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 text-amber-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 hover:border-amber-300 hover:bg-amber-50/50 dark:hover:bg-amber-950/20'"
                         >
@@ -1170,7 +1241,7 @@ onMounted(() => {
                         </button>
 
                         <button
-                            @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'"
+                            @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'; router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })"
                             class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
                             :class="statusFilter === 'Absent' ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/30 text-rose-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 hover:border-rose-300 hover:bg-rose-50/50 dark:hover:bg-rose-950/20'"
                         >
@@ -1182,7 +1253,8 @@ onMounted(() => {
                         <div class="relative rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 text-left text-xs font-semibold bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-hidden">
                             <PieChart class="absolute -right-2 -bottom-2 h-14 w-14 text-zinc-400/10 pointer-events-none" />
                             <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Attendance Rate</p>
-                            <p class="text-2xl font-bold">{{ attendanceRate.toFixed(1) }}%</p>
+                            <p v-if="props.attendanceRate !== undefined" class="text-2xl font-bold">{{ attendanceRate.toFixed(1) }}%</p>
+                            <p v-else class="h-8 w-16 bg-zinc-200 dark:bg-zinc-800 animate-pulse rounded mt-1"></p>
                             <div class="mt-2 h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                                 <div :class="['h-full transition-all duration-700', attendanceRateClass]" :style="{ width: Math.min(attendanceRate, 100) + '%' }"></div>
                             </div>
@@ -1208,6 +1280,7 @@ onMounted(() => {
 
                 <a
                     href="/reports"
+                    data-tour="reports"
                     class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
                 >
                     <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
@@ -1234,6 +1307,7 @@ onMounted(() => {
 
                 <button
                     @click="openCreateModal"
+                    data-tour="add-student"
                     class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
                 >
                     <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
@@ -1276,7 +1350,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Attendance Overview Chart -->
-                    <div v-if="props.attendanceStats" class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
+                    <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
                         <div class="border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
                             <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                                 <PieChart class="h-3.5 w-3.5" />
@@ -1284,8 +1358,11 @@ onMounted(() => {
                             </h2>
                         </div>
                         <div class="p-4 h-64 flex items-center justify-center relative">
-                            <Doughnut v-if="(props.attendanceStats?.Present || props.attendanceStats?.Late || props.attendanceStats?.Absent || props.attendanceStats?.Excused)" :data="chartData" :options="chartOptions" />
-                            <div v-else class="text-xs text-muted-foreground italic absolute">No data yet</div>
+                            <SkeletonCard v-if="!props.attendanceStats" variant="chart" />
+                            <template v-else>
+                                <Doughnut v-if="(props.attendanceStats?.Present || props.attendanceStats?.Late || props.attendanceStats?.Absent || props.attendanceStats?.Excused)" :data="chartData" :options="chartOptions" />
+                                <div v-else class="text-xs text-muted-foreground italic absolute">No data yet</div>
+                            </template>
                         </div>
                     </div>
 
@@ -1306,8 +1383,8 @@ onMounted(() => {
                                 <div v-for="(act, i) in recentActivity" :key="i" class="flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors group">
                                     <div class="flex items-center gap-3">
                                         <!-- Photo/Avatar -->
-                                        <div v-if="students.find(s => s.name === act.name)?.photo" class="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                                            <img :src="(students.find(s => s.name === act.name)?.photo ?? undefined)" class="h-full w-full object-cover" />
+                                        <div v-if="act.photo" class="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                                            <img :src="act.photo" class="h-full w-full object-cover" />
                                         </div>
                                         <div v-else :class="['h-8 w-8 rounded-full flex items-center justify-center shrink-0 border border-white/20 shadow-inner bg-gradient-to-br', getAvatarGradient(act.name)]">
                                             <span class="text-[10px] font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ act.name.charAt(0) }}</span>
@@ -1331,8 +1408,8 @@ onMounted(() => {
                                     </div>
                                     <div class="flex flex-col items-end gap-1 shrink-0">
                                         <span class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400">{{ act.time }}</span>
-                                        <span v-if="act.subject_id" class="text-[9px] text-zinc-400 dark:text-zinc-500 line-clamp-1 max-w-[80px] text-right" :title="getSubjectName(act.subject_id)">
-                                            {{ getSubjectName(act.subject_id) }}
+                                        <span v-if="act.subject_name" class="text-[9px] text-zinc-400 dark:text-zinc-500 line-clamp-1 max-w-[80px] text-right" :title="act.subject_name">
+                                            {{ act.subject_name }}
                                         </span>
                                     </div>
                                 </div>
@@ -1397,6 +1474,7 @@ onMounted(() => {
                                         ref="searchInputRef"
                                         v-model="searchQuery"
                                         type="search"
+                                        data-tour="search"
                                         placeholder="Search students..."
                                         class="pl-9 pr-12 h-9 text-xs rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 shadow-sm"
                                     />

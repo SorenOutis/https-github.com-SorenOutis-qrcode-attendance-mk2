@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, QrCode, User, UserCheck, ClipboardList } from 'lucide-vue-next';
+import { LayoutGrid, QrCode, User, UserCheck, ClipboardList, MessageCircle } from 'lucide-vue-next';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { useScanner } from '@/composables/useScanner';
 import { dashboard } from '@/routes';
@@ -30,6 +30,11 @@ const navItems = [
         title: 'Reports',
         href: reportsIndex().url,
         icon: ClipboardList,
+    },
+    {
+        title: 'Excuses',
+        href: '/excuses',
+        icon: MessageCircle,
     },
     {
         title: 'Profile',

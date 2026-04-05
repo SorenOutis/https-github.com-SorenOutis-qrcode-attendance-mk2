@@ -38,6 +38,59 @@ let mediaStream: MediaStream | null = null;
 
 const subjects = computed(() => (page.props as any).subjects || []);
 
+function isCameraSecureContext(): boolean {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    return window.isSecureContext;
+}
+
+function getCameraErrorMessage(error?: unknown): string {
+    if (!isCameraSecureContext()) {
+        return 'Camera access requires HTTPS on this device. Open the app using a secure HTTPS address instead of the local IP.';
+    }
+
+    if (error instanceof DOMException) {
+        switch (error.name) {
+            case 'NotAllowedError':
+            case 'PermissionDeniedError':
+                return 'Camera permission was denied. Please allow camera access in your browser settings and try again.';
+            case 'NotFoundError':
+            case 'DevicesNotFoundError':
+                return 'No camera was detected on this device.';
+            case 'NotReadableError':
+            case 'TrackStartError':
+                return 'The camera is already being used by another app. Close it and try again.';
+            case 'OverconstrainedError':
+            case 'ConstraintNotSatisfiedError':
+                return 'This device could not use the preferred camera automatically. Please try again.';
+        }
+    }
+
+    return 'Unable to access camera. Please ensure permissions are granted and try again.';
+}
+
+async function requestCameraStream(): Promise<MediaStream> {
+    const constraints: MediaStreamConstraints[] = [
+        { video: { facingMode: { ideal: 'environment' } }, audio: false },
+        { video: { facingMode: { ideal: 'user' } }, audio: false },
+        { video: true, audio: false },
+    ];
+
+    let lastError: unknown = null;
+
+    for (const constraint of constraints) {
+        try {
+            return await navigator.mediaDevices.getUserMedia(constraint);
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw lastError;
+}
+
 function getSubjectName(subjectId: string | number | null | undefined): string {
     if (!subjectId) return 'N/A';
     const subject = subjects.value.find((s: any) => s.id.toString() === subjectId.toString());
@@ -63,21 +116,27 @@ function formatDateTime(iso: string) {
 }
 
 async function startCamera() {
+    scanError.value = null;
+    stopCamera();
+
     if (!navigator.mediaDevices?.getUserMedia) {
-        scanError.value = 'Camera not supported in this browser.';
+        scanError.value = getCameraErrorMessage();
         return;
     }
 
     try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' },
-        });
-        if (!videoRef.value) return;
+        mediaStream = await requestCameraStream();
+
+        if (!videoRef.value) {
+            stopCamera();
+            return;
+        }
+
         videoRef.value.srcObject = mediaStream;
         await videoRef.value.play();
         startScanningLoop();
-    } catch (e) {
-        scanError.value = 'Unable to access camera. Please ensure permissions are granted.';
+    } catch (error) {
+        scanError.value = getCameraErrorMessage(error);
     }
 }
 
@@ -172,22 +231,21 @@ async function handleCodeDetected(token: string) {
         // Refresh the page data if we are on dashboard or attendance to show the update
         router.reload({ only: ['students', 'attendanceStats'] });
 
-        toast.success(`Attendance recorded for ${data.student.name}`);
-        
-        confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#09090b', '#27272a', '#a1a1aa', '#ffffff'],
-            zIndex: 2000
-        });
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]);
+        }
 
         setTimeout(() => { scanFeedback.value = null; }, 1500);
     } catch (error: any) {
-        scanError.value = error instanceof Error ? error.message : 'Failed to record attendance.';
+        scanError.value = error.message || 'An unexpected error occurred during scanning.';
         scanFeedback.value = 'error';
         scanResultModalOpen.value = true;
-        toast.error(scanError.value);
+        
+        if (navigator.vibrate) {
+            navigator.vibrate(200);
+        }
+
+        toast.error(scanError.value || 'An error occurred');
         setTimeout(() => { scanFeedback.value = null; }, 1500);
     }
 }
@@ -252,11 +310,16 @@ function handleClose() {
                     </div>
 
                     <!-- Scanning Volume / Corners -->
-                    <div class="absolute inset-4 pointer-events-none opacity-40">
-                        <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white rounded-tl-lg shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
-                        <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white rounded-tr-lg shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
-                        <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white rounded-bl-lg shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
-                        <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white rounded-br-lg shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
+                    <div class="absolute inset-4 pointer-events-none opacity-40 z-20">
+                        <div class="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-white rounded-tl-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
+                        <div class="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-white rounded-tr-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
+                        <div class="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-white rounded-bl-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
+                        <div class="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-white rounded-br-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
+                    </div>
+                    
+                    <!-- Center Targeting Dot -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30 z-20">
+                        <div class="size-2 rounded-full bg-white shadow-[0_0_10px_white]"></div>
                     </div>
 
                     <!-- Cooldown Overlay -->
@@ -279,10 +342,10 @@ function handleClose() {
                             'bg-zinc-900/40 border-zinc-800': scanFeedback === 'error',
                         }"
                     >
-                        <!-- Scan Line (Enhanced with brighter laser glow) -->
+                        <!-- Scan Line (Enhanced 3D Laser) -->
                         <div 
                             v-if="!scanFeedback"
-                            class="absolute left-0 right-0 h-[8px] bg-gradient-to-r from-transparent via-white/40 to-transparent shadow-[0_0_40px_rgba(255,255,255,0.8)] animate-scan-line-global after:content-[''] after:absolute after:inset-0 after:bg-white after:h-[1px] after:top-1/2 after:-translate-y-1/2 after:blur-[1px]"
+                            class="absolute left-0 right-0 h-[4px] bg-white shadow-[0_0_50px_10px_rgba(255,255,255,1),0_0_100px_20px_rgba(255,255,255,0.5)] animate-scan-line-laser after:content-[''] after:absolute after:inset-0 after:bg-white after:h-[2px] after:top-1/2 after:-translate-y-1/2 after:blur-[1px]"
                         ></div>
 
                         <div class="absolute inset-0 flex items-center justify-center">
@@ -298,9 +361,20 @@ function handleClose() {
                     </p>
                 </div>
 
-                <p v-if="scanError && !scanResultModalOpen" class="text-[10px] font-black tracking-widest uppercase text-center text-white bg-zinc-900 p-3 rounded-xl border border-zinc-800 shadow-lg">
-                    {{ scanError }}
-                </p>
+                <div v-if="scanError && !scanResultModalOpen" class="space-y-3">
+                    <p class="text-[10px] font-black tracking-widest uppercase text-center text-white bg-zinc-900 p-3 rounded-xl border border-zinc-800 shadow-lg">
+                        {{ scanError }}
+                    </p>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="w-full rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-black tracking-widest uppercase"
+                        @click="startCamera"
+                    >
+                        Retry Camera
+                    </Button>
+                </div>
 
                 <DialogFooter class="sm:justify-center">
                     <Button variant="outline" size="lg" class="w-full h-14 rounded-2xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-900 font-black tracking-widest uppercase transition-all shadow-md active:scale-95" @click="handleClose">
@@ -373,15 +447,17 @@ function handleClose() {
 </template>
 
 <style scoped>
-@keyframes scan-line-anim {
-    0% { top: 0; opacity: 0; }
-    15% { opacity: 1; }
-    85% { opacity: 1; }
-    100% { top: 100%; opacity: 0; }
+@keyframes laser-anim {
+    0% { top: 0; opacity: 0; filter: blur(4px); }
+    10% { opacity: 1; filter: blur(0px); }
+    20% { top: 10%; }
+    80% { top: 90%; }
+    90% { opacity: 1; filter: blur(0px); }
+    100% { top: 100%; opacity: 0; filter: blur(4px); }
 }
 
-.animate-scan-line-global {
-    animation: scan-line-anim 2.5s ease-in-out infinite;
+.animate-scan-line-laser {
+    animation: laser-anim 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes shake-anim {

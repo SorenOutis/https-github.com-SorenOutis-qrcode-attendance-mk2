@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
+import SidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { ref } from 'vue';
 import { useSessionStorage } from '@vueuse/core';
@@ -23,8 +23,8 @@ const onLoadingComplete = () => {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <SidebarLayout :breadcrumbs="breadcrumbs">
         <LoadingScreen v-if="isLoadingVisible" @complete="onLoadingComplete" />
-        <slot />
-    </AppLayout>
+        <slot v-else />
+    </SidebarLayout>
 </template>

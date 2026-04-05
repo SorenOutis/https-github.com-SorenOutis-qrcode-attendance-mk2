@@ -3,7 +3,7 @@ import { ref, watch, onUnmounted, nextTick, computed } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import jsQR from 'jsqr';
 import confetti from 'canvas-confetti';
-import { CheckCircle2, AlertCircle, Scan } from 'lucide-vue-next';
+import { CheckCircle2, AlertCircle, Scan, RotateCw } from 'lucide-vue-next';
 import { useScanner } from '@/composables/useScanner';
 import { useToast } from '@/composables/useToast';
 import {
@@ -35,6 +35,7 @@ const lastScanResult = ref<{
 const scanFeedback = ref<'success' | 'error' | null>(null);
 const scanResultModalOpen = ref(false);
 const isCooldownActive = ref(false);
+const facingMode = ref<'user' | 'environment'>('environment');
 
 let scanInterval: number | null = null;
 let mediaStream: MediaStream | null = null;
@@ -95,8 +96,8 @@ function getCameraErrorMessage(error?: unknown): string {
 
 async function requestCameraStream(): Promise<MediaStream> {
     const constraints: MediaStreamConstraints[] = [
-        { video: { facingMode: { ideal: 'environment' } }, audio: false },
-        { video: { facingMode: { ideal: 'user' } }, audio: false },
+        { video: { facingMode: { exact: facingMode.value } }, audio: false },
+        { video: { facingMode: { ideal: facingMode.value } }, audio: false },
         { video: true, audio: false },
     ];
 
@@ -160,6 +161,11 @@ async function startCamera() {
     } catch (error) {
         scanError.value = getCameraErrorMessage(error);
     }
+}
+
+async function toggleCamera() {
+    facingMode.value = facingMode.value === 'environment' ? 'user' : 'environment';
+    await startCamera();
 }
 
 function stopCamera() {
@@ -324,10 +330,21 @@ function handleClose() {
                 <div class="relative aspect-video overflow-hidden rounded-2xl border-4 border-zinc-100 dark:border-zinc-900 bg-black shadow-2xl ring-1 ring-zinc-950/10 preserve-3d">
                     <video
                         ref="videoRef"
-                        class="h-full w-full object-cover opacity-90"
+                        class="h-full w-full object-cover opacity-90 transition-transform duration-500"
+                        :class="{ '-scale-x-100': facingMode === 'user' }"
                         playsinline
                         muted
                     ></video>
+
+                    <!-- Camera Switch Button -->
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        class="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/50 border-white/20 text-white backdrop-blur-md z-30 hover:bg-black/70 transition-all active:scale-90"
+                        @click="toggleCamera"
+                    >
+                        <RotateCw class="size-5" />
+                    </Button>
 
                     <!-- 3D Grid Overlay -->
                     <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-20">

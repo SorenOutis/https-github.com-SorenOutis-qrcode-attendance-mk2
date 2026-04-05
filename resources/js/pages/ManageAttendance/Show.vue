@@ -168,14 +168,18 @@ const statusFilter = ref('all');
 const filteredStudents = computed(() => {
     return props.students.filter(student => {
         const matchesSearch = student.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-                             student.student_number.toLowerCase().includes(searchQuery.value.toLowerCase());
+                             student.student_number?.toLowerCase().includes(searchQuery.value.toLowerCase());
         
-        const status = student.attendance?.status?.toLowerCase() || 'unmarked';
-        const matchesFilter = statusFilter.value === 'all' || 
-                             (statusFilter.value === 'unmarked' && !student.attendance) ||
-                             status === statusFilter.value.toLowerCase();
+        let matchesStatus = true;
+        if (statusFilter.value !== 'all') {
+            if (statusFilter.value === 'present') matchesStatus = student.attendance?.status === 'Present';
+            if (statusFilter.value === 'late') matchesStatus = student.attendance?.status === 'Late';
+            if (statusFilter.value === 'timeout') matchesStatus = student.attendance?.status === 'Time Out';
+            if (statusFilter.value === 'absent') matchesStatus = student.attendance?.status === 'Absent';
+            if (statusFilter.value === 'unmarked') matchesStatus = !student.attendance;
+        }
         
-        return matchesSearch && matchesFilter;
+        return matchesSearch && matchesStatus;
     });
 });
 
@@ -183,31 +187,135 @@ const stats = computed(() => {
     const total = props.students.length;
     const present = props.students.filter(s => s.attendance?.status?.toLowerCase() === 'present').length;
     const late = props.students.filter(s => s.attendance?.status?.toLowerCase() === 'late').length;
+    const timeout = props.students.filter(s => s.attendance?.status?.toLowerCase() === 'time out').length;
     const absent = props.students.filter(s => s.attendance?.status?.toLowerCase() === 'absent').length;
     const excused = props.students.filter(s => s.attendance?.status?.toLowerCase() === 'excused').length;
-    const unmarked = total - (present + late + absent + excused);
+    const unmarked = total - (present + late + timeout + absent + excused);
     const marked = total - unmarked;
     const progress = total === 0 ? 0 : Math.round((marked / total) * 100);
     
-    return { total, present, late, absent, excused, unmarked, marked, progress };
+    return { total, present, late, timeout, absent, excused, unmarked, marked, progress };
 });
 
 const isAllMarked = computed(() => stats.value.total > 0 && stats.value.unmarked === 0);
 
-const animatedStats = ref({ total: 0, present: 0, late: 0, absent: 0, excused: 0, marked: 0, progress: 0 });
+const animatedStats = ref({ total: 0, present: 0, late: 0, timeout: 0, absent: 0, excused: 0, marked: 0, progress: 0 });
+
+const cardsRef = ref<HTMLElement | null>(null);
+const gridRef = ref<HTMLElement | null>(null);
+const searchInputRef = ref<any>(null);
+
+function animateGrid() {
+    nextTick(() => {
+        const cards = gridRef.value?.querySelectorAll('[data-student-card]');
+        if (cards && cards.length > 0) {
+            gsap.fromTo(cards, 
+                { y: 20, opacity: 0, scale: 0.98 },
+                { 
+                    y: 0, 
+                    opacity: 1, 
+                    scale: 1, 
+                    duration: 0.5, 
+                    stagger: {
+                        amount: 0.4,
+                        from: "start",
+                        grid: "auto"
+                    },
+                    ease: 'power3.out',
+                    clearProps: 'all'
+                }
+            );
+        }
+    });
+}
+
+onMounted(() => {
+    // 1. Entrance Animations for Stats Cards
+    if (cardsRef.value) {
+        const cards = cardsRef.value.querySelectorAll<HTMLElement>('[data-card]');
+        
+        gsap.set(cardsRef.value, { perspective: 1000 });
+        gsap.set(cards, { opacity: 1, visibility: 'visible' });
+
+        gsap.from(cards, {
+            opacity: 0,
+            y: 30,
+            rotationX: -15,
+            z: -20,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: 'power2.out',
+            clearProps: 'all'
+        });
+    }
+
+    // 2. Grid Entrance
+    if (gridRef.value) {
+        gsap.set(gridRef.value, { opacity: 1, visibility: 'visible', perspective: 1200 });
+
+        gsap.from(gridRef.value, {
+            opacity: 0,
+            y: 15,
+            duration: 0.7,
+            ease: 'power2.out',
+            clearProps: 'all'
+        });
+        
+        animateGrid();
+    }
+
+    // 3. Button Press Micro-interactions
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach((btn) => {
+        gsap.set(btn, { transformStyle: "preserve-3d" });
+        btn.addEventListener('mousedown', () => {
+            gsap.to(btn, { scale: 0.95, z: -10, duration: 0.1, ease: 'power1.out' });
+        });
+        btn.addEventListener('mouseup', () => {
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'bounce.out' });
+        });
+        btn.addEventListener('mouseleave', () => {
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
+        });
+    });
+
+    // 4. Keyboard Shortcuts for Rapid Marking
+    const handleKeydown = (e: KeyboardEvent) => {
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+        
+        if (selectedStudents.value.length > 0 && !isBulkSaving.value) {
+            if (e.key === '1') bulkUpdateAttendance('Present');
+            if (e.key === '2') bulkUpdateAttendance('Late');
+            if (e.key === '3') bulkUpdateAttendance('Time Out');
+            if (e.key === '4') bulkUpdateAttendance('Absent');
+            if (e.key === '5') bulkUpdateAttendance('Excused');
+        }
+    };
+    
+    window.addEventListener('keydown', handleKeydown);
+    
+    onUnmounted(() => {
+        window.removeEventListener('keydown', handleKeydown);
+    });
+});
+
+watch([searchQuery, statusFilter, filteredStudents], () => {
+    animateGrid();
+});
 
 watch(stats, (newStats) => {
     gsap.to(animatedStats.value, {
         total: newStats.total,
         present: newStats.present,
         late: newStats.late,
+        timeout: newStats.timeout,
         absent: newStats.absent,
         excused: newStats.excused,
         marked: newStats.marked,
         progress: newStats.progress,
         duration: 0.8,
         ease: 'power2.out',
-        snap: { total: 1, present: 1, late: 1, absent: 1, excused: 1, marked: 1, progress: 1 }
+        snap: { total: 1, present: 1, late: 1, timeout: 1, absent: 1, excused: 1, marked: 1, progress: 1 }
     });
 }, { immediate: true });
 
@@ -526,111 +634,6 @@ function openPrintCards() {
     window.open(`/students/print-cards?ids=${selectedStudentForQr.value.id}`, '_blank');
 }
 
-const cardsRef = ref<HTMLElement | null>(null);
-const gridRef = ref<HTMLElement | null>(null);
-
-function animateStudents() {
-    nextTick(() => {
-        const targets = gridRef.value?.querySelectorAll('[data-student-card]');
-
-        if (!targets || targets.length === 0) return;
-
-        gsap.killTweensOf(targets);
-        
-        gsap.fromTo(targets,
-            { opacity: 0, x: -20, filter: 'blur(4px)' },
-            { 
-                opacity: 1, 
-                x: 0, 
-                filter: 'blur(0px)',
-                duration: 0.5, 
-                stagger: 0.03, 
-                ease: 'power2.out',
-                clearProps: 'all'
-            }
-        );
-    });
-}
-
-watch([searchQuery, statusFilter, () => props.students], () => {
-    animateStudents();
-});
-
-onMounted(() => {
-    // 1. Entrance and Hover Animations for Stats Cards
-    if (cardsRef.value) {
-        const cards = cardsRef.value.querySelectorAll<HTMLElement>('[data-card]');
-        
-        gsap.set(cardsRef.value, { perspective: 1000 });
-        gsap.set(cards, { opacity: 1, visibility: 'visible' });
-
-        gsap.from(cards, {
-            opacity: 0,
-            y: 30,
-            rotationX: -15,
-            z: -20,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: 'power2.out',
-            clearProps: 'all'
-        });
-        
-        cards.forEach((card) => {
-            // Directive handles tilt now, but we keeps transformStyle for children
-            gsap.set(card, { transformStyle: "preserve-3d" });
-        });
-    }
-
-    // 2. Grid and Card Entrance
-    if (gridRef.value) {
-        gsap.set(gridRef.value, { opacity: 1, visibility: 'visible', perspective: 1000 });
-
-        gsap.from(gridRef.value, {
-            opacity: 0,
-            y: 10,
-            duration: 0.6,
-            ease: 'power2.out',
-            clearProps: 'all'
-        });
-        
-        // Initial student card animation
-        animateStudents();
-    }
-
-    // 3. Button Press Micro-interactions
-    const buttons = document.querySelectorAll('button');
-    buttons.forEach((btn) => {
-        gsap.set(btn, { transformStyle: "preserve-3d" });
-        btn.addEventListener('mousedown', () => {
-            gsap.to(btn, { scale: 0.95, z: -10, duration: 0.1, ease: 'power1.out' });
-        });
-        btn.addEventListener('mouseup', () => {
-            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'bounce.out' });
-        });
-        btn.addEventListener('mouseleave', () => {
-            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
-        });
-    });
-
-    // 4. Keyboard Shortcuts for Rapid Marking
-    const handleKeydown = (e: KeyboardEvent) => {
-        // Prevent triggering if user is typing in the search box or remarks input
-        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-        
-        if (selectedStudents.value.length > 0 && !isBulkSaving.value) {
-            if (e.key === '1') bulkUpdateAttendance('Present');
-            if (e.key === '2') bulkUpdateAttendance('Late');
-            if (e.key === '3') bulkUpdateAttendance('Absent');
-            if (e.key === '4') bulkUpdateAttendance('Excused');
-        }
-    };
-    
-    window.addEventListener('keydown', handleKeydown);
-    
-    onUnmounted(() => {
-        window.removeEventListener('keydown', handleKeydown);
-    });
-});
 </script>
 
 <template>
@@ -761,18 +764,18 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- Stats Overview (Ultra-Compact 5-Column) -->
-            <div ref="cardsRef" class="grid grid-cols-5 gap-1 sm:gap-3 w-full mt-1 sm:mt-0">
+            <!-- Stats Overview (Ultra-Compact 6-Column) -->
+            <div ref="cardsRef" class="grid grid-cols-6 gap-1 sm:gap-3 w-full mt-1 sm:mt-0">
                 <!-- Total -->
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1.5 sm:p-4 transition-all bg-white dark:bg-black border border-zinc-100 dark:border-zinc-900 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
                     <Users class="hidden sm:block absolute right-[-10%] top-1/2 -translate-y-1/2 h-12 w-12 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10 flex flex-col items-center sm:items-start text-center sm:text-left">
-                        <p class="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Total</p>
-                        <p class="text-sm sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.total) }}</p>
+                        <p class="text-[6px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Total</p>
+                        <p class="text-[10px] sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.total) }}</p>
                     </div>
                 </div>
                 
@@ -780,12 +783,12 @@ onMounted(() => {
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1.5 sm:p-4 transition-all bg-white dark:bg-black border border-zinc-100 dark:border-zinc-900 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
                     <UserCheck class="hidden sm:block absolute right-[-10%] top-1/2 -translate-y-1/2 h-12 w-12 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10 flex flex-col items-center sm:items-start text-center sm:text-left">
-                        <p class="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Present</p>
-                        <p class="text-sm sm:text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.present) }}</p>
+                        <p class="text-[6px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Present</p>
+                        <p class="text-[10px] sm:text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.present) }}</p>
                     </div>
                 </div>
 
@@ -793,12 +796,25 @@ onMounted(() => {
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1.5 sm:p-4 transition-all bg-white dark:bg-black border border-zinc-100 dark:border-zinc-900 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
                     <Clock class="hidden sm:block absolute right-[-10%] top-1/2 -translate-y-1/2 h-12 w-12 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10 flex flex-col items-center sm:items-start text-center sm:text-left">
-                        <p class="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Late</p>
-                        <p class="text-sm sm:text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.late) }}</p>
+                        <p class="text-[6px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Late</p>
+                        <p class="text-[10px] sm:text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.late) }}</p>
+                    </div>
+                </div>
+
+                <!-- Time Out -->
+                <div 
+                    v-tilt
+                    data-card 
+                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
+                >
+                    <LogOut class="hidden sm:block absolute right-[-10%] top-1/2 -translate-y-1/2 h-12 w-12 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
+                    <div class="relative z-10 flex flex-col items-center sm:items-start text-center sm:text-left">
+                        <p class="text-[6px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Time Out</p>
+                        <p class="text-[10px] sm:text-2xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.timeout) }}</p>
                     </div>
                 </div>
 
@@ -806,12 +822,12 @@ onMounted(() => {
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1.5 sm:p-4 transition-all bg-white dark:bg-black border border-zinc-100 dark:border-zinc-900 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
                     <UserX class="hidden sm:block absolute right-[-10%] top-1/2 -translate-y-1/2 h-12 w-12 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10 flex flex-col items-center sm:items-start text-center sm:text-left">
-                        <p class="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Absent</p>
-                        <p class="text-sm sm:text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400 tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.absent) }}</p>
+                        <p class="text-[6px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Absent</p>
+                        <p class="text-[10px] sm:text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400 tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.absent) }}</p>
                     </div>
                 </div>
 
@@ -819,12 +835,12 @@ onMounted(() => {
                 <div 
                     v-tilt
                     data-card 
-                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1.5 sm:p-4 transition-all bg-white dark:bg-black border border-zinc-100 dark:border-zinc-900 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 preserve-3d shadow-3d"
+                    class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
                     <Info class="hidden sm:block absolute right-[-10%] top-1/2 -translate-y-1/2 h-12 w-12 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
                     <div class="relative z-10 flex flex-col items-center sm:items-start text-center sm:text-left">
-                        <p class="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Excused</p>
-                        <p class="text-sm sm:text-2xl font-bold tracking-tight text-zinc-600 dark:text-zinc-400 tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.excused) }}</p>
+                        <p class="text-[6px] sm:text-[9px] font-black uppercase tracking-widest text-zinc-400">Excused</p>
+                        <p class="text-[10px] sm:text-2xl font-bold tracking-tight text-zinc-600 dark:text-zinc-400 tabular-nums leading-none mt-0.5 sm:mt-1">{{ Math.round(animatedStats.excused) }}</p>
                     </div>
                 </div>
             </div>
@@ -890,12 +906,6 @@ onMounted(() => {
                         />
                         <span class="ml-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 whitespace-nowrap hidden sm:block">Select All</span>
                     </div>
-                    <button 
-                        @click="statusFilter = 'all'"
-                        :class="['h-8 sm:h-9 px-2.5 sm:px-4 rounded-lg text-[10px] sm:text-xs font-semibold transition-all shrink-0', statusFilter === 'all' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
-                    >
-                        All
-                    </button>
                     <button 
                         @click="statusFilter = 'unmarked'"
                         :class="['h-8 sm:h-9 px-2.5 sm:px-4 rounded-lg text-[10px] sm:text-xs font-semibold transition-all shrink-0', statusFilter === 'unmarked' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white']"
@@ -1004,6 +1014,7 @@ onMounted(() => {
                                         'inline-flex items-center rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 text-[8px] sm:text-[9px] uppercase font-black tracking-widest shadow-sm border backdrop-blur-md',
                                         student.attendance?.status.toLowerCase() === 'present' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
                                         student.attendance?.status.toLowerCase() === 'late' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                        student.attendance?.status.toLowerCase() === 'time out' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' :
                                         student.attendance?.status.toLowerCase() === 'absent' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
                                         'bg-zinc-100 text-zinc-500 border-zinc-200 dark:bg-zinc-800'
                                     ]">
@@ -1014,7 +1025,7 @@ onMounted(() => {
                                 <td class="px-4 py-3 w-10 text-center" @click.stop>
                                     <div :class="['flex items-center justify-center gap-1', student.slot_start ? '' : 'opacity-30 grayscale pointer-events-none']">
                                         <button 
-                                            v-for="status in ['Present', 'Late', 'Absent', 'Excused']"
+                                            v-for="status in ['Present', 'Late', 'Time Out', 'Absent', 'Excused']"
                                             :key="status"
                                             @click="updateAttendance(student, status)"
                                             :disabled="!student.slot_start"
@@ -1095,6 +1106,7 @@ onMounted(() => {
                                         :class="[
                                             student.attendance.status.toLowerCase() === 'present' ? 'bg-emerald-500' :
                                             student.attendance.status.toLowerCase() === 'late' ? 'bg-amber-500' :
+                                            student.attendance.status.toLowerCase() === 'time out' ? 'bg-indigo-500' :
                                             student.attendance.status.toLowerCase() === 'absent' ? 'bg-rose-500' : 'bg-zinc-400'
                                         ]"
                                     ></div>
@@ -1113,6 +1125,7 @@ onMounted(() => {
                                             :class="[
                                                 status.toLowerCase() === 'present' ? 'bg-emerald-500' :
                                                 status.toLowerCase() === 'late' ? 'bg-amber-500' :
+                                                status.toLowerCase() === 'time out' ? 'bg-indigo-500' :
                                                 status.toLowerCase() === 'absent' ? 'bg-rose-500' : 'bg-zinc-200 dark:bg-zinc-800'
                                             ]"
                                             :title="status"
@@ -1128,6 +1141,7 @@ onMounted(() => {
                                         'inline-flex items-center rounded-full px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[7px] sm:text-[9px] uppercase font-black tracking-widest shadow-md border backdrop-blur-md transition-all',
                                         student.attendance?.status.toLowerCase() === 'present' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
                                         student.attendance?.status.toLowerCase() === 'late' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                        student.attendance?.status.toLowerCase() === 'time out' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' :
                                         student.attendance?.status.toLowerCase() === 'absent' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
                                         'bg-zinc-100 text-zinc-500 border-zinc-200'
                                     ]">
@@ -1164,9 +1178,9 @@ onMounted(() => {
                         </div>
 
                         <!-- Quick Actions Grid (Ultra-compact on mobile) -->
-                        <div :class="['grid grid-cols-4 gap-1 sm:gap-2 relative z-20 transition-all mt-auto', student.slot_start ? '' : 'opacity-30 grayscale pointer-events-none']" @click.stop>
+                        <div :class="['grid grid-cols-5 gap-1 sm:gap-2 relative z-20 transition-all mt-auto', student.slot_start ? '' : 'opacity-30 grayscale pointer-events-none']" @click.stop>
                             <button 
-                                v-for="status in ['Present', 'Late', 'Absent', 'Excused']"
+                                v-for="status in ['Present', 'Late', 'Time Out', 'Absent', 'Excused']"
                                 :key="status"
                                 @click="updateAttendance(student, status)"
                                 :disabled="!student.slot_start"
@@ -1232,7 +1246,7 @@ onMounted(() => {
 
                         <div class="flex items-center gap-1.5 p-1 bg-white/5 dark:bg-black/5 rounded-2xl border border-white/10 dark:border-black/10">
                             <button 
-                                v-for="(status, index) in ['Present', 'Late', 'Absent', 'Excused']" 
+                                v-for="(status, index) in ['Present', 'Late', 'Time Out', 'Absent', 'Excused']" 
                                 :key="status"
                                 @click="bulkUpdateAttendance(status)"
                                 :disabled="isBulkSaving"

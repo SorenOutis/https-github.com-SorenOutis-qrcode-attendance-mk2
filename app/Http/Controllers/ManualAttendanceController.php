@@ -116,6 +116,7 @@ class ManualAttendanceController extends Controller
             // Calculate trend (status for last 5 sessions)
             $trend = $pastDates->map(function ($date) use ($studentHistory) {
                 $record = $studentHistory->first(fn ($h) => $h->scanned_at->toDateString() === $date);
+
                 return $record ? $record->status : 'Unmarked';
             });
 
@@ -145,7 +146,7 @@ class ManualAttendanceController extends Controller
             'student_id' => ['required', 'exists:students,id'],
             'subject_id' => ['required', 'exists:subjects,id'],
             'date' => ['required', 'date'],
-            'status' => ['nullable', 'string', 'in:Present,Late,Absent,Excused'],
+            'status' => ['nullable', 'string', 'in:Present,Late,Time Out,Absent,Excused'],
             'slot_start' => ['nullable', 'date_format:H:i'],
             'slot_end' => ['nullable', 'date_format:H:i'],
             'remarks' => ['nullable', 'string', 'max:500'],

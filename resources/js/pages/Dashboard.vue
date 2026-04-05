@@ -1074,21 +1074,18 @@ onMounted(() => {
     if (cardsRef.value) {
         const cards = cardsRef.value.querySelectorAll<HTMLElement>('[data-card]');
         
-        // Wrap with a perspective container
-        gsap.set(cardsRef.value, { perspective: 1000 });
+        gsap.set(cardsRef.value, { perspective: 1200 });
+        gsap.set(cards, { opacity: 0, y: 40, rotationX: -10, z: -50 });
 
-        // Ensure cards are visible before animation starts if something fails
-        gsap.set(cards, { opacity: 1, visibility: 'visible' });
-
-        gsap.from(cards, {
-            opacity: 0,
-            y: 30,
-            rotationX: -15,
-            z: -20,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: 'power2.out',
-            clearProps: 'all' // Crucial: removes GSAP inline styles after completion
+        gsap.to(cards, {
+            opacity: 1,
+            y: 0,
+            rotationX: 0,
+            z: 0,
+            duration: 1,
+            stagger: 0.08,
+            ease: 'expo.out',
+            clearProps: 'all'
         });
     }
 
@@ -1209,7 +1206,7 @@ onMounted(() => {
             </div>
 
             <!-- Consolidated stats card (mobile + desktop) -->
-            <div data-tour="stats" class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm p-4 sm:p-5">
+            <div ref="cardsRef" data-tour="stats" class="relative overflow-hidden rounded-2xl border border-white/20 dark:border-white/5 bg-white/40 dark:bg-black/40 backdrop-blur-xl shadow-xl p-4 sm:p-5">
                 <Users class="absolute right-[-2%] top-1/2 -translate-y-1/2 h-24 w-24 sm:h-28 sm:w-28 text-zinc-900/[0.04] dark:text-white/[0.04] pointer-events-none" />
                 <div class="relative z-10">
                     <div class="mb-4">
@@ -1222,9 +1219,10 @@ onMounted(() => {
                     </div>
                     <div v-else class="grid grid-cols-2 gap-3">
                         <button
+                            data-card
                             @click="statusFilter = statusFilter === 'Present' ? null : 'Present'; router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })"
                             class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
-                            :class="statusFilter === 'Present' ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20'"
+                            :class="statusFilter === 'Present' ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'border-white/20 dark:border-white/5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md text-zinc-900 dark:text-zinc-100 hover:border-emerald-300 hover:bg-emerald-500/10'"
                         >
                             <CheckCircle2 class="absolute -right-2 -bottom-2 h-14 w-14 text-emerald-400/10 pointer-events-none" />
                             <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Present</p>
@@ -1232,9 +1230,10 @@ onMounted(() => {
                         </button>
 
                         <button
+                            data-card
                             @click="statusFilter = statusFilter === 'Late' ? null : 'Late'; router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })"
                             class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
-                            :class="statusFilter === 'Late' ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 text-amber-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 hover:border-amber-300 hover:bg-amber-50/50 dark:hover:bg-amber-950/20'"
+                            :class="statusFilter === 'Late' ? 'border-amber-400/50 bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'border-white/20 dark:border-white/5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md text-zinc-900 dark:text-zinc-100 hover:border-amber-300 hover:bg-amber-500/10'"
                         >
                             <Zap class="absolute -right-2 -bottom-2 h-14 w-14 text-amber-400/10 pointer-events-none" />
                             <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Late</p>
@@ -1242,21 +1241,25 @@ onMounted(() => {
                         </button>
 
                         <button
+                            data-card
                             @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'; router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })"
                             class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
-                            :class="statusFilter === 'Absent' ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/30 text-rose-700' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 hover:border-rose-300 hover:bg-rose-50/50 dark:hover:bg-rose-950/20'"
+                            :class="statusFilter === 'Absent' ? 'border-rose-400/50 bg-rose-500/10 text-rose-700 dark:text-rose-400' : 'border-white/20 dark:border-white/5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md text-zinc-900 dark:text-zinc-100 hover:border-rose-300 hover:bg-rose-500/10'"
                         >
                             <UserX class="absolute -right-2 -bottom-2 h-14 w-14 text-rose-400/10 pointer-events-none" />
                             <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Absent</p>
                             <p class="text-2xl font-bold">{{ Math.round(animatedStats.absent) }}</p>
                         </button>
 
-                        <div class="relative rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 text-left text-xs font-semibold bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-hidden">
+                        <div 
+                            data-card
+                            class="relative rounded-xl border border-white/20 dark:border-white/5 p-3 text-left text-xs font-semibold bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md text-zinc-900 dark:text-zinc-100 overflow-hidden"
+                        >
                             <PieChart class="absolute -right-2 -bottom-2 h-14 w-14 text-zinc-400/10 pointer-events-none" />
                             <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Attendance Rate</p>
                             <p v-if="props.attendanceRate !== undefined" class="text-2xl font-bold">{{ attendanceRate.toFixed(1) }}%</p>
                             <p v-else class="h-8 w-16 bg-zinc-200 dark:bg-zinc-800 animate-pulse rounded mt-1"></p>
-                            <div class="mt-2 h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                            <div class="mt-2 h-1.5 w-full rounded-full bg-emerald-100 dark:bg-emerald-900/30 overflow-hidden">
                                 <div :class="['h-full transition-all duration-700', attendanceRateClass]" :style="{ width: Math.min(attendanceRate, 100) + '%' }"></div>
                             </div>
                         </div>

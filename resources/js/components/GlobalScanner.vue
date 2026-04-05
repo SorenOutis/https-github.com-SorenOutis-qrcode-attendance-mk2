@@ -36,6 +36,7 @@ const scanFeedback = ref<'success' | 'error' | null>(null);
 const scanResultModalOpen = ref(false);
 const isCooldownActive = ref(false);
 const facingMode = ref<'user' | 'environment'>('environment');
+const recentScans = ref<any[]>([]);
 
 let scanInterval: number | null = null;
 let mediaStream: MediaStream | null = null;
@@ -256,6 +257,14 @@ async function handleCodeDetected(token: string) {
         };
 
         scanError.value = null;
+        recentScans.value.unshift({
+            ...lastScanResult.value,
+            id: Date.now(), // for :key
+        });
+        if (recentScans.value.length > 5) {
+            recentScans.value.pop();
+        }
+
         scanFeedback.value = 'success';
         scanResultModalOpen.value = true;
         
@@ -423,6 +432,46 @@ function handleClose() {
                         Exit Scanner
                     </Button>
                 </DialogFooter>
+
+                <!-- Recent Scans History -->
+                <div v-if="recentScans.length > 0" class="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-900">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-[10px] font-black tracking-widest uppercase text-zinc-400">Recent Activity</h4>
+                        <span class="px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black text-zinc-500 uppercase">{{ recentScans.length }} session{{ recentScans.length > 1 ? 's' : '' }}</span>
+                    </div>
+                    <div class="space-y-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div 
+                            v-for="scan in recentScans" 
+                            :key="scan.id"
+                            class="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50 animate-in slide-in-from-bottom-2 duration-300"
+                        >
+                            <div 
+                                class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                                :class="[
+                                    scan.status === 'Present' ? 'bg-emerald-500/10 text-emerald-500' :
+                                    scan.status === 'Late' ? 'bg-amber-500/10 text-amber-500' :
+                                    'bg-zinc-500/10 text-zinc-500'
+                                ]"
+                            >
+                                <CheckCircle2 v-if="scan.status === 'Present'" class="size-4" />
+                                <Clock v-else-if="scan.status === 'Late'" class="size-4" />
+                                <Scan v-else class="size-4" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[11px] font-bold text-zinc-950 dark:text-white truncate">{{ scan.student.name }}</p>
+                                <p class="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">
+                                    {{ scan.status }} · {{ formatTimeTo12h(new Date(scan.scanned_at).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })) }}
+                                </p>
+                            </div>
+                            <Badge 
+                                variant="outline" 
+                                class="text-[8px] font-black h-5 px-1.5 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
+                            >
+                                {{ scan.subject?.name || 'N/A' }}
+                            </Badge>
+                        </div>
+                    </div>
+                </div>
             </div>
         </DialogContent>
     </Dialog>

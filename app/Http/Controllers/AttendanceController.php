@@ -41,7 +41,8 @@ class AttendanceController extends Controller
             ], 404);
         }
 
-        $now = CarbonImmutable::now();
+        $appTz = config('app.timezone');
+        $now = CarbonImmutable::now($appTz);
         $dayOfWeek = $now->format('l'); // Monday, Tuesday, etc.
         $date = $now->toDateString();
         $time = $now->format('H:i');
@@ -68,16 +69,22 @@ class AttendanceController extends Controller
         $recordsCount = $dailyRecords->count();
         $graceMinutes = 15;
 
+        $minutesEarly = null;
+        $minutesLate = null;
+
         if ($recordsCount < $totalSlots) {
             // Sequential Check-in: The n-th scan of the day is for the n-th slot in the schedule
             $slotIndex = $recordsCount;
             $slot = (array) $schedule[$slotIndex];
-            $start = CarbonImmutable::parse($date.' '.$slot['start']);
+            $start = CarbonImmutable::parse($date.' '.$slot['start'], $appTz);
+            $diffMinutes = (int) abs($now->diffInMinutes($start));
 
             if ($now->lessThan($start->addMinutes($graceMinutes))) {
                 $status = 'Present';
+                $minutesEarly = $now->lessThan($start) ? $diffMinutes : 0;
             } else {
                 $status = 'Late';
+                $minutesLate = $diffMinutes;
             }
         } elseif ($recordsCount === $totalSlots) {
             // The scan after all check-ins is the Time Out
@@ -123,6 +130,8 @@ class AttendanceController extends Controller
                 'status' => $attendance->status,
                 'slot_start' => $attendance->slot_start->format('H:i'),
                 'slot_end' => $attendance->slot_end->format('H:i'),
+                'minutes_early' => $minutesEarly,
+                'minutes_late' => $minutesLate,
                 'subject' => $attendance->subject ? [
                     'id' => $attendance->subject->id,
                     'name' => $attendance->subject->name,

@@ -28,6 +28,9 @@ const lastScanResult = ref<{
     status: string;
     slot_start?: string;
     slot_end?: string;
+    minutes_early?: number | null;
+    minutes_late?: number | null;
+    subject?: { id: number; name: string } | null;
 } | null>(null);
 const scanFeedback = ref<'success' | 'error' | null>(null);
 const scanResultModalOpen = ref(false);
@@ -37,6 +40,25 @@ let scanInterval: number | null = null;
 let mediaStream: MediaStream | null = null;
 
 const subjects = computed(() => (page.props as any).subjects || []);
+
+const scanHeadline = computed(() => {
+    if (scanError.value || !lastScanResult.value) return null;
+    const { status, minutes_early, minutes_late } = lastScanResult.value;
+
+    if (status === 'Time Out') {
+        return { verb: 'Timed Out', mood: 'neutral', detail: null };
+    }
+    if (status === 'Late') {
+        const mins = minutes_late ?? 0;
+        return { verb: 'Timed In', mood: 'late', detail: mins > 0 ? `${mins} min${mins !== 1 ? 's' : ''} late` : 'Running late' };
+    }
+    // Present
+    const mins = minutes_early ?? 0;
+    if (mins >= 3) {
+        return { verb: 'Timed In', mood: 'early', detail: `${mins} min${mins !== 1 ? 's' : ''} early` };
+    }
+    return { verb: 'Timed In', mood: 'ontime', detail: 'Right on time!' };
+});
 
 function isCameraSecureContext(): boolean {
     if (typeof window === 'undefined') {
@@ -222,6 +244,9 @@ async function handleCodeDetected(token: string) {
             status: data.attendance.status,
             slot_start: data.attendance.slot_start,
             slot_end: data.attendance.slot_end,
+            minutes_early: data.attendance.minutes_early ?? null,
+            minutes_late: data.attendance.minutes_late ?? null,
+            subject: data.attendance.subject ?? null,
         };
 
         scanError.value = null;
@@ -389,49 +414,74 @@ function handleClose() {
     <Dialog :open="scanResultModalOpen" @update:open="(val) => !val && closeResultModal()">
         <DialogContent class="max-w-xs sm:max-w-sm p-0 overflow-hidden border-0 shadow-3xl rounded-[2.5rem] bg-background">
             <div 
-                class="p-10 text-center space-y-6"
+                class="p-8 text-center space-y-5"
                 :class="scanError ? 'bg-zinc-900 text-white' : 'bg-white dark:bg-black text-zinc-950 dark:text-white'"
             >
+                <!-- Icon -->
                 <div 
-                    class="mx-auto flex h-28 w-28 items-center justify-center rounded-[2rem] shadow-2xl transition-transform duration-500 hover:scale-110 ring-1 ring-zinc-950/10"
+                    class="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] shadow-2xl transition-transform duration-500 hover:scale-110 ring-1 ring-zinc-950/10"
                     :class="[
-                        scanError ? 'bg-zinc-800 text-white' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white',
+                        scanError ? 'bg-zinc-800 text-white' : '',
+                        !scanError && scanHeadline?.mood === 'early' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400' : '',
+                        !scanError && scanHeadline?.mood === 'ontime' ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : '',
+                        !scanError && scanHeadline?.mood === 'late' ? 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400' : '',
+                        !scanError && scanHeadline?.mood === 'neutral' ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white' : '',
                         !scanError ? 'animate-bounce' : 'animate-shake-global'
                     ]"
                 >
-                    <CheckCircle2 v-if="!scanError" class="h-14 w-14" />
-                    <AlertCircle v-else class="h-14 w-14" />
+                    <CheckCircle2 v-if="!scanError" class="h-12 w-12" />
+                    <AlertCircle v-else class="h-12 w-12" />
                 </div>
                 
                 <div class="space-y-3">
-                    <h3 class="text-3xl font-black tracking-tighter" :class="scanError ? 'text-white' : 'text-zinc-950 dark:text-white'">
-                        {{ scanError ? 'SCAN FAILED' : 'SUCCESSFUL!' }}
-                    </h3>
-                    <div v-if="!scanError && lastScanResult" class="space-y-1">
-                        <p class="text-xl font-black tracking-tight leading-tight">
-                            {{ lastScanResult.student.name }}
-                        </p>
-                        <p class="text-xs font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
-                            {{ lastScanResult.student.student_number }}
-                        </p>
-                    </div>
-                    <div class="flex flex-col items-center gap-3 mt-6">
-                        <span 
-                            class="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg border border-zinc-200 dark:border-zinc-800"
-                            :class="[
-                                scanError ? 'bg-white text-zinc-900' : 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                            ]"
-                        >
-                            {{ scanError ? 'ERROR' : lastScanResult?.status }}
-                        </span>
-                        <p v-if="!scanError && lastScanResult?.slot_start" class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 tracking-wider">
-                            SCHEDULED: {{ formatTimeTo12h(lastScanResult.slot_start) }} – {{ formatTimeTo12h(lastScanResult.slot_end) }}
-                        </p>
-                    </div>
+                    <!-- Smart Headline -->
+                    <template v-if="!scanError && lastScanResult && scanHeadline">
+                        <div class="space-y-0.5">
+                            <p class="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">{{ scanHeadline.verb }}</p>
+                            <h3 class="text-2xl font-black tracking-tight leading-tight text-zinc-950 dark:text-white">
+                                {{ lastScanResult.student.name }}
+                            </h3>
+                            <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                                {{ lastScanResult.student.student_number }}
+                            </p>
+                        </div>
+
+                        <!-- Smart Timing Badge -->
+                        <div class="flex flex-col items-center gap-2 pt-1">
+                            <span 
+                                class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest shadow-sm border"
+                                :class="[
+                                    scanHeadline.mood === 'early' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' : '',
+                                    scanHeadline.mood === 'ontime' ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20' : '',
+                                    scanHeadline.mood === 'late' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20' : '',
+                                    scanHeadline.mood === 'neutral' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700' : '',
+                                ]"
+                            >
+                                <span v-if="scanHeadline.mood === 'early'">⚡</span>
+                                <span v-if="scanHeadline.mood === 'ontime'">✅</span>
+                                <span v-if="scanHeadline.mood === 'late'">⏰</span>
+                                <span v-if="scanHeadline.mood === 'neutral'">🏁</span>
+                                {{ scanHeadline.detail ?? lastScanResult.status }}
+                            </span>
+                            <!-- Subject Name -->
+                            <p v-if="lastScanResult.subject" class="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                for {{ lastScanResult.subject.name }}
+                            </p>
+                            <!-- Slot Time -->
+                            <p v-if="lastScanResult.slot_start" class="text-[10px] font-bold text-zinc-400 tracking-wider">
+                                {{ formatTimeTo12h(lastScanResult.slot_start) }} – {{ formatTimeTo12h(lastScanResult.slot_end) }}
+                            </p>
+                        </div>
+                    </template>
+
+                    <!-- Error State -->
+                    <template v-else>
+                        <h3 class="text-3xl font-black tracking-tighter text-white">SCAN FAILED</h3>
+                    </template>
                 </div>
 
                 <Button 
-                    class="w-full h-16 rounded-[1.5rem] text-sm font-black tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.95] shadow-xl uppercase"
+                    class="w-full h-14 rounded-[1.5rem] text-sm font-black tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.95] shadow-xl uppercase"
                     :variant="scanError ? 'secondary' : 'default'"
                     @click="closeResultModal"
                 >

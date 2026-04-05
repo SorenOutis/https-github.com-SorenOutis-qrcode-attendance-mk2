@@ -391,5 +391,25 @@ onMounted(() => {
                 </Link>
             </div>
         </div>
+
+        <!-- Import Loading Modal -->
+        <Teleport to="body">
+            <div v-if="isImporting" class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/20 backdrop-blur-sm animate-in fade-in duration-300">
+                <div class="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col items-center gap-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-300">
+                    <div class="relative flex items-center justify-center h-20 w-20">
+                        <div class="absolute inset-0 rounded-full border-4 border-zinc-100 dark:border-zinc-800"></div>
+                        <div class="absolute inset-0 rounded-full border-4 border-zinc-900 dark:border-white border-t-transparent animate-spin"></div>
+                        <FileUp class="h-8 w-8 text-zinc-900 dark:text-white" />
+                    </div>
+                    <div class="text-center space-y-2">
+                        <h3 class="text-xl font-serif font-black tracking-tight text-zinc-900 dark:text-white">Importing Data...</h3>
+                        <p class="text-xs font-bold text-zinc-500 uppercase tracking-widest leading-relaxed">
+                            Processing students and subjects.<br/>
+                            Please don't close this window.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AppLayout>
 </template>

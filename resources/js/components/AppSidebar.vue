@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Activity, BookOpen, Calendar, ChartBar, Database, LayoutGrid, MessageCircle, User, UserCheck } from 'lucide-vue-next';
+import { Activity, BookOpen, Calendar, ChartBar, Database, LayoutGrid, MessageCircle, User, UserCheck, Users } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -35,6 +35,11 @@ const mainNavItems: NavItem[] = [
         title: 'Subject Attendance',
         href: '/subject-attendance',
         icon: BookOpen,
+    },
+    {
+        title: 'Students',
+        href: '/students',
+        icon: Users,
     },
     {
         title: 'Reports',

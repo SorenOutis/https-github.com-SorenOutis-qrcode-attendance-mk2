@@ -5,6 +5,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExcuseController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ManualAttendanceController;
@@ -50,7 +51,8 @@ Route::post('excuses', [ExcuseController::class, 'store'])
     ->name('excuses.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', [StudentController::class, 'index'])->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('students', [StudentController::class, 'index'])->name('students.index');
     Route::resource('subjects', SubjectController::class)->except(['create', 'show', 'edit']);
 
     Route::get('students/print-cards', [StudentController::class, 'printCards'])->name('students.print-cards');

@@ -28,6 +28,13 @@ import {
 import { computed, onMounted, ref } from 'vue';
 import { Line, Pie } from 'vue-chartjs';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     Dialog,
     DialogContent,
     DialogHeader,
@@ -78,6 +85,7 @@ const props = defineProps<{
     };
     daily: { date: string; count: number }[];
     statusDistribution: { status: string; count: number }[];
+    allStudents: { id: number; name: string; student_number: string; section: string | null }[];
     students: PaginatedStudents;
     enrolled: number;
     filters: { start: string; end: string };
@@ -221,15 +229,23 @@ function submit() {
             },
             onError: () => error('Failed to update student'),
         });
-    } else {
-        form.post(store().url, {
-            onSuccess: () => {
-                success('Student created successfully');
-                closeModal();
-            },
-            onError: () => error('Failed to create student'),
-        });
     }
+}
+
+function selectStudent(studentId: any) {
+    if (!studentId) return;
+    const student = props.allStudents.find(s => s.id.toString() === studentId.toString());
+    if (!student) return;
+
+    form.name = student.name;
+    form.student_number = student.student_number;
+    form.section = student.section ?? '';
+    // Auto-fill email if possible, or leave blank
+    form.email = ''; 
+    
+    // Switch to manual form or just submit if we want "Quick Add"
+    // For now, let's just populate the form so they can review
+    success(`Selected ${student.name}. Review and click Complete Onboarding.`);
 }
 
 function deleteStudent(student: StudentData) {
@@ -468,11 +484,31 @@ onMounted(() => {
                     <Pencil v-else class="h-6 w-6" />
                 </div>
                 <DialogTitle class="text-2xl font-serif font-black leading-none tracking-tight text-zinc-900 dark:text-white">
-                    {{ isEditing ? 'Edit Student' : 'Add New Student' }}
+                    {{ isEditing ? 'Edit Student' : 'Add Student' }}
                 </DialogTitle>
                 <DialogDescription class="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-400">
-                    {{ isEditing ? 'Update student information' : 'Onboard a new student to this subject' }}
+                    {{ isEditing ? 'Update student information' : 'Create new or select existing student' }}
                 </DialogDescription>
+
+                <!-- Existing Student Selection -->
+                <div v-if="!isEditing" class="mt-6 space-y-2">
+                    <Label class="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">Select Existing Student (Quick Add)</Label>
+                    <Select @update:modelValue="selectStudent">
+                        <SelectTrigger class="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 px-4 text-sm font-bold dark:border-zinc-800 dark:bg-zinc-900/50 transition-all shadow-inner">
+                            <SelectValue placeholder="Search existing students..." />
+                        </SelectTrigger>
+                        <SelectContent class="rounded-2xl border-zinc-100 dark:border-zinc-800 shadow-2xl">
+                            <SelectItem v-for="student in props.allStudents" :key="student.id" :value="student.id.toString()" class="rounded-xl">
+                                {{ student.name }} ({{ student.student_number }})
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <div class="flex items-center gap-2 py-2">
+                        <div class="h-px bg-zinc-100 dark:bg-zinc-800 grow"></div>
+                        <span class="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">or create new</span>
+                        <div class="h-px bg-zinc-100 dark:bg-zinc-800 grow"></div>
+                    </div>
+                </div>
 
                 <!-- Global Error Alert -->
                 <div v-if="Object.keys(form.errors).length > 0" class="mt-4 rounded-xl bg-rose-50 p-3 border border-rose-100 dark:bg-rose-900/20 dark:border-rose-900/30">

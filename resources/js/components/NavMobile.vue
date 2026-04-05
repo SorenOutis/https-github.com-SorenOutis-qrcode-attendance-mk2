@@ -27,11 +27,6 @@ const navItems = [
         isScanner: true,
     },
     {
-        title: 'Reports',
-        href: reportsIndex().url,
-        icon: ClipboardList,
-    },
-    {
         title: 'Excuses',
         href: '/excuses',
         icon: MessageCircle,

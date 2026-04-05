@@ -241,7 +241,7 @@ function handleClose() {
                 <div class="relative aspect-video overflow-hidden rounded-2xl border-4 border-zinc-100 dark:border-zinc-900 bg-black shadow-2xl ring-1 ring-zinc-950/10 preserve-3d">
                     <video
                         ref="videoRef"
-                        class="h-full w-full object-cover scale-x-[-1] opacity-90"
+                        class="h-full w-full object-cover opacity-90"
                         playsinline
                         muted
                     ></video>

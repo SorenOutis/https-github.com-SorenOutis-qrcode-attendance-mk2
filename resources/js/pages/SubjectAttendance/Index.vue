@@ -21,15 +21,20 @@ import {
     ChartBar,
     ChevronDown,
     Database,
+    Download,
+    FileUp,
     FlaskConical,
     LayoutGrid,
+    Loader2,
     Star,
     Users,
 } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { Line } from 'vue-chartjs';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { importMethod, sample } from '@/routes/students';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
@@ -64,6 +69,55 @@ const startDate = ref(props.filters.start);
 const endDate = ref(props.filters.end);
 const filtersExpanded = ref(false);
 const cardsRef = ref<HTMLDivElement | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
+const isImporting = ref(false);
+const { success, error } = useToast();
+
+function downloadTemplate() {
+    window.location.href = sample().url;
+}
+
+function triggerFileInput() {
+    fileInput.value?.click();
+}
+
+async function handleFileUpload(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (!target.files?.length) return;
+
+    const file = target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    isImporting.value = true;
+    
+    try {
+        const response = await fetch(importMethod().url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                'Accept': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            success(data.message || 'Students and subjects imported successfully.');
+            // Reload the page to show new subjects
+            window.location.reload();
+        } else {
+            error(data.message || 'There was an error importing the file.');
+        }
+    } catch (err) {
+        console.error('Import failed:', err);
+        error('Import failed. Please check the file format.');
+    } finally {
+        isImporting.value = false;
+        if (fileInput.value) fileInput.value.value = '';
+    }
+}
 
 const iconMap: Record<string, any> = {
     LayoutGrid,
@@ -178,27 +232,58 @@ onMounted(() => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-4 sm:gap-6 p-3 sm:p-6 lg:p-8 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 px-1">
-                <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500 mb-1 leading-none">
-                        Breakdown
-                    </p>
-                    <h1 class="text-xl sm:text-4xl lg:text-5xl font-serif font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
-                        Subject <span class="text-zinc-400 dark:text-zinc-500 italic font-medium">Attendance.</span>
-                    </h1>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500 mb-1 leading-none">
+                            Breakdown
+                        </p>
+                        <h1 class="text-xl sm:text-4xl lg:text-5xl font-serif font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
+                            Subject <span class="text-zinc-400 dark:text-zinc-500 italic font-medium">Attendance.</span>
+                        </h1>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button 
+                            @click="downloadTemplate"
+                            class="flex items-center gap-2 px-4 py-2 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all active:scale-95"
+                        >
+                            <Download class="w-3 h-3" />
+                            <span class="hidden sm:inline">Template</span>
+                        </button>
+                        
+                        <input 
+                            type="file" 
+                            ref="fileInput" 
+                            class="hidden" 
+                            accept=".csv"
+                            @change="handleFileUpload"
+                        />
+                        
+                        <button 
+                            @click="triggerFileInput"
+                            :disabled="isImporting"
+                            class="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            <Loader2 v-if="isImporting" class="w-3 h-3 animate-spin" />
+                            <FileUp v-else class="w-3 h-3" />
+                            {{ isImporting ? 'Importing...' : 'Import Students' }}
+                        </button>
+                    </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button
-                        v-for="option in (['worst', 'best', 'name'] as const)"
-                        :key="option"
-                        class="rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all border"
-                        :class="sortBy === option
-                            ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-zinc-900 dark:border-white'
-                            : 'bg-white dark:bg-zinc-900 text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
-                        @click="sortBy = option"
-                    >
-                        {{ option === 'worst' ? 'Worst First' : option === 'best' ? 'Best First' : 'A-Z' }}
-                    </button>
-                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 px-1">
+                <button
+                    v-for="option in (['worst', 'best', 'name'] as const)"
+                    :key="option"
+                    class="rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all border"
+                    :class="sortBy === option
+                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-zinc-900 dark:border-white'
+                        : 'bg-white dark:bg-zinc-900 text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
+                    @click="sortBy = option"
+                >
+                    {{ option === 'worst' ? 'Worst First' : option === 'best' ? 'Best First' : 'A-Z' }}
+                </button>
             </div>
 
             <!-- Filters -->

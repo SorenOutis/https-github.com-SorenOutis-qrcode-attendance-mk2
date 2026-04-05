@@ -5,15 +5,18 @@ namespace App\Http\Controllers;
 use App\ActivityLogger;
 use App\Models\Student;
 use App\Models\StudentQrToken;
+use App\Models\Subject;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudentImportController extends Controller
 {
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): Response|JsonResponse|RedirectResponse
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:csv,txt'],
@@ -23,11 +26,11 @@ class StudentImportController extends Controller
         $handle = fopen($file->getRealPath(), 'r');
         $header = fgetcsv($handle);
 
-        // Expected headers: name, student_number, email, section
-        $expected = ['name', 'student_number', 'email', 'section'];
+        // Expected headers: name, student_number, email, section, subjects
+        $expected = ['name', 'student_number', 'email', 'section', 'subjects'];
 
         // Simple map to handle different casings or slight variations if needed
-        $headerMap = array_flip($header);
+        $headerMap = array_change_key_case(array_flip($header), CASE_LOWER);
 
         $count = 0;
         $errors = [];
@@ -62,9 +65,34 @@ class StudentImportController extends Controller
                 }
 
                 $data['qr_token'] = Str::uuid()->toString();
-                // Default schedule if none provided - we'll just leave it as an empty array or empty for now
-                // if the model allows. If not, we'll need to handle it.
-                $data['schedule'] = [];
+
+                // Handle subjects auto-creation and enrollment
+                $schedule = [];
+                if (! empty($data['subjects'])) {
+                    $subjectNames = array_map('trim', explode(',', $data['subjects']));
+                    foreach ($subjectNames as $name) {
+                        if (empty($name)) {
+                            continue;
+                        }
+
+                        $subject = Subject::firstOrCreate(
+                            ['name' => $name],
+                            [
+                                'icon' => 'BookOpen',
+                                'color' => 'indigo',
+                                'description' => 'Auto-created from import.',
+                                'schedule' => [],
+                            ]
+                        );
+
+                        $schedule[] = [
+                            'subject_id' => $subject->id,
+                            'slot_index' => 0, // Default to first slot if unknown
+                        ];
+                    }
+                }
+
+                $data['schedule'] = $schedule;
 
                 $student = Student::create($data);
 
@@ -91,19 +119,28 @@ class StudentImportController extends Controller
         );
 
         if (count($errors) > 0) {
-            return back()->with('warning', "Imported {$count} students, but had ".count($errors).' errors.')
-                ->with('import_errors', $errors);
+            $msg = "Imported {$count} students, but had ".count($errors).' errors.';
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $msg, 'errors' => $errors], 200);
+            }
+
+            return back()->with('warning', $msg)->with('import_errors', $errors);
         }
 
-        return back()->with('success', "Successfully imported {$count} students.");
+        $msg = "Successfully imported {$count} students.";
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $msg], 200);
+        }
+
+        return back()->with('success', $msg);
     }
 
     public function downloadSample(): StreamedResponse
     {
         return response()->streamDownload(function () {
-            echo "name,student_number,email,section\n";
-            echo "John Doe,2024-001,john@example.com,BSIT-1A\n";
-            echo "Jane Smith,2024-002,jane@example.com,BSIT-1B\n";
+            echo "name,student_number,email,section,subjects\n";
+            echo "John Doe,2024-001,john@example.com,BSIT-1A,\"Math, Science\"\n";
+            echo "Jane Smith,2024-002,jane@example.com,BSIT-1B,\"English, History\"\n";
         }, 'students_sample.csv', [
             'Content-Type' => 'text/csv',
         ]);

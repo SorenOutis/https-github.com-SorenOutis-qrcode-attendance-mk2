@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { store, update, destroy } from '@/routes/students';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -13,9 +14,28 @@ import {
     ArcElement,
 } from 'chart.js';
 import { gsap } from 'gsap';
-import { ArrowLeft, BookOpen, TrendingUp, Users, Clock } from 'lucide-vue-next';
-import { computed, onMounted } from 'vue';
+import {
+    ArrowLeft,
+    BookOpen,
+    TrendingUp,
+    Users,
+    Clock,
+    Plus,
+    Pencil,
+    Trash2,
+    X,
+} from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
 import { Line, Pie } from 'vue-chartjs';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement);
@@ -24,7 +44,9 @@ type StudentData = {
     id: number;
     name: string;
     student_number: string;
+    email: string | null;
     section: string | null;
+    schedule: any[] | null;
     photo: string | null;
     total_records: number;
     attendance_rate: number;
@@ -46,7 +68,14 @@ type PaginatedStudents = {
 };
 
 const props = defineProps<{
-    subject: { id: number; name: string; icon: string | null; color: string | null; description: string | null };
+    subject: {
+        id: number;
+        name: string;
+        icon: string | null;
+        color: string | null;
+        description: string | null;
+        schedule: any[] | null;
+    };
     daily: { date: string; count: number }[];
     statusDistribution: { status: string; count: number }[];
     students: PaginatedStudents;
@@ -107,6 +136,111 @@ const overallRate = computed(() => {
 const studentRows = computed(() => props.students.data ?? []);
 const studentRankStart = computed(() => props.students.from ?? ((props.students.current_page - 1) * props.students.per_page + 1));
 
+const { success, error } = useToast();
+
+const showModal = ref(false);
+const isEditing = ref(false);
+const editingStudent = ref<StudentData | null>(null);
+
+const form = useForm({
+    name: '',
+    student_number: '',
+    email: '',
+    section: '',
+    schedule: [] as any[],
+});
+
+function resetForm() {
+    form.reset();
+    form.clearErrors();
+    isEditing.value = false;
+    editingStudent.value = null;
+}
+
+function openAddModal() {
+    resetForm();
+    // Default schedule to current subject if possible
+    if (props.subject.schedule && props.subject.schedule.length > 0) {
+        form.schedule = props.subject.schedule.map(slot => ({
+            day: slot.day,
+            subject_id: props.subject.id,
+            start: slot.start,
+            end: slot.end,
+        }));
+    }
+    showModal.value = true;
+}
+
+function openEditModal(student: StudentData) {
+    resetForm();
+    isEditing.value = true;
+    editingStudent.value = student;
+    form.name = student.name;
+    form.student_number = student.student_number;
+    form.email = student.email ?? '';
+    form.section = student.section ?? '';
+    form.schedule = Array.isArray(student.schedule) ? JSON.parse(JSON.stringify(student.schedule)) : [];
+    showModal.value = true;
+}
+
+function closeModal() {
+    showModal.value = false;
+    resetForm();
+}
+
+function submit() {
+    form.transform((data) => {
+        let schedule = data.schedule.length > 0 ? [...data.schedule] : [];
+        
+        // Ensure the current subject is in the schedule if adding a new student
+        if (!isEditing.value) {
+            const hasSubject = schedule.some(slot => slot.subject_id === props.subject.id);
+            if (!hasSubject) {
+                // Add a dummy slot for the current subject if no schedule exists
+                // This ensures they are "enrolled" and appear in the leaderboard
+                schedule.push({
+                    day: 'Monday', // Default day if none exists
+                    subject_id: props.subject.id,
+                    start: '08:00',
+                    end: '09:00'
+                });
+            }
+        }
+
+        return {
+            ...data,
+            schedule: schedule.length > 0 ? schedule : null,
+        };
+    });
+
+    if (isEditing.value && editingStudent.value) {
+        form.put(update({ student: editingStudent.value.id }).url, {
+            onSuccess: () => {
+                success('Student updated successfully');
+                closeModal();
+            },
+            onError: () => error('Failed to update student'),
+        });
+    } else {
+        form.post(store().url, {
+            onSuccess: () => {
+                success('Student created successfully');
+                closeModal();
+            },
+            onError: () => error('Failed to create student'),
+        });
+    }
+}
+
+function deleteStudent(student: StudentData) {
+    if (confirm(`Are you sure you want to remove ${student.name}?`)) {
+        useForm({}).delete(destroy({ student: student.id }).url, {
+            onSuccess: () => success('Student removed successfully'),
+            onError: () => error('Failed to remove student'),
+        });
+    }
+}
+
 function rateColor(rate: number): string {
     if (rate >= 90) return 'text-zinc-900 dark:text-white';
     if (rate >= 75) return 'text-zinc-600 dark:text-zinc-300';
@@ -151,6 +285,14 @@ onMounted(() => {
                     </h1>
                 </div>
                 <div class="flex items-center gap-3">
+                    <button
+                        @click="openAddModal"
+                        class="flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 shadow-lg shadow-zinc-200/50 dark:shadow-none active:scale-95"
+                    >
+                        <Plus class="h-3.5 w-3.5" />
+                        Add Student
+                    </button>
+                    <div class="h-10 w-px bg-zinc-100 dark:bg-zinc-800 mx-1 hidden sm:block"></div>
                     <div class="text-right">
                         <div class="text-3xl sm:text-4xl font-serif font-black" :class="rateColor(overallRate)">
                             {{ overallRate }}<span class="text-xl opacity-50">%</span>
@@ -226,21 +368,42 @@ onMounted(() => {
 
                 <div v-if="studentRows.length" class="space-y-2">
                     <template v-for="(student, idx) in studentRows" :key="student.id">
-                        <Link
-                            :href="`/students/${student.id}/analytics`"
-                            data-card class="flex items-center gap-2 sm:gap-4 rounded-2xl border border-zinc-100 dark:border-zinc-900/40 bg-white dark:bg-zinc-950/40 px-2 sm:px-4 py-2 sm:py-3 hover:bg-zinc-100 dark:hover:bg-zinc-900/40 transition-all shadow-sm hover:shadow-md group w-full"                        >
+                        <div
+                            data-card
+                            class="flex items-center gap-2 sm:gap-4 rounded-2xl border border-zinc-100 dark:border-zinc-900/40 bg-white dark:bg-zinc-950/40 px-2 sm:px-4 py-2 sm:py-3 hover:bg-zinc-100 dark:hover:bg-zinc-900/40 transition-all shadow-sm hover:shadow-md group w-full"
+                        >
                             <span class="w-6 text-center text-[10px] sm:text-xs font-black text-zinc-400 dark:text-zinc-500">{{ studentRankStart + idx }}</span>
-                            <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-zinc-200 dark:bg-zinc-800 overflow-hidden shrink-0">
-                                <img v-if="student.photo" :src="student.photo" class="h-full w-full object-cover" :alt="student.name" />
-                                <div v-else class="h-full w-full flex items-center justify-center text-xs font-bold text-zinc-400">
-                                    {{ student.name.charAt(0) }}
+                            <Link :href="`/students/${student.id}/analytics`" class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 group/info">
+                                <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-zinc-200 dark:bg-zinc-800 overflow-hidden shrink-0">
+                                    <img v-if="student.photo" :src="student.photo" class="h-full w-full object-cover" :alt="student.name" />
+                                    <div v-else class="h-full w-full flex items-center justify-center text-xs font-bold text-zinc-400">
+                                        {{ student.name.charAt(0) }}
+                                    </div>
                                 </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-xs sm:text-sm font-bold truncate group-hover/info:text-zinc-600 dark:group-hover/info:text-zinc-300 transition-colors">{{ student.name }}</div>
+                                    <div class="text-[9px] text-zinc-400 font-medium">{{ student.student_number }} <span v-if="student.section">• {{ student.section }}</span></div>
+                                </div>
+                            </Link>
+
+                            <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+                                <button
+                                    @click="openEditModal(student)"
+                                    class="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition-all active:scale-95"
+                                    title="Edit Student"
+                                >
+                                    <Pencil class="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                    @click="deleteStudent(student)"
+                                    class="p-2 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-900/20 transition-all active:scale-95"
+                                    title="Remove Student"
+                                >
+                                    <Trash2 class="h-3.5 w-3.5" />
+                                </button>
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-xs sm:text-sm font-bold truncate">{{ student.name }}</div>
-                                <div class="text-[9px] text-zinc-400 font-medium">{{ student.student_number }} <span v-if="student.section">• {{ student.section }}</span></div>
-                            </div>
-                            <div class="text-right shrink-0 min-w-[72px]">
+
+                            <div class="text-right shrink-0 min-w-[60px] sm:min-w-[72px]">
                                 <div class="text-sm sm:text-base font-black" :class="rateColor(student.attendance_rate)">
                                     {{ student.attendance_rate }}%
                                 </div>
@@ -251,7 +414,7 @@ onMounted(() => {
                                     <div class="h-full rounded-full transition-all" :class="rateBg(student.attendance_rate)" :style="{ width: `${student.attendance_rate}%` }"></div>
                                 </div>
                             </div>
-                        </Link>
+                        </div>
                     </template>
 
                     <div
@@ -286,4 +449,100 @@ onMounted(() => {
             </div>
         </div>
     </AppLayout>
+
+    <!-- Student Modal -->
+    <Dialog :open="showModal" @update:open="closeModal">
+        <DialogContent class="sm:max-w-[425px] rounded-[2rem] border-zinc-100 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl">
+            <div class="absolute top-4 right-4 z-10">
+                <button
+                    @click="closeModal"
+                    class="rounded-full p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                    <X class="h-4 w-4" />
+                </button>
+            </div>
+
+            <DialogHeader class="p-8 pb-4 text-left">
+                <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xl">
+                    <Users v-if="!isEditing" class="h-6 w-6" />
+                    <Pencil v-else class="h-6 w-6" />
+                </div>
+                <DialogTitle class="text-2xl font-serif font-black leading-none tracking-tight text-zinc-900 dark:text-white">
+                    {{ isEditing ? 'Edit Student' : 'Add New Student' }}
+                </DialogTitle>
+                <DialogDescription class="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-400">
+                    {{ isEditing ? 'Update student information' : 'Onboard a new student to this subject' }}
+                </DialogDescription>
+
+                <!-- Global Error Alert -->
+                <div v-if="Object.keys(form.errors).length > 0" class="mt-4 rounded-xl bg-rose-50 p-3 border border-rose-100 dark:bg-rose-900/20 dark:border-rose-900/30">
+                    <div class="flex gap-2">
+                        <X class="h-4 w-4 text-rose-500 shrink-0" />
+                        <ul class="text-[10px] font-bold text-rose-600 dark:text-rose-400 list-disc list-inside">
+                            <li v-for="(err, key) in form.errors" :key="key">{{ err }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </DialogHeader>
+
+            <form @submit.prevent="submit" class="space-y-4 p-8 pt-0">
+                <div class="grid gap-4">
+                    <div class="grid gap-2">
+                        <Label for="name" class="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">Full Name</Label>
+                        <Input
+                            id="name"
+                            v-model="form.name"
+                            placeholder="e.g. John Doe"
+                            class="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 px-4 text-sm font-bold placeholder:text-zinc-300 focus:border-zinc-900 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900/50 dark:focus:border-white transition-all shadow-inner"
+                        />
+                        <p v-if="form.errors.name" class="text-[10px] font-bold text-rose-500 px-1">{{ form.errors.name }}</p>
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="student_number" class="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">Student Number</Label>
+                        <Input
+                            id="student_number"
+                            v-model="form.student_number"
+                            placeholder="e.g. 2024-0001"
+                            class="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 px-4 text-sm font-bold placeholder:text-zinc-300 focus:border-zinc-900 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900/50 dark:focus:border-white transition-all shadow-inner"
+                        />
+                        <p v-if="form.errors.student_number" class="text-[10px] font-bold text-rose-500 px-1">{{ form.errors.student_number }}</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="grid gap-2">
+                            <Label for="section" class="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">Section</Label>
+                            <Input
+                                id="section"
+                                v-model="form.section"
+                                placeholder="e.g. BSCS-1A"
+                                class="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 px-4 text-sm font-bold placeholder:text-zinc-300 focus:border-zinc-900 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900/50 dark:focus:border-white transition-all shadow-inner"
+                            />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="email" class="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">Email (Optional)</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                v-model="form.email"
+                                placeholder="john@example.com"
+                                class="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 px-4 text-sm font-bold placeholder:text-zinc-300 focus:border-zinc-900 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900/50 dark:focus:border-white transition-all shadow-inner"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6">
+                    <button
+                        type="submit"
+                        :disabled="form.processing"
+                        class="w-full h-14 rounded-2xl bg-zinc-900 text-sm font-black uppercase tracking-[0.2em] text-white shadow-2xl transition-all hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                        <span v-if="form.processing" class="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white dark:border-black/20 dark:border-t-black"></span>
+                        {{ isEditing ? 'Update Records' : 'Complete Onboarding' }}
+                    </button>
+                </div>
+            </form>
+        </DialogContent>
+    </Dialog>
 </template>

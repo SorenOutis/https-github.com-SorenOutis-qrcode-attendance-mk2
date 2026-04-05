@@ -122,8 +122,8 @@ class SubjectAttendanceController extends Controller
 
         $studentStats = Student::query()
             ->whereIn('id', $enrolledIds->toArray(), 'and', false)
-            ->select(['id', 'name', 'student_number', 'section', 'photo'])
-            ->get(['id', 'name', 'student_number', 'section', 'photo'])
+            ->select(['id', 'name', 'student_number', 'email', 'section', 'schedule', 'photo'])
+            ->get(['id', 'name', 'student_number', 'email', 'section', 'schedule', 'photo'])
             ->map(function ($student) use ($subject, $startDate, $endDate) {
                 $records = Attendance::query()
                     ->where('subject_id', '=', (int) $subject->id, 'and')
@@ -140,7 +140,9 @@ class SubjectAttendanceController extends Controller
                     'id' => $student->id,
                     'name' => $student->name,
                     'student_number' => $student->student_number,
+                    'email' => $student->email,
                     'section' => $student->section,
+                    'schedule' => $student->schedule,
                     'photo' => $student->photo,
                     'total_records' => $total,
                     'attendance_rate' => $rate,
@@ -173,6 +175,7 @@ class SubjectAttendanceController extends Controller
                 'icon' => $subject->icon,
                 'color' => $subject->color,
                 'description' => $subject->description,
+                'schedule' => $subject->schedule,
             ],
             'daily' => $daily,
             'statusDistribution' => $statusDistribution,

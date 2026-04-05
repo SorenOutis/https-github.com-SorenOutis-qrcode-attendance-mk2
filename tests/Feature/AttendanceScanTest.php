@@ -92,5 +92,5 @@ test('handles multiple slots correctly', function () {
     CarbonImmutable::setTestNow(CarbonImmutable::parse("{$baseDate} 15:05:00"));
     $response = $this->post(route('attendance.scan'), ['token' => 'multi-token']);
     $response->assertStatus(422);
-    $response->assertJsonPath('message', 'You have already completed your attendance for today.');
+    $response->assertJsonPath('message', 'You have already completed your attendance (Time Out) for today.');
 });

@@ -57,12 +57,7 @@ class StudentImportController extends Controller
                     continue;
                 }
 
-                // Check if student number exists
-                if (Student::where('student_number', $data['student_number'])->exists()) {
-                    $errors[] = "Row {$rowNum}: Student Number {$data['student_number']} already exists.";
-
-                    continue;
-                }
+                // We will update or create the student below instead of skipping
 
                 $data['qr_token'] = Str::uuid()->toString();
 
@@ -76,7 +71,7 @@ class StudentImportController extends Controller
                         }
 
                         $subject = Subject::firstOrCreate(
-                            ['name' => $name],
+                            ['name' => strtoupper($name)],
                             [
                                 'icon' => 'BookOpen',
                                 'color' => 'indigo',
@@ -94,12 +89,21 @@ class StudentImportController extends Controller
 
                 $data['schedule'] = $schedule;
 
-                $student = Student::create($data);
+                $student = Student::updateOrCreate(
+                    ['student_number' => $data['student_number']],
+                    [
+                        'name' => $data['name'],
+                        'email' => $data['email'] ?? null,
+                        'section' => $data['section'] ?? null,
+                        'schedule' => $schedule,
+                        'qr_token' => $data['qr_token'],
+                    ]
+                );
 
-                StudentQrToken::create([
-                    'student_id' => $student->id,
-                    'token' => $student->qr_token,
-                ]);
+                StudentQrToken::updateOrCreate(
+                    ['student_id' => $student->id],
+                    ['token' => $student->qr_token]
+                );
 
                 $count++;
             }

@@ -35,6 +35,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import SkeletonCard from '@/components/SkeletonCard.vue';
+import TimeInput from '@/components/TimeInput.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import commentsRoutes from '@/routes/comments';
@@ -2047,21 +2048,23 @@ onMounted(() => {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <Input
-                                            v-model="slot.start"
-                                            type="time"
-                                            class="h-8 w-full flex-1 text-xs"
-                                        />
-                                        <span class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                                            to
-                                        </span>
-                                        <Input
-                                            v-model="slot.end"
-                                            type="time"
-                                            class="h-8 w-full flex-1 text-xs"
-                                        />
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Start</label>
+                                            <TimeInput
+                                                v-model="slot.start"
+                                                class="w-full"
+                                            />
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">End</label>
+                                            <TimeInput
+                                                v-model="slot.end"
+                                                class="w-full"
+                                            />
+                                        </div>
                                     </div>
+
                                     <Button
                                         v-if="schedules.length > 1"
                                         type="button"
@@ -2494,21 +2497,23 @@ onMounted(() => {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <Input
-                                            v-model="slot.start"
-                                            type="time"
-                                            class="h-8 w-full flex-1 text-xs"
-                                        />
-                                        <span class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                                            to
-                                        </span>
-                                        <Input
-                                            v-model="slot.end"
-                                            type="time"
-                                            class="h-8 w-full flex-1 text-xs"
-                                        />
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Start</label>
+                                            <TimeInput
+                                                v-model="slot.start"
+                                                class="w-full"
+                                            />
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">End</label>
+                                            <TimeInput
+                                                v-model="slot.end"
+                                                class="w-full"
+                                            />
+                                        </div>
                                     </div>
+
                                     <Button
                                         v-if="editSchedules.length > 1"
                                         type="button"

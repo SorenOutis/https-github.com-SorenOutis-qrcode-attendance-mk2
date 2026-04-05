@@ -72,10 +72,31 @@ class AttendanceController extends Controller
         $minutesEarly = null;
         $minutesLate = null;
 
-        if ($recordsCount < $totalSlots) {
-            // Sequential Check-in: The n-th scan of the day is for the n-th slot in the schedule
-            $slotIndex = $recordsCount;
-            $slot = (array) $schedule[$slotIndex];
+        // Find the appropriate slot for the current time
+        $targetSlot = null;
+        $targetIndex = null;
+        $status = 'Time Out'; // Default status if no active slot found
+
+        foreach ($schedule as $index => $slot) {
+            // Check if this slot was already recorded today
+            $alreadyRecorded = $dailyRecords->contains('slot_index', $index);
+            if ($alreadyRecorded) {
+                continue;
+            }
+
+            $slotEnd = CarbonImmutable::parse($date.' '.$slot['end'], $appTz);
+
+            // If the current time is before the end of this slot, it's our candidate
+            if ($now->lessThan($slotEnd)) {
+                $targetSlot = (array) $slot;
+                $targetIndex = $index;
+                break;
+            }
+        }
+
+        if ($targetSlot) {
+            $slot = $targetSlot;
+            $slotIndex = $targetIndex;
             $start = CarbonImmutable::parse($date.' '.$slot['start'], $appTz);
             $diffMinutes = (int) abs($now->diffInMinutes($start));
 
@@ -86,16 +107,19 @@ class AttendanceController extends Controller
                 $status = 'Late';
                 $minutesLate = $diffMinutes;
             }
-        } elseif ($recordsCount === $totalSlots) {
-            // The scan after all check-ins is the Time Out
-            $status = 'Time Out';
-            // Use the last slot as the reference for the Time Out record
+        } else {
+            // If No active slot remains, it's a Time Out scan
+            // Check if they've already Timed Out today
+            if ($dailyRecords->contains('status', 'Time Out')) {
+                return response()->json([
+                    'message' => 'You have already completed your attendance (Time Out) for today.',
+                ], 422);
+            }
+
+            // Use the last slot as metadata reference for the Time Out record
             $slot = (array) $schedule->last();
             $slotIndex = $totalSlots - 1;
-        } else {
-            return response()->json([
-                'message' => 'You have already completed your attendance for today.',
-            ], 422);
+            $status = 'Time Out';
         }
 
         $attendance = Attendance::create([

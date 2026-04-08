@@ -49,7 +49,7 @@ interface Props {
         total: number;
         links: any[];
     };
-    subjects: { id: number; name: string }[];
+    subjects: { id: number; name: string; schedule: any[] }[];
     filters: {
         search: string | null;
     };
@@ -364,7 +364,7 @@ function formatTimeTo12h(timeStr?: string) {
                     <Button variant="outline" @click="isImportModalOpen = true" class="rounded-xl font-bold uppercase tracking-widest text-[10px] h-10 px-4">
                         <Upload class="mr-2 h-3.5 w-3.5" /> Import CSV
                     </Button>
-                    <a :href="`/template/download?type=students`" class="inline-flex items-center justify-center rounded-xl font-bold uppercase tracking-widest text-[10px] h-10 px-4 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors">
+                    <a :href="`/students/sample`" class="inline-flex items-center justify-center rounded-xl font-bold uppercase tracking-widest text-[10px] h-10 px-4 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors">
                         <Download class="mr-2 h-3.5 w-3.5" /> Template
                     </a>
                     <Button @click="openCreateModal" class="rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-black font-bold uppercase tracking-widest text-[10px] h-10 px-5 hover:scale-[1.02] transition-transform active:scale-95 shadow-lg shadow-zinc-200 dark:shadow-none">

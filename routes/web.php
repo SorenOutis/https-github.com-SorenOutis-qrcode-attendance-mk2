@@ -66,6 +66,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('students/{student}/attendance', [StudentController::class, 'attendance'])->name('students.attendance');
     Route::post('students/import', [StudentImportController::class, 'store'])->name('students.import');
     Route::get('students/sample', [StudentImportController::class, 'downloadSample'])->name('students.sample');
+    Route::get('template/download', [StudentImportController::class, 'downloadSample'])->name('template.download');
+    Route::get('template/download', [StudentImportController::class, 'downloadSample'])->name('template.download');
 
     // Student Analytics
     Route::get('students/{student}/analytics', [StudentAnalyticsController::class, 'show'])->name('students.analytics');

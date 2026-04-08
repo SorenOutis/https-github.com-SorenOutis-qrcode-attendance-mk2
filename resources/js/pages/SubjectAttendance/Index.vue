@@ -138,17 +138,45 @@ function getIcon(name: string | null) {
 
 function iconBadgeClasses(color: string | null): string {
     const colors: Record<string, string> = {
-        emerald: 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400',
-        amber: 'text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400',
-        indigo: 'text-indigo-600 bg-indigo-50 border-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/20 dark:text-indigo-400',
-        rose: 'text-rose-600 bg-rose-50 border-rose-100 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400',
-        blue: 'text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-400',
-        zinc: 'text-zinc-600 bg-zinc-50 border-zinc-100 dark:bg-zinc-500/10 dark:border-zinc-500/20 dark:text-zinc-400',
-        violet: 'text-violet-600 bg-violet-50 border-violet-100 dark:bg-violet-500/10 dark:border-violet-500/20 dark:text-violet-400',
-        cyan: 'text-cyan-600 bg-cyan-50 border-cyan-100 dark:bg-cyan-500/10 dark:border-cyan-500/20 dark:text-cyan-400',
+        emerald: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20 dark:text-emerald-400',
+        amber: 'text-amber-600 bg-amber-500/10 border-amber-500/20 dark:text-amber-400',
+        indigo: 'text-indigo-600 bg-indigo-500/10 border-indigo-500/20 dark:text-indigo-400',
+        rose: 'text-rose-600 bg-rose-500/10 border-rose-500/20 dark:text-rose-400',
+        blue: 'text-blue-600 bg-blue-500/10 border-blue-500/20 dark:text-blue-400',
+        zinc: 'text-zinc-600 bg-zinc-500/10 border-zinc-500/20 dark:text-zinc-400',
+        violet: 'text-violet-600 bg-violet-500/10 border-violet-500/20 dark:text-violet-400',
+        cyan: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20 dark:text-cyan-400',
     };
 
     return colors[color ?? 'zinc'] ?? colors.zinc;
+}
+
+function glowClasses(color: string | null): string {
+    const glows: Record<string, string> = {
+        emerald: 'bg-emerald-500/20 dark:bg-emerald-500/10',
+        amber: 'bg-amber-500/20 dark:bg-amber-500/10',
+        indigo: 'bg-indigo-500/20 dark:bg-indigo-500/10',
+        rose: 'bg-rose-500/20 dark:bg-rose-500/10',
+        blue: 'bg-blue-500/20 dark:bg-blue-500/10',
+        zinc: 'bg-zinc-500/20 dark:bg-zinc-500/10',
+        violet: 'bg-violet-500/20 dark:bg-violet-500/10',
+        cyan: 'bg-cyan-500/20 dark:bg-cyan-500/10',
+    };
+    return glows[color ?? 'zinc'] ?? glows.zinc;
+}
+
+function progressIndicatorClasses(color: string | null): string {
+    const progress: Record<string, string> = {
+        emerald: 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]',
+        amber: 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]',
+        indigo: 'bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.4)]',
+        rose: 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.4)]',
+        blue: 'bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]',
+        zinc: 'bg-zinc-500 shadow-[0_0_12px_rgba(113,113,122,0.4)]',
+        violet: 'bg-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.4)]',
+        cyan: 'bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.4)]',
+    };
+    return progress[color ?? 'zinc'] ?? progress.zinc;
 }
 
 const sortedSubjects = computed(() => {
@@ -320,73 +348,94 @@ onMounted(() => {
             </div>
 
             <!-- Subject Cards Grid -->
-            <div ref="cardsRef" class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div ref="cardsRef" class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 <Link
                     v-for="subject in sortedSubjects"
                     :key="subject.id"
                     :href="`/subject-attendance/${subject.id}`"
                     data-card
-                    class="group relative overflow-hidden rounded-2xl border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-5 transition-all text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:shadow-md transform-gpu hover:-translate-y-0.5 active:translate-y-0.5"
+                    class="group relative overflow-hidden rounded-[2rem] border border-zinc-100 dark:border-zinc-800/80 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl p-4 sm:p-5 transition-all text-zinc-900 dark:text-white shadow-xl shadow-zinc-200/40 dark:shadow-none hover:shadow-2xl hover:shadow-zinc-300/50 dark:hover:shadow-indigo-500/5 transform-gpu hover:-translate-y-1.5 active:translate-y-0"
                 >
-                    <div class="flex items-start justify-between mb-4 sm:mb-6">
-                        <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Accent Glow -->
+                    <div 
+                        class="absolute -top-24 -right-24 h-48 w-48 rounded-full blur-[80px] opacity-0 group-hover:opacity-60 transition-opacity duration-700 pointer-events-none"
+                        :class="glowClasses(subject.color)"
+                    />
+
+                    <div class="relative flex items-start justify-between mb-6 sm:mb-8">
+                        <div class="flex items-center gap-4">
                             <div
-                                class="flex h-10 w-10 items-center justify-center rounded-xl border sm:h-12 sm:w-12 sm:rounded-2xl"
+                                class="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl border transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-inner shadow-white/20"
                                 :class="iconBadgeClasses(subject.color)"
                             >
                                 <component :is="getIcon(subject.icon)" class="h-5 w-5 sm:h-6 sm:w-6" />
                             </div>
                             <div>
-                                <h3 class="font-serif font-black text-base sm:text-lg tracking-tight leading-tight">{{ subject.name }}</h3>
-                                <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{{ subject.enrolled }} enrolled</p>
+                                <h3 class="font-serif font-black text-base sm:text-lg tracking-tight leading-tight group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
+                                    {{ subject.name }}
+                                </h3>
+                                <p class="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">{{ subject.enrolled }} enrolled</p>
                             </div>
                         </div>
-                        <ArrowRight class="h-4 w-4 text-zinc-300 dark:text-zinc-700 group-hover:text-zinc-500 dark:group-hover:text-zinc-400 group-hover:translate-x-1 transition-all" />
+                        <div class="h-10 w-10 flex items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all duration-300">
+                            <ArrowRight class="h-4 w-4 text-zinc-400 group-hover:text-white dark:group-hover:text-black group-hover:translate-x-0.5 transition-all" />
+                        </div>
                     </div>
 
                     <!-- Attendance rate -->
-                    <div class="mb-4 sm:mb-6">
-                        <div class="flex items-end justify-between mb-2">
-                            <span class="text-3xl sm:text-4xl font-serif font-black" :class="rateColor(subject.attendance_rate)">
-                                {{ subject.attendance_rate }}<span class="text-xl opacity-50">%</span>
-                            </span>
-                            <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">rate</span>
+                    <div class="relative mb-6 sm:mb-8">
+                        <div class="flex items-baseline justify-between mb-2.5">
+                            <div>
+                                <span class="text-3xl sm:text-4xl font-serif font-black tabular-nums transition-all" :class="rateColor(subject.attendance_rate)">
+                                    {{ subject.attendance_rate }}
+                                </span>
+                                <span class="ml-0.5 text-sm sm:text-base font-bold opacity-30">%</span>
+                            </div>
+                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">current rate</span>
                         </div>
-                        <div class="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
+                        <div class="w-full h-2.5 rounded-full bg-zinc-100/50 dark:bg-zinc-900 overflow-hidden shadow-inner">
                             <div
-                                class="h-full rounded-full transition-all duration-1000 ease-out"
-                                :class="rateBg(subject.attendance_rate)"
+                                class="h-full rounded-full transition-all duration-[1500ms] ease-out-quart"
+                                :class="progressIndicatorClasses(subject.color)"
                                 :style="{ width: `${subject.attendance_rate}%` }"
-                            ></div>
+                            >
+                                <div class="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Stats row -->
-                    <div class="grid grid-cols-4 gap-2 text-center mb-4 sm:mb-6">
-                        <div>
-                            <div class="text-xs sm:text-sm font-black">{{ subject.present }}</div>
-                            <div class="text-[8px] sm:text-[9px] font-bold uppercase text-zinc-400 tracking-wider">Present</div>
+                    <!-- Stats row (Modern Grid) -->
+                    <div class="grid grid-cols-4 gap-2 text-center mb-6 sm:mb-8">
+                        <div class="bg-emerald-50/40 dark:bg-emerald-500/5 border border-emerald-100/30 dark:border-emerald-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300">
+                            <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400">{{ subject.present }}</div>
+                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-emerald-600/60 dark:text-emerald-400/50 tracking-wider">Present</div>
                         </div>
-                        <div>
-                            <div class="text-xs sm:text-sm font-black">{{ subject.late }}</div>
-                            <div class="text-[8px] sm:text-[9px] font-bold uppercase text-zinc-400 tracking-wider">Late</div>
+                        <div class="bg-amber-50/40 dark:bg-amber-500/5 border border-amber-100/30 dark:border-amber-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300 delay-[50ms]">
+                            <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400">{{ subject.late }}</div>
+                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-amber-600/60 dark:text-amber-400/50 tracking-wider">Late</div>
                         </div>
-                        <div>
-                            <div class="text-xs sm:text-sm font-black">{{ subject.absent }}</div>
-                            <div class="text-[8px] sm:text-[9px] font-bold uppercase text-zinc-400 tracking-wider">Absent</div>
+                        <div class="bg-rose-50/40 dark:bg-rose-500/5 border border-rose-100/30 dark:border-rose-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300 delay-[100ms]">
+                            <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">{{ subject.absent }}</div>
+                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-rose-600/60 dark:text-rose-400/50 tracking-wider">Absent</div>
                         </div>
-                        <div>
-                            <div class="text-xs sm:text-sm font-black">{{ subject.excused }}</div>
-                            <div class="text-[8px] sm:text-[9px] font-bold uppercase text-zinc-400 tracking-wider">Excused</div>
+                        <div class="bg-zinc-50/40 dark:bg-zinc-500/5 border border-zinc-100/30 dark:border-zinc-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300 delay-[150ms]">
+                            <div class="text-sm sm:text-base font-black text-zinc-500 dark:text-zinc-400">{{ subject.excused }}</div>
+                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-zinc-500/60 dark:text-zinc-400/50 tracking-wider">Excused</div>
                         </div>
                     </div>
 
-                    <!-- Sparkline -->
-                    <div v-if="subject.daily.length" class="h-12 sm:h-16 w-full">
-                        <Line :data="sparklineData(subject.daily)" :options="sparklineOptions" />
-                    </div>
-                    <div v-else class="h-12 sm:h-16 flex items-center justify-center">
-                        <span class="text-[9px] font-bold text-zinc-300 dark:text-zinc-700 uppercase tracking-widest">No trend data</span>
+                    <!-- Sparkline (Enhanced) -->
+                    <div class="relative pt-4 border-t border-zinc-50 dark:border-zinc-900">
+                        <div class="flex items-center gap-2 mb-3">
+                            <Activity class="h-3 w-3 text-zinc-400" />
+                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Attendance Trend</span>
+                        </div>
+                        <div v-if="subject.daily.length" class="h-16 sm:h-20 w-full transform-gpu group-hover:scale-[1.02] transition-transform duration-500">
+                            <Line :data="sparklineData(subject.daily)" :options="sparklineOptions" />
+                        </div>
+                        <div v-else class="h-16 sm:h-20 flex items-center justify-center rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/50 border border-dashed border-zinc-200 dark:border-zinc-800">
+                            <span class="text-[9px] font-bold text-zinc-300 dark:text-zinc-600 uppercase tracking-widest">Insufficient Data</span>
+                        </div>
                     </div>
                 </Link>
             </div>

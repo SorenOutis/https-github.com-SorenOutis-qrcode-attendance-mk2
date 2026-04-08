@@ -229,6 +229,19 @@
             0 20px 40px rgba(0, 0, 0, 0.4),
             0 0 100px -10px rgba(0, 0, 0, 0.2);
     }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .animate-shimmer {
+        animation: shimmer 2.5s infinite linear;
+    }
+
+    .ease-out-quart {
+        transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+    }
 }
 
 /* Theme transition ripple effect */

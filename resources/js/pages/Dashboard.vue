@@ -1902,7 +1902,7 @@ onMounted(() => {
         </div>
 
     <Dialog v-model:open="createModalOpen">
-                <DialogContent class="max-w-sm flex flex-col max-h-[80dvh]">
+                <DialogContent class="max-w-[400px] md:max-w-2xl flex flex-col max-h-[90dvh] md:max-h-none overflow-hidden">
                     <DialogHeader>
                         <DialogTitle>
                             Add student
@@ -1910,194 +1910,177 @@ onMounted(() => {
                     </DialogHeader>
 
                     <form class="flex flex-col flex-1 min-h-0" @submit.prevent="submitStudent">
-                        <div class="flex-1 overflow-y-auto space-y-3 pr-0.5">
-                            <!-- Photo Upload -->
-                            <div class="flex flex-col items-center justify-center py-4 border-b border-zinc-100 dark:border-zinc-800/50 mb-2">
-                                <div class="relative group cursor-pointer" @click="photoInput?.click()">
-                                    <div class="h-24 w-24 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-all group-hover:border-zinc-400 dark:group-hover:border-zinc-600 shadow-inner">
-                                        <img v-if="photoPreview" :src="photoPreview" class="h-full w-full object-cover" />
-                                        <div v-else class="flex flex-col items-center text-zinc-400">
-                                            <Plus class="h-6 w-6 mb-1 opacity-50" />
-                                            <span class="text-[10px] font-bold uppercase tracking-tighter">Photo</span>
+                        <div class="flex-1 overflow-y-auto md:overflow-visible space-y-4 pr-0.5">
+                            <div class="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
+                                <!-- Photo Upload -->
+                                <div class="flex flex-col items-center justify-center p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/30 dark:bg-zinc-900/10">
+                                    <div class="relative group cursor-pointer" @click="photoInput?.click()">
+                                        <div class="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-all group-hover:border-zinc-400 dark:group-hover:border-zinc-600 shadow-inner">
+                                            <img v-if="photoPreview" :src="photoPreview" class="h-full w-full object-cover" />
+                                            <div v-else class="flex flex-col items-center text-zinc-400">
+                                                <Plus class="h-5 w-5 mb-0.5 opacity-50" />
+                                                <span class="text-[9px] font-bold uppercase tracking-tighter">Photo</span>
+                                            </div>
+                                            <!-- Overlay -->
+                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <Scan class="h-5 w-5 text-white" />
+                                            </div>
                                         </div>
-                                        <!-- Overlay -->
-                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <Scan class="h-5 w-5 text-white" />
+                                        <input 
+                                            type="file" 
+                                            ref="photoInput" 
+                                            class="hidden" 
+                                            accept="image/*" 
+                                            @change="e => handlePhotoChange(e, 'create')"
+                                        />
+                                        <div class="absolute -bottom-1 -right-1 bg-foreground text-background p-1.5 rounded-2xl shadow-lg">
+                                            <Plus class="h-3 w-3" />
                                         </div>
                                     </div>
-                                    <input 
-                                        type="file" 
-                                        ref="photoInput" 
-                                        class="hidden" 
-                                        accept="image/*" 
-                                        @change="e => handlePhotoChange(e, 'create')"
-                                    />
-                                    <div class="absolute -bottom-1 -right-1 bg-foreground text-background p-1.5 sm:p-2 rounded-2xl shadow-lg animate-bounce">
-                                        <Plus class="h-3 w-3" />
+                                    <p class="text-[9px] text-zinc-500 mt-2 font-bold uppercase tracking-widest text-center">Student Portrait</p>
+                                    <p v-if="formErrors.photo" class="text-[10px] text-destructive mt-1 text-center">
+                                        {{ Array.isArray(formErrors.photo) ? formErrors.photo[0] : formErrors.photo }}
+                                    </p>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="space-y-1.5">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Full name
+                                            </label>
+                                            <Input v-model="name" placeholder="e.g. Juan Dela Cruz" class="h-9 text-xs" />
+                                            <p v-if="formErrors.name" class="text-[10px] text-destructive">
+                                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
+                                            </p>
+                                        </div>
+
+                                        <div class="space-y-1.5">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Student number
+                                            </label>
+                                            <Input v-model="studentNumber" placeholder="e.g. 2026-0001" class="h-9 text-xs" />
+                                            <p v-if="formErrors.student_number" class="text-[10px] text-destructive">
+                                                {{ Array.isArray(formErrors.student_number) ? formErrors.student_number[0] : formErrors.student_number }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="space-y-1.5">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Section
+                                            </label>
+                                            <Input v-model="section" placeholder="e.g. BSIT-3A" class="h-9 text-xs" />
+                                            <p v-if="formErrors.section" class="text-[10px] text-destructive">
+                                                {{ Array.isArray(formErrors.section) ? formErrors.section[0] : formErrors.section }}
+                                            </p>
+                                        </div>
+
+                                        <div class="space-y-1.5">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Email (Optional)
+                                            </label>
+                                            <Input v-model="email" type="email" placeholder="Optional" class="h-9 text-xs" />
+                                            <p v-if="formErrors.email" class="text-[10px] text-destructive">
+                                                {{ Array.isArray(formErrors.email) ? formErrors.email[0] : formErrors.email }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                                <p class="text-[10px] text-zinc-500 mt-2 font-medium uppercase tracking-widest">Student Portrait</p>
-                                <p v-if="formErrors.photo" class="text-xs text-destructive mt-1">
-                                    {{ Array.isArray(formErrors.photo) ? formErrors.photo[0] : formErrors.photo }}
-                                </p>
                             </div>
 
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-medium">
-                                Full name
-                            </label>
-                            <Input v-model="name" placeholder="e.g. Juan Dela Cruz" />
-                            <p
-                                v-if="formErrors.name"
-                                class="text-xs text-destructive"
-                            >
-                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-medium">
-                                Student number
-                            </label>
-                            <Input
-                                v-model="studentNumber"
-                                placeholder="e.g. 2026-0001"
-                            />
-                            <p
-                                v-if="formErrors.student_number"
-                                class="text-xs text-destructive"
-                            >
-                                {{ Array.isArray(formErrors.student_number) ? formErrors.student_number[0] : formErrors.student_number }}
-                            </p>
-                        </div>
-
-                        <div class="grid gap-3 md:grid-cols-2">
-                            <div class="space-y-1.5">
-                                <label class="text-xs font-medium">
-                                    Section
-                                </label>
-                                <Input v-model="section" placeholder="e.g. BSIT-3A" />
-                                <p
-                                    v-if="formErrors.section"
-                                    class="text-xs text-destructive"
-                                >
-                                    {{ Array.isArray(formErrors.section) ? formErrors.section[0] : formErrors.section }}
-                                </p>
-                            </div>
-
-                            <div class="space-y-1.5">
-                                <label class="text-xs font-medium">
-                                    Email
-                                </label>
-                                <Input
-                                    v-model="email"
-                                    type="email"
-                                    placeholder="Optional"
-                                />
-                                <p
-                                    v-if="formErrors.email"
-                                    class="text-xs text-destructive"
-                                >
-                                    {{ Array.isArray(formErrors.email) ? formErrors.email[0] : formErrors.email }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-medium">
-                                    Time slots
-                                </label>
-                                <Button
-                                    type="button"
-                                    size="icon-sm"
-                                    variant="outline"
-                                    @click="addScheduleSlot"
-                                >
-                                    +
-                                </Button>
-                            </div>
-                            <p class="text-[11px] text-muted-foreground">
-                                Example:
-                                10:00–12:00,&nbsp;13:00–14:00,&nbsp;15:00–17:00.
-                                A 15-minute grace period is applied.
-                            </p>
-
-                            <div class="space-y-2">
-                                <div
-                                    v-for="(slot, index) in schedules"
-                                    :key="index"
-                                    class="relative flex flex-col gap-2.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-2.5"
-                                >
-                                    <div class="flex items-center gap-2 pr-6">
-                                        <Select v-model="slot.day">
-                                            <SelectTrigger class="h-8 flex-1 text-left text-xs">
-                                                <SelectValue :placeholder="slot.day" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem v-for="d in daysOfWeek" :key="d" :value="d">
-                                                    {{ d }}
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <Select v-model="slot.subject_id">
-                                            <SelectTrigger class="h-8 flex-1 text-left text-xs">
-                                                <SelectValue placeholder="Subject" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem v-for="subj in props.subjects" :key="subj.id" :value="subj.id.toString()">
-                                                    {{ subj.name }}
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div class="flex flex-col gap-1">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Start</label>
-                                            <TimeInput
-                                                v-model="slot.start"
-                                                class="w-full"
-                                            />
-                                        </div>
-                                        <div class="flex flex-col gap-1">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">End</label>
-                                            <TimeInput
-                                                v-model="slot.end"
-                                                class="w-full"
-                                            />
-                                        </div>
-                                    </div>
-
+                            <div class="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                        Time slots
+                                    </label>
                                     <Button
-                                        v-if="schedules.length > 1"
                                         type="button"
                                         size="icon-sm"
-                                        variant="ghost"
-                                        class="absolute right-1 top-1 h-6 w-6 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                        @click="removeScheduleSlot(index)"
+                                        variant="outline"
+                                        class="h-7 w-7"
+                                        @click="addScheduleSlot"
                                     >
-                                        <Trash2 class="h-3 w-3" />
+                                        <Plus class="h-3.5 w-3.5" />
                                     </Button>
                                 </div>
-                            </div>
-                            <div
-                                v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
-                                class="mt-2 space-y-1 rounded-md bg-destructive/5 p-2"
-                            >
-                                <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[10px] text-destructive leading-tight">
-                                    • {{ Array.isArray(err) ? err[0] : err }}
-                                </p>
+
+                                <div class="flex flex-wrap gap-2">
+                                    <div
+                                        v-for="(slot, index) in schedules"
+                                        :key="index"
+                                        class="relative flex flex-col gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-2 min-w-[280px] flex-1"
+                                    >
+                                        <div class="flex items-center gap-2 pr-6">
+                                            <Select v-model="slot.day">
+                                                <SelectTrigger class="h-7 flex-1 text-[10px]">
+                                                    <SelectValue :placeholder="slot.day" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem v-for="d in daysOfWeek" :key="d" :value="d" class="text-xs">
+                                                        {{ d }}
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Select v-model="slot.subject_id">
+                                                <SelectTrigger class="h-7 flex-1 text-[10px]">
+                                                    <SelectValue placeholder="Subject" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem v-for="subj in props.subjects" :key="subj.id" :value="subj.id.toString()" class="text-xs">
+                                                        {{ subj.name }}
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="flex flex-col gap-0.5">
+                                                <label class="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Start</label>
+                                                <TimeInput
+                                                    v-model="slot.start"
+                                                    class="h-7 text-[10px]"
+                                                />
+                                            </div>
+                                            <div class="flex flex-col gap-0.5">
+                                                <label class="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">End</label>
+                                                <TimeInput
+                                                    v-model="slot.end"
+                                                    class="h-7 text-[10px]"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <Button
+                                            v-if="schedules.length > 1"
+                                            type="button"
+                                            size="icon-sm"
+                                            variant="ghost"
+                                            class="absolute right-1 top-1 h-5 w-5 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                            @click="removeScheduleSlot(index)"
+                                        >
+                                            <Trash2 class="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div
+                                    v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
+                                    class="mt-1 space-y-0.5"
+                                >
+                                    <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[9px] text-destructive leading-tight font-medium">
+                                        • {{ Array.isArray(err) ? err[0] : err }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
-                        </div>
-                        <DialogFooter class="mt-4 flex justify-end gap-2">
+                        <DialogFooter class="mt-4 flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
                             <DialogClose as-child>
-                                <Button type="button" variant="outline">
+                                <Button type="button" variant="outline" size="sm" class="text-xs h-9">
                                     Cancel
                                 </Button>
                             </DialogClose>
-                            <Button type="submit" :disabled="submitting">
+                            <Button type="submit" :disabled="submitting" size="sm" class="text-xs h-9 px-6 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900">
                                 {{ submitting ? 'Saving…' : 'Save student' }}
                             </Button>
                         </DialogFooter>
@@ -2346,7 +2329,7 @@ onMounted(() => {
             </Dialog>
 
             <Dialog v-model:open="editModalOpen">
-                <DialogContent class="max-w-md flex flex-col max-h-[80dvh]">
+                <DialogContent class="max-w-[400px] md:max-w-2xl flex flex-col max-h-[90dvh] md:max-h-none overflow-hidden">
                     <DialogHeader>
                         <DialogTitle>
                             Edit student
@@ -2354,199 +2337,177 @@ onMounted(() => {
                     </DialogHeader>
 
                     <form class="flex flex-col flex-1 min-h-0" @submit.prevent="submitEditStudent">
-                        <div class="flex-1 overflow-y-auto space-y-3 pr-0.5">
-                            <!-- Photo Upload -->
-                            <div class="flex flex-col items-center justify-center py-4 border-b border-zinc-100 dark:border-zinc-800/50 mb-2">
-                                <div class="relative group cursor-pointer" @click="editPhotoInput?.click()">
-                                    <div class="h-24 w-24 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-all group-hover:border-zinc-400 dark:group-hover:border-zinc-600 shadow-inner">
-                                        <img v-if="editPhotoPreview" :src="editPhotoPreview" class="h-full w-full object-cover" />
-                                        <div v-else class="flex flex-col items-center text-zinc-400">
-                                            <Plus class="h-6 w-6 mb-1 opacity-50" />
-                                            <span class="text-[10px] font-bold uppercase tracking-tighter">Photo</span>
+                        <div class="flex-1 overflow-y-auto md:overflow-visible space-y-4 pr-0.5">
+                            <div class="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
+                                <!-- Photo Upload -->
+                                <div class="flex flex-col items-center justify-center p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/30 dark:bg-zinc-900/10">
+                                    <div class="relative group cursor-pointer" @click="editPhotoInput?.click()">
+                                        <div class="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-all group-hover:border-zinc-400 dark:group-hover:border-zinc-600 shadow-inner">
+                                            <img v-if="editPhotoPreview" :src="editPhotoPreview" class="h-full w-full object-cover" />
+                                            <div v-else class="flex flex-col items-center text-zinc-400">
+                                                <Plus class="h-5 w-5 mb-0.5 opacity-50" />
+                                                <span class="text-[9px] font-bold uppercase tracking-tighter">Photo</span>
+                                            </div>
+                                            <!-- Overlay -->
+                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <Scan class="h-5 w-5 text-white" />
+                                            </div>
                                         </div>
-                                        <!-- Overlay -->
-                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <Scan class="h-5 w-5 text-white" />
+                                        <input 
+                                            type="file" 
+                                            ref="editPhotoInput" 
+                                            class="hidden" 
+                                            accept="image/*" 
+                                            @change="e => handlePhotoChange(e, 'edit')"
+                                        />
+                                        <div class="absolute -bottom-1 -right-1 bg-foreground text-background p-1.5 rounded-2xl shadow-lg">
+                                            <RefreshCw class="h-3 w-3" />
                                         </div>
                                     </div>
-                                    <input 
-                                        type="file" 
-                                        ref="editPhotoInput" 
-                                        class="hidden" 
-                                        accept="image/*" 
-                                        @change="e => handlePhotoChange(e, 'edit')"
-                                    />
-                                    <div class="absolute -bottom-1 -right-1 bg-foreground text-background p-1.5 sm:p-2 rounded-2xl shadow-lg animate-bounce">
-                                        <RefreshCw class="h-3 w-3" />
+                                    <p class="text-[9px] text-zinc-500 mt-2 font-bold uppercase tracking-widest text-center">Update Portrait</p>
+                                    <p v-if="formErrors.photo" class="text-[10px] text-destructive mt-1 text-center">
+                                        {{ Array.isArray(formErrors.photo) ? formErrors.photo[0] : formErrors.photo }}
+                                    </p>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="space-y-1.5">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Full name
+                                            </label>
+                                            <Input v-model="editName" placeholder="e.g. Juan Dela Cruz" class="h-9 text-xs" />
+                                            <p v-if="formErrors.name" class="text-[10px] text-destructive">
+                                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
+                                            </p>
+                                        </div>
+
+                                        <div class="space-y-1.5">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Student number
+                                            </label>
+                                            <Input v-model="editStudentNumber" placeholder="e.g. 2026-0001" class="h-9 text-xs" />
+                                            <p v-if="formErrors.student_number" class="text-[10px] text-destructive">
+                                                {{ Array.isArray(formErrors.student_number) ? formErrors.student_number[0] : formErrors.student_number }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="space-y-1.5">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Section
+                                            </label>
+                                            <Input v-model="editSection" placeholder="e.g. BSIT-3A" class="h-9 text-xs" />
+                                            <p v-if="formErrors.section" class="text-[10px] text-destructive">
+                                                {{ Array.isArray(formErrors.section) ? formErrors.section[0] : formErrors.section }}
+                                            </p>
+                                        </div>
+
+                                        <div class="space-y-1.5">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Email (Optional)
+                                            </label>
+                                            <Input v-model="editEmail" type="email" placeholder="Optional" class="h-9 text-xs" />
+                                            <p v-if="formErrors.email" class="text-[10px] text-destructive">
+                                                {{ Array.isArray(formErrors.email) ? formErrors.email[0] : formErrors.email }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                                <p class="text-[10px] text-zinc-500 mt-2 font-medium uppercase tracking-widest">Update Portrait</p>
-                                <p v-if="formErrors.photo" class="text-xs text-destructive mt-1">
-                                    {{ Array.isArray(formErrors.photo) ? formErrors.photo[0] : formErrors.photo }}
-                                </p>
                             </div>
 
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-medium">
-                                Full name
-                            </label>
-                            <Input
-                                v-model="editName"
-                                placeholder="e.g. Juan Dela Cruz"
-                            />
-                            <p
-                                v-if="formErrors.name"
-                                class="text-xs text-destructive"
-                            >
-                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-medium">
-                                Student number
-                            </label>
-                            <Input
-                                v-model="editStudentNumber"
-                                placeholder="e.g. 2026-0001"
-                            />
-                            <p
-                                v-if="formErrors.student_number"
-                                class="text-xs text-destructive"
-                            >
-                                {{ Array.isArray(formErrors.student_number) ? formErrors.student_number[0] : formErrors.student_number }}
-                            </p>
-                        </div>
-
-                        <div class="grid gap-3 md:grid-cols-2">
-                            <div class="space-y-1.5">
-                                <label class="text-xs font-medium">
-                                    Section
-                                </label>
-                                <Input
-                                    v-model="editSection"
-                                    placeholder="e.g. BSIT-3A"
-                                />
-                                <p
-                                    v-if="formErrors.section"
-                                    class="text-xs text-destructive"
-                                >
-                                    {{ Array.isArray(formErrors.section) ? formErrors.section[0] : formErrors.section }}
-                                </p>
-                            </div>
-
-                            <div class="space-y-1.5">
-                                <label class="text-xs font-medium">
-                                    Email
-                                </label>
-                                <Input
-                                    v-model="editEmail"
-                                    type="email"
-                                    placeholder="Optional"
-                                />
-                                <p
-                                    v-if="formErrors.email"
-                                    class="text-xs text-destructive"
-                                >
-                                    {{ Array.isArray(formErrors.email) ? formErrors.email[0] : formErrors.email }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-medium">
-                                    Time slots
-                                </label>
-                                <Button
-                                    type="button"
-                                    size="icon-sm"
-                                    variant="outline"
-                                    @click="addEditScheduleSlot"
-                                >
-                                    +
-                                </Button>
-                            </div>
-                            <p class="text-[11px] text-muted-foreground">
-                                Update the student's schedule. A 15-minute grace
-                                period is applied to each start time.
-                            </p>
-
-                            <div class="space-y-2">
-                                <div
-                                    v-for="(slot, index) in editSchedules"
-                                    :key="index"
-                                    class="relative flex flex-col gap-2.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-2.5"
-                                >
-                                    <div class="flex items-center gap-2 pr-6">
-                                        <Select v-model="slot.day">
-                                            <SelectTrigger class="h-8 flex-1 text-left text-xs">
-                                                <SelectValue :placeholder="slot.day" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem v-for="d in daysOfWeek" :key="d" :value="d">
-                                                    {{ d }}
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <Select v-model="slot.subject_id">
-                                            <SelectTrigger class="h-8 flex-1 text-left text-xs">
-                                                <SelectValue placeholder="Subject" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem v-for="subject in props.subjects" :key="subject.id" :value="String(subject.id)">
-                                                    {{ subject.name }}
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div class="flex flex-col gap-1">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Start</label>
-                                            <TimeInput
-                                                v-model="slot.start"
-                                                class="w-full"
-                                            />
-                                        </div>
-                                        <div class="flex flex-col gap-1">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">End</label>
-                                            <TimeInput
-                                                v-model="slot.end"
-                                                class="w-full"
-                                            />
-                                        </div>
-                                    </div>
-
+                            <div class="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                        Time slots
+                                    </label>
                                     <Button
-                                        v-if="editSchedules.length > 1"
                                         type="button"
                                         size="icon-sm"
-                                        variant="ghost"
-                                        class="absolute right-1 top-1 h-6 w-6 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                        @click="removeEditScheduleSlot(index)"
+                                        variant="outline"
+                                        class="h-7 w-7"
+                                        @click="addEditScheduleSlot"
                                     >
-                                        <Trash2 class="h-3 w-3" />
+                                        <Plus class="h-3.5 w-3.5" />
                                     </Button>
                                 </div>
+
+                                <div class="flex flex-wrap gap-2">
+                                    <div
+                                        v-for="(slot, index) in editSchedules"
+                                        :key="index"
+                                        class="relative flex flex-col gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-2 min-w-[280px] flex-1"
+                                    >
+                                        <div class="flex items-center gap-2 pr-6">
+                                            <Select v-model="slot.day">
+                                                <SelectTrigger class="h-7 flex-1 text-[10px]">
+                                                    <SelectValue :placeholder="slot.day" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem v-for="d in daysOfWeek" :key="d" :value="d" class="text-xs">
+                                                        {{ d }}
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Select v-model="slot.subject_id">
+                                                <SelectTrigger class="h-7 flex-1 text-[10px]">
+                                                    <SelectValue placeholder="Subject" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem v-for="subject in props.subjects" :key="subject.id" :value="String(subject.id)" class="text-xs">
+                                                        {{ subject.name }}
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="flex flex-col gap-0.5">
+                                                <label class="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Start</label>
+                                                <TimeInput
+                                                    v-model="slot.start"
+                                                    class="h-7 text-[10px]"
+                                                />
+                                            </div>
+                                            <div class="flex flex-col gap-0.5">
+                                                <label class="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">End</label>
+                                                <TimeInput
+                                                    v-model="slot.end"
+                                                    class="h-7 text-[10px]"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <Button
+                                            v-if="editSchedules.length > 1"
+                                            type="button"
+                                            size="icon-sm"
+                                            variant="ghost"
+                                            class="absolute right-1 top-1 h-5 w-5 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                            @click="removeEditScheduleSlot(index)"
+                                        >
+                                            <Trash2 class="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div
+                                    v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
+                                    class="mt-1 space-y-0.5"
+                                >
+                                    <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[9px] text-destructive leading-tight font-medium">
+                                        • {{ Array.isArray(err) ? err[0] : err }}
+                                    </p>
+                                </div>
                             </div>
-                            <div
-                                v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
-                                class="mt-2 space-y-1 rounded-md bg-destructive/5 p-2"
-                            >
-                                <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[10px] text-destructive leading-tight">
-                                    • {{ Array.isArray(err) ? err[0] : err }}
-                                </p>
-                            </div>
-                        </div>
                         </div>
 
-                        <DialogFooter class="mt-4 flex justify-end gap-2">
+                        <DialogFooter class="mt-4 flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
                             <DialogClose as-child>
-                                <Button type="button" variant="outline">
+                                <Button type="button" variant="outline" size="sm" class="text-xs h-9">
                                     Cancel
                                 </Button>
                             </DialogClose>
-                            <Button type="submit" :disabled="submitting">
+                            <Button type="submit" :disabled="submitting" size="sm" class="text-xs h-9 px-6 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900">
                                 {{ submitting ? 'Saving…' : 'Save changes' }}
                             </Button>
                         </DialogFooter>

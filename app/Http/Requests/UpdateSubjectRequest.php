@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateSubjectRequest extends FormRequest
 {
@@ -23,7 +24,11 @@ class UpdateSubjectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('subjects', 'name')->ignore($this->route('subject'))],
+            'name' => ['required', 'string', 'max:255', Rule::unique('subjects', 'name')->ignore($this->route('subject'))],
+            'schedule' => ['nullable', 'array'],
+            'schedule.*.day' => ['required', 'string', 'max:20'],
+            'schedule.*.start' => ['required', 'string', 'max:10'],
+            'schedule.*.end' => ['required', 'string', 'max:10'],
         ];
     }
 }

@@ -24,6 +24,10 @@ class StoreSubjectRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', 'unique:subjects,name'],
+            'schedule' => ['nullable', 'array'],
+            'schedule.*.day' => ['required', 'string', 'max:20'],
+            'schedule.*.start' => ['required', 'string', 'max:10'],
+            'schedule.*.end' => ['required', 'string', 'max:10'],
         ];
     }
 }

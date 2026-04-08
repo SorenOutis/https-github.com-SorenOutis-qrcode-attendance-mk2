@@ -13,7 +13,15 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
+import TimeInput from '@/components/TimeInput.vue';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 
@@ -26,6 +34,11 @@ type Student = {
 type Subject = {
     id: number;
     name: string;
+    schedule?: Array<{
+        day: string;
+        start: string;
+        end: string;
+    }>;
     students?: Student[];
 };
 
@@ -50,6 +63,26 @@ const editingSubjectId = ref<number | null>(null);
 const submitting = ref(false);
 const formErrors = ref<Record<string, string[]>>({});
 const listRef = ref<HTMLDivElement | null>(null);
+
+const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const schedules = ref([{ day: 'Monday', start: '08:00', end: '10:00' }]);
+const editSchedules = ref<Array<{ day: string; start: string; end: string }>>([]);
+
+function addScheduleSlot() {
+    schedules.value.push({ day: 'Monday', start: '08:00', end: '10:00' });
+}
+
+function removeScheduleSlot(index: number) {
+    schedules.value.splice(index, 1);
+}
+
+function addEditScheduleSlot() {
+    editSchedules.value.push({ day: 'Monday', start: '08:00', end: '10:00' });
+}
+
+function removeEditScheduleSlot(index: number) {
+    editSchedules.value.splice(index, 1);
+}
 
 const studentsModalOpen = ref(false);
 const selectedSubjectForStudents = ref<Subject | null>(null);
@@ -88,6 +121,7 @@ function handleConfirm() {
 
 function openCreateModal() {
     name.value = '';
+    schedules.value = [{ day: 'Monday', start: '08:00', end: '10:00' }];
     formErrors.value = {};
     createModalOpen.value = true;
 }
@@ -104,6 +138,7 @@ async function submitSubject() {
         '/subjects',
         {
             name: name.value,
+            schedule: schedules.value,
         },
         {
             onError: (errors) => {
@@ -123,6 +158,7 @@ async function submitSubject() {
 function openEditModal(subject: Subject) {
     editingSubjectId.value = subject.id;
     editName.value = subject.name;
+    editSchedules.value = subject.schedule ? JSON.parse(JSON.stringify(subject.schedule)) : [];
     formErrors.value = {};
     editModalOpen.value = true;
 }
@@ -142,6 +178,7 @@ async function submitEditSubject() {
         `/subjects/${editingSubjectId.value}`,
         {
             name: editName.value,
+            schedule: editSchedules.value,
         },
         {
             onError: (errors) => {
@@ -309,25 +346,101 @@ onMounted(() => {
 
         <!-- Create Modal -->
         <Dialog v-model:open="createModalOpen">
-            <DialogContent class="max-w-sm">
+            <DialogContent class="max-w-md flex flex-col max-h-[90dvh]">
                 <DialogHeader>
                     <DialogTitle>Add Subject</DialogTitle>
                 </DialogHeader>
 
-                <form class="space-y-4 pt-2" @submit.prevent="submitSubject">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-medium">Subject Name</label>
-                        <Input v-model="name" placeholder="e.g. Mathematics" autofocus />
-                        <p v-if="formErrors.name" class="text-xs text-destructive">
-                            {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
-                        </p>
+                <form class="flex flex-col flex-1 min-h-0 space-y-4 pt-2" @submit.prevent="submitSubject">
+                    <div class="flex-1 overflow-y-auto space-y-4 pr-0.5">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Subject Name</label>
+                            <Input v-model="name" placeholder="e.g. Mathematics" class="h-10" autofocus />
+                            <p v-if="formErrors.name" class="text-xs text-destructive">
+                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
+                            </p>
+                        </div>
+
+                        <div class="space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                    Time slots
+                                </label>
+                                <Button
+                                    type="button"
+                                    size="icon-sm"
+                                    variant="outline"
+                                    class="h-7 w-7"
+                                    @click="addScheduleSlot"
+                                >
+                                    <Plus class="h-3.5 w-3.5" />
+                                </Button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div
+                                    v-for="(slot, index) in schedules"
+                                    :key="index"
+                                    class="relative flex flex-col gap-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-3"
+                                >
+                                    <div class="flex items-center gap-2 pr-8">
+                                        <Select v-model="slot.day">
+                                            <SelectTrigger class="h-8 flex-1 text-xs">
+                                                <SelectValue :placeholder="slot.day" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem v-for="d in daysOfWeek" :key="d" :value="d" class="text-xs">
+                                                    {{ d }}
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">Start</label>
+                                            <TimeInput
+                                                v-model="slot.start"
+                                                class="h-9"
+                                            />
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">End</label>
+                                            <TimeInput
+                                                v-model="slot.end"
+                                                class="h-9"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <Button
+                                        v-if="schedules.length > 1"
+                                        type="button"
+                                        size="icon-sm"
+                                        variant="ghost"
+                                        class="absolute right-2 top-2 h-7 w-7 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                        @click="removeScheduleSlot(index)"
+                                    >
+                                        <Trash2 class="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                            <div
+                                v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
+                                class="mt-2 space-y-1"
+                            >
+                                <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[10px] text-destructive leading-tight font-medium">
+                                    • {{ Array.isArray(err) ? err[0] : err }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                    <DialogFooter class="mt-4 flex justify-end gap-2">
+                    <DialogFooter class="mt-4 flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
                         <DialogClose as-child>
                             <Button type="button" variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit" :disabled="submitting">
+                        <Button type="submit" :disabled="submitting" class="bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 px-6">
                             {{ submitting ? 'Saving…' : 'Save Subject' }}
                         </Button>
                     </DialogFooter>
@@ -337,25 +450,101 @@ onMounted(() => {
 
         <!-- Edit Modal -->
         <Dialog v-model:open="editModalOpen">
-            <DialogContent class="max-w-sm">
+            <DialogContent class="max-w-md flex flex-col max-h-[90dvh]">
                 <DialogHeader>
                     <DialogTitle>Edit Subject</DialogTitle>
                 </DialogHeader>
 
-                <form class="space-y-4 pt-2" @submit.prevent="submitEditSubject">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-medium">Subject Name</label>
-                        <Input v-model="editName" placeholder="e.g. Mathematics" autofocus />
-                        <p v-if="formErrors.name" class="text-xs text-destructive">
-                            {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
-                        </p>
+                <form class="flex flex-col flex-1 min-h-0 space-y-4 pt-2" @submit.prevent="submitEditSubject">
+                    <div class="flex-1 overflow-y-auto space-y-4 pr-0.5">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Subject Name</label>
+                            <Input v-model="editName" placeholder="e.g. Mathematics" class="h-10" autofocus />
+                            <p v-if="formErrors.name" class="text-xs text-destructive">
+                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
+                            </p>
+                        </div>
+
+                        <div class="space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                    Time slots
+                                </label>
+                                <Button
+                                    type="button"
+                                    size="icon-sm"
+                                    variant="outline"
+                                    class="h-7 w-7"
+                                    @click="addEditScheduleSlot"
+                                >
+                                    <Plus class="h-3.5 w-3.5" />
+                                </Button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div
+                                    v-for="(slot, index) in editSchedules"
+                                    :key="index"
+                                    class="relative flex flex-col gap-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-3"
+                                >
+                                    <div class="flex items-center gap-2 pr-8">
+                                        <Select v-model="slot.day">
+                                            <SelectTrigger class="h-8 flex-1 text-xs">
+                                                <SelectValue :placeholder="slot.day" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem v-for="d in daysOfWeek" :key="d" :value="d" class="text-xs">
+                                                    {{ d }}
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">Start</label>
+                                            <TimeInput
+                                                v-model="slot.start"
+                                                class="h-9"
+                                            />
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">End</label>
+                                            <TimeInput
+                                                v-model="slot.end"
+                                                class="h-9"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <Button
+                                        v-if="editSchedules.length > 1"
+                                        type="button"
+                                        size="icon-sm"
+                                        variant="ghost"
+                                        class="absolute right-2 top-2 h-7 w-7 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                        @click="removeEditScheduleSlot(index)"
+                                    >
+                                        <Trash2 class="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div
+                                v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
+                                class="mt-2 space-y-1"
+                            >
+                                <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[10px] text-destructive leading-tight font-medium">
+                                    • {{ Array.isArray(err) ? err[0] : err }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                    <DialogFooter class="mt-4 flex justify-end gap-2">
+                    <DialogFooter class="mt-4 flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
                         <DialogClose as-child>
                             <Button type="button" variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit" :disabled="submitting">
+                        <Button type="submit" :disabled="submitting" class="bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 px-6">
                             {{ submitting ? 'Saving…' : 'Save Changes' }}
                         </Button>
                     </DialogFooter>

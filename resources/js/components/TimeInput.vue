@@ -68,10 +68,10 @@ function onPeriodChange(e: Event): void {
         <select
             :value="parsed.hour"
             @change="onHourChange"
-            class="flex-1 min-w-0 bg-transparent text-sm font-medium text-center appearance-none outline-none cursor-pointer py-2"
+            class="flex-1 min-w-0 bg-transparent text-sm font-medium text-center appearance-none outline-none cursor-pointer py-2 text-foreground"
             aria-label="Hour"
         >
-            <option v-for="h in hours12" :key="h" :value="h">{{ h }}</option>
+            <option v-for="h in hours12" :key="h" :value="h" class="bg-background text-foreground">{{ h }}</option>
         </select>
 
         <span class="text-muted-foreground font-bold text-sm shrink-0">:</span>
@@ -80,10 +80,10 @@ function onPeriodChange(e: Event): void {
         <select
             :value="parsed.minute"
             @change="onMinuteChange"
-            class="flex-1 min-w-0 bg-transparent text-sm font-medium text-center appearance-none outline-none cursor-pointer py-2"
+            class="flex-1 min-w-0 bg-transparent text-sm font-medium text-center appearance-none outline-none cursor-pointer py-2 text-foreground"
             aria-label="Minute"
         >
-            <option v-for="m in minutes" :key="m" :value="m">{{ m }}</option>
+            <option v-for="m in minutes" :key="m" :value="m" class="bg-background text-foreground">{{ m }}</option>
         </select>
 
         <span class="w-px h-5 bg-border shrink-0 mx-0.5"></span>
@@ -92,11 +92,11 @@ function onPeriodChange(e: Event): void {
         <select
             :value="parsed.period"
             @change="onPeriodChange"
-            class="shrink-0 bg-transparent text-sm font-black tracking-wider text-center appearance-none outline-none cursor-pointer py-2"
+            class="shrink-0 bg-transparent text-sm font-black tracking-wider text-center appearance-none outline-none cursor-pointer py-2 text-foreground"
             aria-label="AM or PM"
         >
-            <option value="AM">AM</option>
-            <option value="PM">PM</option>
+            <option value="AM" class="bg-background text-foreground">AM</option>
+            <option value="PM" class="bg-background text-foreground">PM</option>
         </select>
     </div>
 </template>

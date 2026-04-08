@@ -411,6 +411,9 @@ class StudentController extends Controller
             } else {
                 $data['photo'] = 'data:'.$file->getMimeType().';base64,'.base64_encode(file_get_contents($imagePath));
             }
+        } else {
+            // Remove photo from the update array to prevent overwriting existing with null
+            unset($data['photo']);
         }
 
         $data['schedule'] = collect($data['schedule'])

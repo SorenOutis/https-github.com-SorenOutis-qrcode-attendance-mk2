@@ -386,19 +386,19 @@ function formatTimeTo12h(timeStr?: string) {
             </div>
 
             <!-- Students List -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 lg:grid-cols-3 gap-4">
                 <div v-for="student in props.students.data" :key="student.id" 
-                    class="group relative bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800 rounded-3xl p-5 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-none transition-all duration-300 hover:-translate-y-1"
+                    class="group relative bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800 rounded-[28px] p-4 hover:shadow-xl hover:shadow-zinc-200/40 dark:hover:shadow-none transition-all duration-300 hover:-translate-y-1"
                 >
-                    <div class="flex items-start gap-4">
-                        <div class="h-16 w-16 rounded-2xl bg-zinc-100 dark:bg-zinc-900 overflow-hidden shrink-0 border border-zinc-50 dark:border-zinc-800 shadow-inner">
+                    <div class="flex items-start gap-3">
+                        <div class="h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-900 overflow-hidden shrink-0 border border-zinc-50 dark:border-zinc-800 shadow-inner">
                             <img v-if="student.photo" :src="student.photo" class="h-full w-full object-cover" />
                             <div v-else :class="['h-full w-full flex items-center justify-center shrink-0 border border-white/20 shadow-inner bg-gradient-to-br transition-all duration-500', getAvatarGradient(student.name)]">
                                 <span class="text-2xl font-serif font-black text-white dark:text-zinc-100 drop-shadow-sm uppercase tracking-tighter">{{ student.name.charAt(0) }}</span>
                             </div>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <h3 class="font-serif font-black text-lg leading-tight truncate group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
+                            <h3 class="font-serif font-black text-base leading-tight truncate group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
                                 {{ student.name }}
                             </h3>
                             <div class="flex flex-col gap-1 mt-2">
@@ -416,7 +416,7 @@ function formatTimeTo12h(timeStr?: string) {
                     </div>
 
                     <!-- Actions -->
-                    <div class="mt-6 pt-4 border-t border-zinc-50 dark:border-zinc-900 flex items-center justify-between">
+                    <div class="mt-4 pt-3 border-t border-zinc-50 dark:border-zinc-900 flex items-center justify-between">
                         <Link :href="`/students/${student.id}/analytics`" class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors">
                             View Analytics
                         </Link>

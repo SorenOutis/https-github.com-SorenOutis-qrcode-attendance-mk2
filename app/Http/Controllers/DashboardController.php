@@ -6,7 +6,6 @@ use App\Models\Attendance;
 use App\Models\Student;
 use App\Models\Subject;
 use Carbon\CarbonImmutable;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,7 +16,7 @@ class DashboardController extends Controller
     {
         $date = CarbonImmutable::now()->toDateString();
         $dayOfWeek = CarbonImmutable::now()->format('l');
-        $subjects = Subject::orderBy('name')->get(['id', 'name']);
+        $subjects = Subject::orderBy('name')->get(['id', 'name', 'schedule']);
 
         $search = request('search');
         $onlyScheduled = request('only_scheduled') === 'true';
@@ -178,9 +177,10 @@ class DashboardController extends Controller
                 $total = $student->total_attendance_count;
                 $positive = $student->positive_attendance_count;
                 $percentage = $total > 0 ? (int) round(($positive / $total) * 100) : 100;
-                
+
                 $mapped = $mapStudent($student);
                 $mapped['attendance_percentage'] = $percentage;
+
                 return $mapped;
             })
             ->filter(fn ($s) => $s['attendance_percentage'] < 80)

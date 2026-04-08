@@ -21,7 +21,7 @@ class StudentController extends Controller
 {
     public function index(): Response
     {
-        $subjects = Subject::orderBy('name')->get(['id', 'name']);
+        $subjects = Subject::orderBy('name')->get(['id', 'name', 'schedule']);
         $search = request('search');
 
         $students = Student::query()
@@ -125,7 +125,7 @@ class StudentController extends Controller
                 'subject_id' => $a->subject_id,
             ]);
 
-        $subjects = Subject::orderBy('name')->get(['id', 'name']);
+        $subjects = Subject::orderBy('name')->get(['id', 'name', 'schedule']);
 
         $todaySchedule = collect($student->schedule ?? [])
             ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end']))

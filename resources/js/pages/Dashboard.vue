@@ -488,17 +488,66 @@ const photoPreview = ref<string | null>(null);
 const studentNumber = ref('');
 const email = ref('');
 const section = ref('');
-const schedules = ref<{ day: string; start: string; end: string; subject_id: string }[]>([
-    { day: 'Monday', start: '', end: '', subject_id: '' },
-]);
+const selectedSubjectIds = ref<number[]>([]);
+const editSelectedSubjectIds = ref<number[]>([]);
 
+const schedules = computed(() => {
+    const slots: any[] = [];
+    selectedSubjectIds.value.forEach(id => {
+        const subject = props.subjects.find(s => s.id === id);
+        if (subject && subject.schedule) {
+            subject.schedule.forEach((s: any) => {
+                slots.push({
+                    day: s.day,
+                    subject_id: subject.id,
+                    start: s.start,
+                    end: s.end
+                });
+            });
+        }
+    });
+    return slots;
+});
+
+const editSchedules = computed(() => {
+    const slots: any[] = [];
+    editSelectedSubjectIds.value.forEach(id => {
+        const subject = props.subjects.find(s => s.id === id);
+        if (subject && subject.schedule) {
+            subject.schedule.forEach((s: any) => {
+                slots.push({
+                    day: s.day,
+                    subject_id: subject.id,
+                    start: s.start,
+                    end: s.end
+                });
+            });
+        }
+    });
+    return slots;
+});
+
+function toggleSubject(id: number) {
+    const index = selectedSubjectIds.value.indexOf(id);
+    if (index === -1) {
+        selectedSubjectIds.value.push(id);
+    } else {
+        selectedSubjectIds.value.splice(index, 1);
+    }
+}
+
+function toggleEditSubject(id: number) {
+    const index = editSelectedSubjectIds.value.indexOf(id);
+    if (index === -1) {
+        editSelectedSubjectIds.value.push(id);
+    } else {
+        editSelectedSubjectIds.value.splice(index, 1);
+    }
+}
 const editName = ref('');
 const editStudentNumber = ref('');
 const editEmail = ref('');
 const editSection = ref('');
-const editSchedules = ref<{ day: string; start: string; end: string; subject_id: string }[]>([
-    { day: 'Monday', start: '', end: '', subject_id: '' },
-]);
 const editingStudentId = ref<number | null>(null);
 const editPhoto = ref<File | null>(null);
 const editPhotoPreview = ref<string | null>(null);
@@ -594,7 +643,7 @@ function resetForm() {
     studentNumber.value = '';
     email.value = '';
     section.value = '';
-    schedules.value = [{ day: 'Monday', start: '', end: '', subject_id: '' }];
+    selectedSubjectIds.value = [];
     photo.value = null;
     photoPreview.value = null;
     formErrors.value = {};
@@ -640,14 +689,7 @@ async function submitStudent() {
     );
 }
 
-function addScheduleSlot() {
-    schedules.value.push({ day: 'Monday', start: '', end: '', subject_id: '' });
-}
 
-function removeScheduleSlot(index: number) {
-    if (schedules.value.length === 1) return;
-    schedules.value.splice(index, 1);
-}
 
 function deleteStudent(id: number) {
     showConfirm(
@@ -744,10 +786,13 @@ function openEditModal(student: Student) {
     editStudentNumber.value = student.student_number;
     editEmail.value = student.email || '';
     editSection.value = student.section || '';
-    editSchedules.value =
-        student.schedule && student.schedule.length > 0
-            ? student.schedule.map((s) => ({ day: s.day || 'Monday', start: s.start, end: s.end, subject_id: s.subject_id?.toString() || '' }))
-            : [{ day: 'Monday', start: '', end: '', subject_id: '' }];
+    const subjectIds = new Set<number>();
+    if (student.schedule) {
+        student.schedule.forEach((s: any) => {
+            if (s.subject_id) subjectIds.add(Number(s.subject_id));
+        });
+    }
+    editSelectedSubjectIds.value = Array.from(subjectIds);
     editPhoto.value = null;
     editPhotoPreview.value = (student as any).photo || null;
     formErrors.value = {};
@@ -824,14 +869,6 @@ function closeEditModal() {
     editingStudentId.value = null;
 }
 
-function addEditScheduleSlot() {
-    editSchedules.value.push({ day: 'Monday', start: '', end: '', subject_id: '' });
-}
-
-function removeEditScheduleSlot(index: number) {
-    if (editSchedules.value.length === 1) return;
-    editSchedules.value.splice(index, 1);
-}
 
 async function submitEditStudent() {
     if (!editingStudentId.value) return;
@@ -1970,88 +2007,48 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <div class="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
                                 <div class="flex items-center justify-between">
                                     <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                        Time slots
+                                        Enrolled Subjects
                                     </label>
-                                    <Button
-                                        type="button"
-                                        size="icon-sm"
-                                        variant="outline"
-                                        class="h-7 w-7"
-                                        @click="addScheduleSlot"
-                                    >
-                                        <Plus class="h-3.5 w-3.5" />
-                                    </Button>
                                 </div>
 
-                                <div class="flex flex-wrap gap-2">
-                                    <div
-                                        v-for="(slot, index) in schedules"
-                                        :key="index"
-                                        class="relative flex flex-col gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-2 min-w-[280px] flex-1"
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button
+                                        v-for="subj in props.subjects"
+                                        :key="subj.id"
+                                        type="button"
+                                        @click="toggleSubject(subj.id)"
+                                        :class="[
+                                            'px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight border transition-all',
+                                            selectedSubjectIds.includes(subj.id)
+                                                ? 'bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 border-transparent shadow-sm'
+                                                : 'bg-zinc-50 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
+                                        ]"
                                     >
-                                        <div class="flex items-center gap-2 pr-6">
-                                            <Select v-model="slot.day">
-                                                <SelectTrigger class="h-7 flex-1 text-[10px]">
-                                                    <SelectValue :placeholder="slot.day" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem v-for="d in daysOfWeek" :key="d" :value="d" class="text-xs">
-                                                        {{ d }}
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <Select v-model="slot.subject_id">
-                                                <SelectTrigger class="h-7 flex-1 text-[10px]">
-                                                    <SelectValue placeholder="Subject" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem v-for="subj in props.subjects" :key="subj.id" :value="subj.id.toString()" class="text-xs">
-                                                        {{ subj.name }}
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div class="flex flex-col gap-0.5">
-                                                <label class="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Start</label>
-                                                <TimeInput
-                                                    v-model="slot.start"
-                                                    class="h-7 text-[10px]"
-                                                />
-                                            </div>
-                                            <div class="flex flex-col gap-0.5">
-                                                <label class="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">End</label>
-                                                <TimeInput
-                                                    v-model="slot.end"
-                                                    class="h-7 text-[10px]"
-                                                />
-                                            </div>
-                                        </div>
+                                        {{ subj.name }}
+                                    </button>
+                                </div>
 
-                                        <Button
-                                            v-if="schedules.length > 1"
-                                            type="button"
-                                            size="icon-sm"
-                                            variant="ghost"
-                                            class="absolute right-1 top-1 h-5 w-5 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                            @click="removeScheduleSlot(index)"
+                                <!-- Preview of schedule -->
+                                <div v-if="schedules.length > 0" class="mt-4 p-3 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50">
+                                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-3 ml-1">Schedule Preview</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div 
+                                            v-for="(slot, i) in schedules" 
+                                            :key="i"
+                                            class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 shadow-[0_1px_2px_rgba(0,0,0,0.02)] border border-zinc-100 dark:border-zinc-800/80"
                                         >
-                                            <Trash2 class="h-3 w-3" />
-                                        </Button>
+                                            <div class="h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 shrink-0" />
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-[10px] font-bold truncate leading-tight">{{ getSubjectName(slot.subject_id) }}</p>
+                                                <p class="text-[9px] text-zinc-500 font-semibold tabular-nums mt-0.5">
+                                                    {{ slot.day }} · {{ formatTimeTo12h(slot.start) }} – {{ formatTimeTo12h(slot.end) }}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div
-                                    v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
-                                    class="mt-1 space-y-0.5"
-                                >
-                                    <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[9px] text-destructive leading-tight font-medium">
-                                        • {{ Array.isArray(err) ? err[0] : err }}
-                                    </p>
-                                </div>
-                            </div>
                         </div>
 
                         <DialogFooter class="mt-4 flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
@@ -2397,88 +2394,48 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <div class="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
                                 <div class="flex items-center justify-between">
                                     <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                        Time slots
+                                        Enrolled Subjects
                                     </label>
-                                    <Button
-                                        type="button"
-                                        size="icon-sm"
-                                        variant="outline"
-                                        class="h-7 w-7"
-                                        @click="addEditScheduleSlot"
-                                    >
-                                        <Plus class="h-3.5 w-3.5" />
-                                    </Button>
                                 </div>
 
-                                <div class="flex flex-wrap gap-2">
-                                    <div
-                                        v-for="(slot, index) in editSchedules"
-                                        :key="index"
-                                        class="relative flex flex-col gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 p-2 min-w-[280px] flex-1"
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button
+                                        v-for="subj in props.subjects"
+                                        :key="subj.id"
+                                        type="button"
+                                        @click="toggleEditSubject(subj.id)"
+                                        :class="[
+                                            'px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight border transition-all',
+                                            editSelectedSubjectIds.includes(subj.id)
+                                                ? 'bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 border-transparent shadow-sm'
+                                                : 'bg-zinc-50 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
+                                        ]"
                                     >
-                                        <div class="flex items-center gap-2 pr-6">
-                                            <Select v-model="slot.day">
-                                                <SelectTrigger class="h-7 flex-1 text-[10px]">
-                                                    <SelectValue :placeholder="slot.day" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem v-for="d in daysOfWeek" :key="d" :value="d" class="text-xs">
-                                                        {{ d }}
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <Select v-model="slot.subject_id">
-                                                <SelectTrigger class="h-7 flex-1 text-[10px]">
-                                                    <SelectValue placeholder="Subject" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem v-for="subject in props.subjects" :key="subject.id" :value="String(subject.id)" class="text-xs">
-                                                        {{ subject.name }}
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div class="flex flex-col gap-0.5">
-                                                <label class="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Start</label>
-                                                <TimeInput
-                                                    v-model="slot.start"
-                                                    class="h-7 text-[10px]"
-                                                />
-                                            </div>
-                                            <div class="flex flex-col gap-0.5">
-                                                <label class="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">End</label>
-                                                <TimeInput
-                                                    v-model="slot.end"
-                                                    class="h-7 text-[10px]"
-                                                />
-                                            </div>
-                                        </div>
+                                        {{ subj.name }}
+                                    </button>
+                                </div>
 
-                                        <Button
-                                            v-if="editSchedules.length > 1"
-                                            type="button"
-                                            size="icon-sm"
-                                            variant="ghost"
-                                            class="absolute right-1 top-1 h-5 w-5 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                            @click="removeEditScheduleSlot(index)"
+                                <!-- Preview of schedule -->
+                                <div v-if="editSchedules.length > 0" class="mt-4 p-3 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50">
+                                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-3 ml-1">Schedule Preview</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div 
+                                            v-for="(slot, i) in editSchedules" 
+                                            :key="i"
+                                            class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 shadow-[0_1px_2px_rgba(0,0,0,0.02)] border border-zinc-100 dark:border-zinc-800/80"
                                         >
-                                            <Trash2 class="h-3 w-3" />
-                                        </Button>
+                                            <div class="h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 shrink-0" />
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-[10px] font-bold truncate leading-tight">{{ getSubjectName(slot.subject_id) }}</p>
+                                                <p class="text-[9px] text-zinc-500 font-semibold tabular-nums mt-0.5">
+                                                    {{ slot.day }} · {{ formatTimeTo12h(slot.start) }} – {{ formatTimeTo12h(slot.end) }}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div
-                                    v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
-                                    class="mt-1 space-y-0.5"
-                                >
-                                    <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[9px] text-destructive leading-tight font-medium">
-                                        • {{ Array.isArray(err) ? err[0] : err }}
-                                    </p>
-                                </div>
-                            </div>
                         </div>
 
                         <DialogFooter class="mt-4 flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">

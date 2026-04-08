@@ -1509,26 +1509,6 @@ onMounted(() => {
                                     </button>
                                 </div>
 
-                                <Button 
-                                    v-if="activeTab === 'active'"
-                                    variant="outline"
-                                    size="sm" 
-                                    class="rounded-full shrink-0 gap-1.5 border-zinc-200 dark:border-zinc-800" 
-                                    @click="importModalOpen = true"
-                                >
-                                    <UserPlus class="h-4 w-4" />
-                                    <span class="hidden sm:inline">Import</span>
-                                </Button>
-
-                                <Button 
-                                    v-if="activeTab === 'active'"
-                                    size="sm" 
-                                    class="rounded-full shrink-0 gap-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200" 
-                                    @click="openCreateModal"
-                                >
-                                    <Plus class="h-4 w-4" />
-                                    <span class="hidden sm:inline">Add Student</span>
-                                </Button>
                             </div>
                         </div>
 

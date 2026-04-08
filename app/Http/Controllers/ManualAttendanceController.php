@@ -26,7 +26,6 @@ class ManualAttendanceController extends Controller
             ->get()
             ->map(function ($subject) use ($date) {
                 // Get all students who have this subject in their schedule
-                // We fetch IDs and schedules first to be robust against SQLite JSON issues
                 $enrolledStudentIds = Student::query()
                     ->get(['id', 'schedule'])
                     ->filter(fn ($s) => collect($s->schedule ?? [])->contains('subject_id', $subject->id))
@@ -34,18 +33,30 @@ class ManualAttendanceController extends Controller
 
                 $enrolledCount = $enrolledStudentIds->count();
 
-                // Get attendance for these students on this specific date
-                $presentCount = Attendance::query()
+                // Get attendance records for this date
+                $attendances = Attendance::query()
                     ->where('subject_id', $subject->id)
                     ->whereDate('scanned_at', $date)
                     ->whereIn('student_id', $enrolledStudentIds)
-                    ->count();
+                    ->get(['status']);
+
+                $presentCount = $attendances->whereIn('status', ['Present', 'present'])->count();
+                $lateCount = $attendances->whereIn('status', ['Late', 'late'])->count();
+                $absentCount = $attendances->whereIn('status', ['Absent', 'absent'])->count();
+                $excusedCount = $attendances->whereIn('status', ['Excused', 'excused'])->count();
+
+                // Logical absent: If explicitly marked absent OR not marked at all
+                $totalMarked = $attendances->count();
+                $unmarked = max(0, $enrolledCount - $totalMarked);
+                $logicalAbsent = $absentCount + $unmarked;
 
                 $subject->stats = [
                     'enrolled' => $enrolledCount,
                     'present' => $presentCount,
-                    'absent' => max(0, $enrolledCount - $presentCount),
-                    'attendance_rate' => $enrolledCount > 0 ? round(($presentCount / $enrolledCount) * 100) : 0,
+                    'late' => $lateCount,
+                    'absent' => $logicalAbsent,
+                    'excused' => $excusedCount,
+                    'attendance_rate' => $enrolledCount > 0 ? round((($presentCount + $lateCount + $excusedCount) / $enrolledCount) * 100) : 0,
                 ];
 
                 return $subject;

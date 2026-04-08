@@ -363,14 +363,8 @@ onMounted(() => {
                     />
 
                     <div class="relative flex items-start justify-between mb-6 sm:mb-8">
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl border transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-inner shadow-white/20"
-                                :class="iconBadgeClasses(subject.color)"
-                            >
-                                <component :is="getIcon(subject.icon)" class="h-5 w-5 sm:h-6 sm:w-6" />
-                            </div>
-                            <div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex flex-col">
                                 <h3 class="font-serif font-black text-base sm:text-lg tracking-tight leading-tight group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
                                     {{ subject.name }}
                                 </h3>
@@ -427,7 +421,6 @@ onMounted(() => {
                     <!-- Sparkline (Enhanced) -->
                     <div class="relative pt-4 border-t border-zinc-50 dark:border-zinc-900">
                         <div class="flex items-center gap-2 mb-3">
-                            <Activity class="h-3 w-3 text-zinc-400" />
                             <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Attendance Trend</span>
                         </div>
                         <div v-if="subject.daily.length" class="h-16 sm:h-20 w-full transform-gpu group-hover:scale-[1.02] transition-transform duration-500">

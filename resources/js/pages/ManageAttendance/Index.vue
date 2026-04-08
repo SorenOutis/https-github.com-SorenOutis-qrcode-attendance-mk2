@@ -19,7 +19,9 @@ type Subject = {
     stats?: {
         enrolled: number;
         present: number;
+        late: number;
         absent: number;
+        excused: number;
         attendance_rate: number;
     };
 };
@@ -34,13 +36,40 @@ const props = defineProps<{
 const selectedDate = ref<string>(props.filters.date);
 const cardsRef = ref<HTMLElement | null>(null);
 
-// Map icon names to components
-const iconMap: Record<string, any> = {
-    LayoutGrid, BookOpen, Calculator, FlaskConical, Users, 
-    Calendar, ChartBar, Database, Activity, Star
+const glowClasses = (color?: string) => {
+    const colors: Record<string, string> = {
+        emerald: 'bg-emerald-400',
+        amber: 'bg-amber-400',
+        indigo: 'bg-indigo-400',
+        rose: 'bg-rose-400',
+        blue: 'bg-blue-400',
+        zinc: 'bg-zinc-400',
+        violet: 'bg-violet-400',
+        cyan: 'bg-cyan-400',
+    };
+    return colors[color || 'zinc'] || colors.zinc;
 };
 
-const getIcon = (name?: string) => iconMap[name || 'BookOpen'] || BookOpen;
+const progressIndicatorClasses = (color?: string) => {
+    const colors: Record<string, string> = {
+        emerald: 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]',
+        amber: 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]',
+        indigo: 'bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.4)]',
+        rose: 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.4)]',
+        blue: 'bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]',
+        zinc: 'bg-zinc-500 shadow-[0_0_12px_rgba(113,113,122,0.4)]',
+        violet: 'bg-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.4)]',
+        cyan: 'bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.4)]',
+    };
+    return colors[color || 'zinc'] || colors.zinc;
+};
+
+const rateColor = (rate: number) => {
+    if (rate >= 90) return 'text-emerald-500 dark:text-emerald-400';
+    if (rate >= 75) return 'text-blue-500 dark:text-blue-400';
+    if (rate >= 50) return 'text-amber-500 dark:text-amber-400';
+    return 'text-rose-500 dark:text-rose-400';
+};
 
 const getColorClasses = (color?: string) => {
     const colors: Record<string, string> = {
@@ -129,7 +158,7 @@ onMounted(() => {
             <!-- Subject Grid -->
             <div 
                 ref="cardsRef"
-                class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
             >
                 <div 
                     v-for="(subject, index) in subjects" 
@@ -139,93 +168,72 @@ onMounted(() => {
                     data-card
                     @mouseenter="router.prefetch(`/manage-attendance/${subject.id}/${selectedDate}`, { method: 'get' })"
                     @click="router.get(`/manage-attendance/${subject.id}/${selectedDate}`)"
-                    class="group relative flex flex-col h-[280px] bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200/60 dark:border-zinc-800/60 rounded-3xl p-6 transition-all duration-500 hover:shadow-2xl hover:shadow-zinc-200 dark:hover:shadow-none hover:-translate-y-1 cursor-pointer overflow-hidden"
+                    class="group relative flex flex-col bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl border border-zinc-100 dark:border-zinc-800/80 rounded-[2rem] p-4 sm:p-5 transition-all duration-500 shadow-xl shadow-zinc-200/40 dark:shadow-none hover:shadow-2xl hover:shadow-zinc-300/50 dark:hover:shadow-indigo-500/5 cursor-pointer overflow-hidden transform-gpu hover:-translate-y-1.5 active:translate-y-0"
                 >
-                    <!-- Background Icon Decoration -->
-                    <component 
-                        :is="getIcon(subject.icon)" 
-                        class="absolute -right-8 -bottom-8 h-48 w-48 text-zinc-900/[0.03] dark:text-white/[0.03] transition-transform duration-700 group-hover:scale-110 group-hover:-rotate-12 pointer-events-none" 
+                    <!-- Accent Glow -->
+                    <div 
+                        class="absolute -top-24 -right-24 h-48 w-48 rounded-full blur-[80px] opacity-0 group-hover:opacity-60 transition-opacity duration-700 pointer-events-none"
+                        :class="glowClasses(subject.color)"
                     />
 
                     <!-- Card Header -->
-                    <div class="flex items-start justify-between mb-4">
-                        <div 
-                            class="h-14 w-14 rounded-2xl border flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm shadow-inherit"
-                            :class="getColorClasses(subject.color)"
-                        >
-                            <component :is="getIcon(subject.icon)" class="w-7 h-7" />
+                    <div class="relative flex items-start justify-between mb-6 sm:mb-8">
+                        <div class="flex items-center gap-3">
+                            <div class="flex flex-col">
+                                <h3 class="font-serif font-black text-base sm:text-lg tracking-tight leading-tight group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors uppercase italic">
+                                    {{ subject.name }}
+                                </h3>
+                                <p class="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">{{ subject.stats?.enrolled || 0 }} enrolled</p>
+                            </div>
                         </div>
                         
-                        <div class="flex flex-col items-end">
-                            <div class="px-3 py-1 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-tighter text-zinc-500 flex items-center gap-1.5 shadow-sm">
-                                <Activity class="w-3 h-3 text-zinc-400" />
-                                Live Stats
-                            </div>
+                        <div class="h-9 w-9 flex items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all duration-300">
+                            <ArrowRight class="h-4 w-4 text-zinc-400 group-hover:text-white dark:group-hover:text-black group-hover:translate-x-0.5 transition-all" />
                         </div>
                     </div>
 
-                    <!-- Subject Info -->
-                    <div class="mb-auto">
-                        <h3 class="text-xl font-black tracking-tight text-zinc-900 dark:text-white leading-tight uppercase mb-1 line-clamp-1">
-                            {{ subject.name }}
-                        </h3>
-                        <p class="text-xs text-zinc-500 font-medium line-clamp-2 pr-10">
-                            {{ subject.description || 'Manage daily attendance records and monitoring for this subject.' }}
-                        </p>
-                    </div>
-
-                    <!-- Statistics Section -->
-                    <div class="mt-6 space-y-4 relative z-10">
-                        <!-- Progress info -->
-                        <div class="flex items-end justify-between">
-                            <div class="flex gap-4">
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Enrolled</span>
-                                    <div class="flex items-center gap-1.5 font-black text-zinc-900 dark:text-white">
-                                        <Users class="w-3.5 h-3.5 text-zinc-400" />
-                                        {{ subject.stats?.enrolled || 0 }}
-                                    </div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Present</span>
-                                    <div class="flex items-center gap-1.5 font-black text-emerald-500">
-                                        <CheckCircle2 class="w-3.5 h-3.5" />
-                                        {{ subject.stats?.present || 0 }}
-                                    </div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Absent</span>
-                                    <div class="flex items-center gap-1.5 font-black text-rose-500">
-                                        <XCircle class="w-3.5 h-3.5" />
-                                        {{ subject.stats?.absent || 0 }}
-                                    </div>
-                                </div>
+                    <!-- Attendance rate -->
+                    <div class="relative mb-6 sm:mb-8">
+                        <div class="flex items-baseline justify-between mb-2.5">
+                            <div>
+                                <span class="text-3xl sm:text-4xl font-serif font-black tabular-nums transition-all" :class="rateColor(subject.stats?.attendance_rate || 0)">
+                                    {{ subject.stats?.attendance_rate || 0 }}
+                                </span>
+                                <span class="ml-0.5 text-sm sm:text-base font-bold opacity-30">%</span>
                             </div>
-                            <div class="text-right">
-                                <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-0.5 block">Attendance</span>
-                                <div class="text-2xl font-black tracking-tighter text-zinc-900 dark:text-white italic">
-                                    {{ subject.stats?.attendance_rate || 0 }}<span class="text-sm not-italic opacity-40 ml-0.5">%</span>
-                                </div>
-                            </div>
+                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">today's rate</span>
                         </div>
-
-                        <!-- Progress Bar -->
-                        <div class="h-2 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                            <div 
+                        <div class="w-full h-2.5 rounded-full bg-zinc-100/50 dark:bg-zinc-900 overflow-hidden shadow-inner">
+                            <div
                                 class="h-full rounded-full transition-all duration-1000 ease-out"
-                                :class="getProgressBarColor(subject.color)"
+                                :class="progressIndicatorClasses(subject.color)"
                                 :style="{ width: `${subject.stats?.attendance_rate || 0}%` }"
-                            ></div>
+                            >
+                                <div class="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Floating Action Indicator Overlay -->
-                    <div class="absolute inset-0 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-500 z-20">
-                        <div class="px-6 py-3 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black uppercase tracking-widest text-xs flex items-center gap-3 shadow-2xl translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                            Open Sheet
-                            <ArrowRight class="w-4 h-4" />
+                    <!-- Stats row (Modern Grid) -->
+                    <div class="grid grid-cols-4 gap-2 text-center mb-0 sm:mb-2">
+                        <div class="bg-emerald-50/40 dark:bg-emerald-500/5 border border-emerald-100/30 dark:border-emerald-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300">
+                            <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400">{{ subject.stats?.present || 0 }}</div>
+                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-emerald-600/60 dark:text-emerald-400/50 tracking-wider">Present</div>
+                        </div>
+                        <div class="bg-amber-50/40 dark:bg-amber-500/5 border border-amber-100/30 dark:border-amber-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300 delay-[50ms]">
+                            <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400">{{ subject.stats?.late || 0 }}</div>
+                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-amber-600/60 dark:text-amber-400/50 tracking-wider">Late</div>
+                        </div>
+                        <div class="bg-rose-50/40 dark:bg-rose-500/5 border border-rose-100/30 dark:border-rose-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300 delay-[100ms]">
+                            <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">{{ subject.stats?.absent || 0 }}</div>
+                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-rose-600/60 dark:text-rose-400/50 tracking-wider">Absent</div>
+                        </div>
+                        <div class="bg-zinc-50/40 dark:bg-zinc-500/5 border border-zinc-100/30 dark:border-zinc-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300 delay-[150ms]">
+                            <div class="text-sm sm:text-base font-black text-zinc-500 dark:text-zinc-400">{{ subject.stats?.excused || 0 }}</div>
+                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-zinc-500/60 dark:text-zinc-400/50 tracking-wider">Excused</div>
                         </div>
                     </div>
+
                 </div>
 
                 <!-- Empty State -->

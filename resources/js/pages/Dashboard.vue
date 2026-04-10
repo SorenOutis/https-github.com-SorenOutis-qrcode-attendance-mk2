@@ -222,6 +222,15 @@ const mappedActivity = computed(() => {
     }));
 });
 
+const derivedSchedules = computed(() => {
+    return (props.value.subjects || [])
+        .filter(s => form.value.selectedSubjectIds.includes(s.id))
+        .flatMap(s => (s.schedule || []).map(slot => ({
+            ...slot,
+            subject_id: s.id
+        })));
+});
+
 // --- Action Configs ---
 const quickActions = [
     { label: 'Scanner', sub: 'Live Check-in', icon: Scan, onClick: openScanner, primary: true, tourId: 'tour-scan' },
@@ -650,12 +659,12 @@ const startTour = () => {
             :form-errors="formErrors"
             :subjects="props.subjects"
             v-model:name="form.name"
-            v-model:student-number="form.student_number"
+            v-model:studentNumber="form.student_number"
             v-model:email="form.email"
             v-model:section="form.section"
-            v-model:selected-subject-ids="form.selectedSubjectIds"
+            v-model:selectedSubjectIds="form.selectedSubjectIds"
             :photo-preview="form.photoPreview"
-            :schedules="[]"
+            :schedules="derivedSchedules"
             :get-subject-name="getSubjectName"
             :format-time-to-12h="formatTimeTo12h"
             @handle-photo-change="handlePhotoChange"
@@ -670,12 +679,12 @@ const startTour = () => {
             :form-errors="formErrors"
             :subjects="props.subjects"
             v-model:name="form.name"
-            v-model:student-number="form.student_number"
+            v-model:studentNumber="form.student_number"
             v-model:email="form.email"
             v-model:section="form.section"
-            v-model:selected-subject-ids="form.selectedSubjectIds"
+            v-model:selectedSubjectIds="form.selectedSubjectIds"
             :photo-preview="form.photoPreview"
-            :schedules="[]"
+            :schedules="derivedSchedules"
             :get-subject-name="getSubjectName"
             :format-time-to-12h="formatTimeTo12h"
             @handle-photo-change="handlePhotoChange"

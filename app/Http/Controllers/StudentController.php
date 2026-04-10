@@ -311,7 +311,7 @@ class StudentController extends Controller
         }
 
         // Ensure each slot has start < end
-        $data['schedule'] = collect($data['schedule'])
+        $data['schedule'] = collect($data['schedule'] ?? [])
             ->filter(fn ($slot) => isset($slot['day'], $slot['subject_id'], $slot['start'], $slot['end']))
             ->map(function ($slot) {
                 return [
@@ -416,7 +416,7 @@ class StudentController extends Controller
             unset($data['photo']);
         }
 
-        $data['schedule'] = collect($data['schedule'])
+        $data['schedule'] = collect($data['schedule'] ?? [])
             ->filter(fn ($slot) => isset($slot['day'], $slot['subject_id'], $slot['start'], $slot['end']))
             ->map(function ($slot) {
                 return [

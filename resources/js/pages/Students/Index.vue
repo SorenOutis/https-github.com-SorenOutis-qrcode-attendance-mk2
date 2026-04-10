@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm, Link } from '@inertiajs/vue3';
 import { ref, computed, watch, nextTick } from 'vue';
 import QRCode from 'qrcode';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
 import TimeInput from '@/components/TimeInput.vue';
+import StudentFormModal from '@/components/dashboard/modals/StudentFormModal.vue';
 
 interface Student {
     id: number;
@@ -86,27 +87,15 @@ const schedules = computed(() => {
     const slots: any[] = [];
     selectedSubjectIds.value.forEach(id => {
         const subject = props.subjects.find(s => s.id === id);
-        if (subject) {
-            if (subject.schedule && subject.schedule.length > 0) {
-                subject.schedule.forEach((s: any) => {
-                    slots.push({
-                        day: s.day,
-                        subject_id: subject.id,
-                        start: s.start,
-                        end: s.end
-                    });
-                });
-            } else {
-                // FALLBACK: If a subject has NO schedule defined, we must still add a placeholder slot
-                // to the student data so they are technically "enrolled" in that subject_id.
-                // We'll use a Monday 8-9am default that satisfies backend validation.
+        if (subject && subject.schedule) {
+            subject.schedule.forEach((s: any) => {
                 slots.push({
-                    day: 'Monday',
+                    day: s.day,
                     subject_id: subject.id,
-                    start: '08:00',
-                    end: '09:00'
+                    start: s.start,
+                    end: s.end
                 });
-            }
+            });
         }
     });
     return slots;
@@ -524,153 +513,45 @@ function formatTimeTo12h(timeStr?: string) {
         </div>
 
         <!-- Student Form Modal (Create/Edit) -->
-        <Dialog :open="isCreateModalOpen || isEditModalOpen" @update:open="(val) => {
-            if (!val) {
-                isCreateModalOpen = false;
-                isEditModalOpen = false;
-                editingStudent = null;
-                form.reset();
-                selectedSubjectIds = [];
-                photoPreview = null;
-            }
-        }">
-            <DialogContent class="max-w-[400px] md:max-w-2xl flex flex-col max-h-[90dvh] md:max-h-none overflow-hidden p-0 border-none rounded-[32px] shadow-2xl">
-                <DialogHeader class="p-6 md:p-8 pb-4">
-                    <DialogTitle class="text-2xl font-serif font-black tracking-tight leading-none text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
-                        <div class="h-10 w-10 rounded-2xl bg-zinc-950 dark:bg-white flex items-center justify-center shrink-0">
-                            <Users class="h-5 w-5 text-white dark:text-black" />
-                        </div>
-                        {{ editingStudent ? 'Edit student' : 'Add new student' }}
-                    </DialogTitle>
-                </DialogHeader>
+        <StudentFormModal 
+            v-model:open="isCreateModalOpen"
+            mode="create"
+            :submitting="form.processing"
+            :form-errors="form.errors"
+            :subjects="props.subjects"
+            v-model:name="form.name"
+            v-model:studentNumber="form.student_number"
+            v-model:email="form.email"
+            v-model:section="form.section"
+            v-model:selectedSubjectIds="selectedSubjectIds"
+            :photo-preview="photoPreview"
+            :schedules="schedules"
+            :get-subject-name="getSubjectName"
+            :format-time-to-12h="formatTimeTo12h"
+            @handle-photo-change="handlePhotoChange"
+            @toggle-subject="toggleSubject"
+            @submit="submit"
+        />
 
-                <form class="flex flex-col flex-1 min-h-0" @submit.prevent="submit">
-                    <div class="flex-1 overflow-y-auto p-6 md:p-8 pt-0 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
-                            <!-- Photo Upload -->
-                            <div class="flex flex-col items-center justify-center p-4 rounded-3xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/30">
-                                <div class="relative group cursor-pointer" @click="photoInput?.click()">
-                                    <div class="h-24 w-24 rounded-[32px] overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-all group-hover:border-zinc-400 dark:group-hover:border-zinc-600 shadow-inner">
-                                        <img v-if="photoPreview" :src="photoPreview" class="h-full w-full object-cover" />
-                                        <div v-else class="flex flex-col items-center text-zinc-400">
-                                            <Plus class="h-6 w-6 mb-1 opacity-50" />
-                                            <span class="text-[10px] font-black uppercase tracking-widest leading-none">Photo</span>
-                                        </div>
-                                        <!-- Overlay -->
-                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <Scan class="h-6 w-6 text-white" />
-                                        </div>
-                                    </div>
-                                    <input 
-                                        type="file" 
-                                        ref="photoInput" 
-                                        class="hidden" 
-                                        accept="image/*" 
-                                        @change="handlePhotoChange"
-                                    />
-                                    <div class="absolute -bottom-2 -right-2 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 p-2 rounded-2xl shadow-xl">
-                                        <Plus class="h-4 w-4" />
-                                    </div>
-                                </div>
-                                <p class="text-[10px] text-zinc-400 mt-4 font-black uppercase tracking-widest text-center leading-none">Student Portrait</p>
-                                <p v-if="form.errors.photo" class="text-[10px] text-rose-500 mt-2 text-center font-bold">
-                                    {{ form.errors.photo }}
-                                </p>
-                            </div>
-
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Full name</label>
-                                        <Input v-model="form.name" placeholder="Juan Dela Cruz" class="h-11 rounded-2xl border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 focus:ring-zinc-950 dark:focus:ring-white transition-all shadow-none font-medium" />
-                                        <p v-if="form.errors.name" class="text-[10px] text-rose-500 font-bold ml-1">{{ form.errors.name }}</p>
-                                    </div>
-
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Student number</label>
-                                        <Input v-model="form.student_number" placeholder="2026-0001" class="h-11 rounded-2xl border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 focus:ring-zinc-950 dark:focus:ring-white transition-all shadow-none font-medium" />
-                                        <p v-if="form.errors.student_number" class="text-[10px] text-rose-500 font-bold ml-1">{{ form.errors.student_number }}</p>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Section</label>
-                                        <Input v-model="form.section" placeholder="BSIT-3A" class="h-11 rounded-2xl border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 focus:ring-zinc-950 dark:focus:ring-white transition-all shadow-none font-medium" />
-                                        <p v-if="form.errors.section" class="text-[10px] text-rose-500 font-bold ml-1">{{ form.errors.section }}</p>
-                                    </div>
-
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Email (Optional)</label>
-                                        <Input v-model="form.email" type="email" placeholder="Optional" class="h-11 rounded-2xl border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 focus:ring-zinc-950 dark:focus:ring-white transition-all shadow-none font-medium" />
-                                        <p v-if="form.errors.email" class="text-[10px] text-rose-500 font-bold ml-1">{{ form.errors.email }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4 pt-6 border-t border-zinc-100 dark:border-zinc-800/80">
-                            <div class="flex items-center justify-between">
-                                <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">
-                                    Enrolled Subjects
-                                </label>
-                            </div>
-
-                            <div class="flex flex-wrap gap-2">
-                                <button
-                                    v-for="subj in props.subjects"
-                                    :key="subj.id"
-                                    type="button"
-                                    @click="toggleSubject(subj.id)"
-                                    :class="[
-                                        'px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95',
-                                        selectedSubjectIds.includes(subj.id)
-                                            ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 border-transparent shadow-lg shadow-zinc-200 dark:shadow-none'
-                                            : 'bg-zinc-50 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
-                                    ]"
-                                >
-                                    {{ subj.name }}
-                                </button>
-                            </div>
-
-                            <!-- Preview of schedule -->
-                            <div v-if="schedules.length > 0" class="p-4 rounded-3xl bg-zinc-50/50 dark:bg-zinc-950/30 border border-zinc-100 dark:border-zinc-800/80">
-                                <p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-4 ml-1">Schedule Preview</p>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div 
-                                        v-for="(slot, i) in schedules" 
-                                        :key="i"
-                                        class="flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 dark:border-zinc-800/80"
-                                    >
-                                        <div class="h-2 w-2 rounded-full bg-zinc-950 dark:bg-white shrink-0" />
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-[11px] font-black truncate leading-none uppercase tracking-tight">{{ getSubjectName(slot.subject_id) }}</p>
-                                            <p class="text-[10px] text-zinc-500 font-bold tabular-nums mt-1.5 opacity-80">
-                                                {{ slot.day }} · {{ formatTimeTo12h(slot.start) }} – {{ formatTimeTo12h(slot.end) }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div v-if="form.errors.schedule" class="text-[10px] text-rose-500 font-bold ml-1 pt-1">
-                                • {{ form.errors.schedule }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <DialogFooter class="p-6 md:p-8 bg-zinc-50/50 dark:bg-zinc-950/30 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row gap-3">
-                        <Button type="button" variant="ghost" @click="() => (isCreateModalOpen = isEditModalOpen = false)" class="rounded-2xl font-black uppercase tracking-widest text-[10px] h-12 order-2 sm:order-1 flex-1">
-                            Cancel
-                        </Button>
-                        <Button :disabled="form.processing" class="rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black uppercase tracking-widest text-[10px] h-12 px-8 flex-1 order-1 sm:order-2 shadow-xl shadow-zinc-200 dark:shadow-none hover:scale-[1.02] transition-transform active:scale-95">
-                            <Loader2 v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
-                            {{ editingStudent ? 'Update student' : 'Save student' }}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+        <StudentFormModal 
+            v-model:open="isEditModalOpen"
+            mode="edit"
+            :submitting="form.processing"
+            :form-errors="form.errors"
+            :subjects="props.subjects"
+            v-model:name="form.name"
+            v-model:studentNumber="form.student_number"
+            v-model:email="form.email"
+            v-model:section="form.section"
+            v-model:selectedSubjectIds="selectedSubjectIds"
+            :photo-preview="photoPreview"
+            :schedules="schedules"
+            :get-subject-name="getSubjectName"
+            :format-time-to-12h="formatTimeTo12h"
+            @handle-photo-change="handlePhotoChange"
+            @toggle-subject="toggleSubject"
+            @submit="submit"
+        />
 
         <!-- Import Modal -->
         <Dialog :open="isImportModalOpen" @update:open="(val) => (isImportModalOpen = val)">

@@ -422,44 +422,6 @@ onMounted(() => {
                 </div>
             </div>
 
-            <div class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <!-- Trend Chart -->
-                <div class="subject-detail-card md:col-span-2 rounded-[20px] border border-zinc-200/50 dark:border-zinc-800/50 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl p-4 sm:p-6 shadow-sm text-zinc-900 dark:text-white isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700">
-                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-900/5 dark:bg-white/5 blur-3xl -z-10 transition-opacity group-hover:bg-zinc-900/10 dark:group-hover:bg-white/10"></div>
-                    <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
-                            <TrendingUp class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400 dark:text-zinc-500" />
-                        </div>
-                        <div>
-                            <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Attendance Trend</h3>
-                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none">Over Time</p>
-                        </div>
-                    </div>
-                    <div class="h-[180px] sm:h-[300px] w-full">
-                        <Line v-if="daily.length" :data="lineData" :options="chartOptions" />
-                        <div v-else class="h-full flex items-center justify-center text-sm font-bold text-zinc-400/60 dark:text-zinc-600/60 tracking-widest uppercase">No data in range</div>
-                    </div>
-                </div>
-
-                <!-- Status Pie -->
-                <div class="subject-detail-card rounded-[20px] border border-zinc-200/50 dark:border-zinc-800/50 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl p-4 sm:p-6 shadow-sm text-zinc-900 dark:text-white isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700">
-                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-900/5 dark:bg-white/5 blur-3xl -z-10 transition-opacity group-hover:bg-zinc-900/10 dark:group-hover:bg-white/10"></div>
-                    <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
-                            <Clock class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400 dark:text-zinc-500" />
-                        </div>
-                        <div>
-                            <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Status Mix</h3>
-                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none">Distribution</p>
-                        </div>
-                    </div>
-                    <div class="h-[180px] sm:h-[300px] w-full">
-                        <Pie v-if="statusDistribution.length" :data="pieData" :options="chartOptions" />
-                        <div v-else class="h-full flex items-center justify-center text-sm font-bold text-zinc-400/60 dark:text-zinc-600/60 tracking-widest uppercase">No data</div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Student Leaderboard -->
             <div data-card class="subject-detail-card relative overflow-hidden rounded-[20px] p-4 sm:p-6 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700 isolate">
                 <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-900/5 dark:bg-white/5 blur-3xl -z-10 transition-opacity"></div>
@@ -576,6 +538,44 @@ onMounted(() => {
                     </div>
                 </div>
                 <div v-else class="py-8 text-center text-sm text-zinc-400">No students enrolled in this subject.</div>
+            </div>
+
+            <div class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Trend Chart -->
+                <div class="subject-detail-card md:col-span-2 rounded-[20px] border border-zinc-200/50 dark:border-zinc-800/50 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl p-4 sm:p-6 shadow-sm text-zinc-900 dark:text-white isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700">
+                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-900/5 dark:bg-white/5 blur-3xl -z-10 transition-opacity group-hover:bg-zinc-900/10 dark:group-hover:bg-white/10"></div>
+                    <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+                            <TrendingUp class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400 dark:text-zinc-500" />
+                        </div>
+                        <div>
+                            <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Attendance Trend</h3>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none">Over Time</p>
+                        </div>
+                    </div>
+                    <div class="h-[180px] sm:h-[300px] w-full">
+                        <Line v-if="daily.length" :data="lineData" :options="chartOptions" />
+                        <div v-else class="h-full flex items-center justify-center text-sm font-bold text-zinc-400/60 dark:text-zinc-600/60 tracking-widest uppercase">No data in range</div>
+                    </div>
+                </div>
+
+                <!-- Status Pie -->
+                <div class="subject-detail-card rounded-[20px] border border-zinc-200/50 dark:border-zinc-800/50 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl p-4 sm:p-6 shadow-sm text-zinc-900 dark:text-white isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700">
+                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-900/5 dark:bg-white/5 blur-3xl -z-10 transition-opacity group-hover:bg-zinc-900/10 dark:group-hover:bg-white/10"></div>
+                    <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+                            <Clock class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400 dark:text-zinc-500" />
+                        </div>
+                        <div>
+                            <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Status Mix</h3>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none">Distribution</p>
+                        </div>
+                    </div>
+                    <div class="h-[180px] sm:h-[300px] w-full">
+                        <Pie v-if="statusDistribution.length" :data="pieData" :options="chartOptions" />
+                        <div v-else class="h-full flex items-center justify-center text-sm font-bold text-zinc-400/60 dark:text-zinc-600/60 tracking-widest uppercase">No data</div>
+                    </div>
+                </div>
             </div>
         </div>
     </AppLayout>

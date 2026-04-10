@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import gsap from 'gsap';
-import { Plus, BookOpen, Trash2, Edit2, Users, CalendarDays } from 'lucide-vue-next';
+import { Plus, BookOpen, Trash2, Edit2, Users, CalendarDays, Clock } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -117,6 +117,15 @@ function handleConfirm() {
     }
     confirmModalOpen.value = false;
     confirmAction.value = null;
+}
+
+function formatTime(timeStr: string) {
+    if (!timeStr) return '';
+    const [h, m] = timeStr.split(':');
+    const d = new Date();
+    d.setHours(parseInt(h, 10));
+    d.setMinutes(parseInt(m, 10));
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 function openCreateModal() {
@@ -288,7 +297,7 @@ onMounted(() => {
             <div 
                 v-else 
                 ref="listRef" 
-                class="grid grid-cols-2 lg:grid-cols-3 gap-4 pb-12"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-12"
             >
                 <div 
                     v-for="subject in props.subjects" 
@@ -297,46 +306,79 @@ onMounted(() => {
                     class="h-full"
                 >
                     <article 
-                        class="group relative flex flex-col h-28 sm:h-36 rounded-xl border border-sidebar-border/40 bg-background/40 p-3 sm:p-4 shadow-sm transition-colors duration-200 hover:bg-background/60 overflow-hidden"
+                        class="group relative flex flex-col h-36 rounded-[20px] border border-sidebar-border/40 bg-background/40 p-4 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 hover:border-sidebar-border overflow-hidden"
                     >
-                        <Users class="absolute right-[-5%] bottom-[-10%] h-24 w-24 text-foreground/[0.03] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 pointer-events-none" />
-                        <div class="relative z-10 flex-1 flex flex-col justify-between">
-                            <div class="flex items-start justify-between gap-2 overflow-hidden">
-                                <h3 class="text-lg font-serif font-black text-foreground leading-tight line-clamp-2" :title="subject.name">
+                        <BookOpen class="absolute right-[-8%] bottom-[-15%] h-32 w-32 text-foreground/[0.02] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-12 pointer-events-none" />
+                        
+                        <div class="relative z-10 flex-1 flex flex-col">
+                            <!-- Title Row -->
+                            <div class="flex items-start justify-between min-w-0">
+                                <h3 class="text-lg font-serif font-black text-foreground leading-tight line-clamp-1 break-all" :title="subject.name">
                                     {{ subject.name }}
                                 </h3>
-                                
-                                <div class="h-1 w-8 rounded-full bg-primary/20 group-hover:bg-primary/40 transition-colors shrink-0 mt-1.5"></div>
                             </div>
                             
-                            <div class="flex items-center justify-end gap-1.5">
-                                <Button 
-                                    size="icon" 
-                                    variant="secondary" 
-                                    class="h-8 w-8 rounded-lg transition-all" 
-                                    title="View Students"
-                                    @click="openStudentsModal(subject)"
-                                >
-                                    <Users class="h-3.5 w-3.5" />
-                                </Button>
-                                <Button 
-                                    size="icon" 
-                                    variant="outline" 
-                                    class="h-8 w-8 rounded-lg border-sidebar-border hover:bg-muted transition-all" 
-                                    title="Edit Subject"
-                                    @click="openEditModal(subject)"
-                                >
-                                    <Edit2 class="h-3.5 w-3.5" />
-                                </Button>
-                                <Button 
-                                    size="icon" 
-                                    variant="ghost" 
-                                    class="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10 transition-all" 
-                                    title="Remove Subject"
-                                    @click="deleteSubject(subject.id)"
-                                >
-                                    <Trash2 class="h-3.5 w-3.5" />
-                                </Button>
+                            <!-- Middle section: Schedules -->
+                            <div class="mt-2 flex-1 relative">
+                                <div v-if="subject.schedule && subject.schedule.length > 0" class="flex flex-wrap gap-1.5 relative z-10">
+                                    <span 
+                                        v-for="slot in subject.schedule.slice(0, 2)" 
+                                        :key="slot.day + slot.start" 
+                                        class="inline-flex items-center gap-1 bg-background/80 backdrop-blur-md border border-sidebar-border/50 px-2 py-0.5 rounded-md text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground/90 shadow-sm"
+                                    >
+                                        <Clock class="w-3 h-3 text-muted-foreground/70 shrink-0" />
+                                        <span>{{ slot.day.substring(0, 3) }} {{ formatTime(slot.start).toLowerCase() }}—{{ formatTime(slot.end).toLowerCase() }}</span>
+                                    </span>
+                                    <span 
+                                        v-if="subject.schedule.length > 2" 
+                                        class="inline-flex items-center justify-center bg-muted/30 border border-sidebar-border/30 px-1.5 py-0.5 rounded-md text-[9px] font-black text-muted-foreground"
+                                    >
+                                        +{{ subject.schedule.length - 2 }}
+                                    </span>
+                                </div>
+                                <div v-else class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 italic mt-1">
+                                    No schedule set
+                                </div>
+                            </div>
+                            
+                            <!-- Footer: Stats and Actions -->
+                            <div class="flex items-center justify-between mt-auto border-t border-sidebar-border/30 pt-3 relative z-10">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-1.5 bg-muted/40 border border-sidebar-border/40 px-2 py-1 rounded-lg">
+                                        <Users class="h-3.5 w-3.5 text-muted-foreground/70" />
+                                        <span class="text-[10px] font-black text-foreground">{{ subject.students?.length || 0 }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <Button 
+                                        size="icon-sm" 
+                                        variant="secondary" 
+                                        class="h-7 w-7 rounded-lg transition-all" 
+                                        title="View Students"
+                                        @click="openStudentsModal(subject)"
+                                    >
+                                        <Users class="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button 
+                                        size="icon-sm" 
+                                        variant="outline" 
+                                        class="h-7 w-7 rounded-lg transition-all" 
+                                        title="Edit Subject"
+                                        @click="openEditModal(subject)"
+                                    >
+                                        <Edit2 class="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button 
+                                        size="icon-sm" 
+                                        variant="ghost" 
+                                        class="h-7 w-7 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive transition-all" 
+                                        title="Remove Subject"
+                                        @click="deleteSubject(subject.id)"
+                                    >
+                                        <Trash2 class="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </article>

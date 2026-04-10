@@ -1369,89 +1369,96 @@ onMounted(() => {
                 <div class="lg:col-span-3 order-first lg:order-first">
                     <div
                         ref="tableRef"
-                        class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl"
+                        class="relative overflow-hidden rounded-[28px] border border-zinc-100 dark:border-zinc-800/80 bg-white dark:bg-black shadow-xl"
                     >
-                        <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-3 sm:p-6 gap-3 sm:gap-4 bg-zinc-50 dark:bg-zinc-900/50">
-                            <!-- Title row -->
-                            <div class="flex items-center justify-between gap-2">
-                                <h2 class="text-base sm:text-2xl font-serif font-bold tracking-tight text-foreground">
-                                    Today's Attendance Status
-                                </h2>
-                            </div>
+                        <!-- Header -->
+                        <div class="relative overflow-hidden flex flex-col border-b border-zinc-100 dark:border-zinc-800/80 p-4 sm:p-6 gap-4 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl">
+                            <!-- Subtle decorative icon -->
+                            <Users class="absolute right-4 top-1/2 -translate-y-1/2 h-28 w-28 text-zinc-900/[0.025] dark:text-white/[0.025] pointer-events-none" />
 
-                            <!-- Filter controls: stacks on mobile -->
-                            <div class="flex flex-row flex-wrap items-center gap-2 sm:gap-4">
-                                <!-- Checkbox filter -->
-                                <div class="flex items-center gap-1.5 sm:gap-2 bg-muted/50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 shrink-0">
-                                    <input 
-                                        type="checkbox" 
-                                        id="today-toggle" 
-                                        v-model="showOnlyScheduledToday" 
-                                        class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 shrink-0"
-                                    />
-                                    <label for="today-toggle" class="text-[8px] sm:text-[10px] font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400 cursor-pointer whitespace-nowrap">
-                                        Scheduled Today
-                                    </label>
-                                </div>
- 
-                                <!-- Tabs -->
-                                <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-0.5 sm:p-1 border border-zinc-200 dark:border-zinc-800 overflow-x-auto max-w-full shrink-0">
-                                    <button
-                                        class="rounded-md px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0"
-                                        :class="activeTab === 'active' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                        @click="activeTab = 'active'"
-                                    >
-                                        Active
-                                    </button>
-                                    <button
-                                        class="rounded-md px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0"
-                                        :class="activeTab === 'deleted' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                        @click="activeTab = 'deleted'"
-                                    >
-                                        Trash ({{ props.trashedStudents.length }})
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Search + actions row -->
-                            <div class="flex items-center gap-2 w-full">
-                                <div class="relative flex-1 min-w-0 group">
-                                    <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500 dark:text-zinc-400 group-focus-within:text-zinc-900 dark:group-focus-within:text-white transition-colors" />
-                                    <Input
-                                        ref="searchInputRef"
-                                        v-model="searchQuery"
-                                        type="search"
-                                        data-tour="search"
-                                        placeholder="Search students..."
-                                        class="pl-9 pr-12 h-9 text-xs rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600 text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 shadow-sm"
-                                    />
-                                    <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                        <kbd class="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 font-mono text-[10px] font-medium text-zinc-500 dark:text-zinc-400 opacity-100 transition-opacity">
-                                            <span class="text-xs">⌘</span>K
-                                        </kbd>
+                            <!-- Title + meta row -->
+                            <div class="relative z-10 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-10 w-10 rounded-2xl bg-zinc-950 dark:bg-white flex items-center justify-center shrink-0 shadow-lg shadow-zinc-200 dark:shadow-none">
+                                        <Users class="h-5 w-5 text-white dark:text-black" />
+                                    </div>
+                                    <div>
+                                        <h2 class="text-lg sm:text-2xl font-serif font-black tracking-tight leading-none">
+                                            Today's Attendance
+                                        </h2>
+                                        <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Live status overview</p>
                                     </div>
                                 </div>
-                            
                                 <!-- View Switcher -->
-                                <div class="hidden md:flex rounded-full bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 border border-zinc-200 dark:border-zinc-800">
+                                <div class="hidden md:flex rounded-2xl bg-zinc-100 dark:bg-zinc-900 p-1 shrink-0 border border-zinc-200 dark:border-zinc-800">
                                     <button
-                                        class="rounded-full p-1.5 transition-all outline-none"
-                                        :class="viewMode === 'table' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                                        class="rounded-xl p-2 transition-all outline-none"
+                                        :class="viewMode === 'table' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                         title="Table View"
                                         @click="viewMode = 'table'"
                                     >
                                         <Table class="h-4 w-4" />
                                     </button>
                                     <button
-                                        class="rounded-full p-1.5 transition-all outline-none"
-                                        :class="viewMode === 'grid' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                                        class="rounded-xl p-2 transition-all outline-none"
+                                        :class="viewMode === 'grid' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                         title="Grid View"
                                         @click="viewMode = 'grid'"
                                     >
                                         <LayoutGrid class="h-4 w-4" />
                                     </button>
                                 </div>
+                            </div>
 
+                            <!-- Controls row -->
+                            <div class="relative z-10 flex flex-wrap items-center gap-2">
+                                <!-- Checkbox filter -->
+                                <label class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors shrink-0">
+                                    <input 
+                                        type="checkbox" 
+                                        id="today-toggle" 
+                                        v-model="showOnlyScheduledToday" 
+                                        class="w-3.5 h-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 accent-zinc-900 dark:accent-white"
+                                    />
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                                        Scheduled Today
+                                    </span>
+                                </label>
+
+                                <!-- Tabs -->
+                                <div class="flex rounded-xl bg-zinc-100 dark:bg-zinc-900 p-0.5 border border-zinc-200 dark:border-zinc-800 shrink-0">
+                                    <button
+                                        class="rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all"
+                                        :class="activeTab === 'active' ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                                        @click="activeTab = 'active'"
+                                    >
+                                        Active
+                                    </button>
+                                    <button
+                                        class="rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all"
+                                        :class="activeTab === 'deleted' ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
+                                        @click="activeTab = 'deleted'"
+                                    >
+                                        Trash ({{ props.trashedStudents.length }})
+                                    </button>
+                                </div>
+
+                                <!-- Search -->
+                                <div class="relative flex-1 min-w-[180px]" data-tour="search">
+                                    <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
+                                    <Input
+                                        ref="searchInputRef"
+                                        v-model="searchQuery"
+                                        type="search"
+                                        placeholder="Search students..."
+                                        class="pl-9 pr-16 h-9 rounded-xl border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-white text-xs font-medium"
+                                    />
+                                    <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                        <kbd class="hidden sm:inline-flex h-5 items-center gap-0.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-1.5 font-mono text-[10px] font-medium text-zinc-400">
+                                            <span class="text-xs">⌘</span>K
+                                        </kbd>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1690,77 +1697,70 @@ onMounted(() => {
                     <div 
                         v-else
                         ref="studentsGridRef"
-                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
                     >
                         <div 
                             v-for="(student, index) in paginatedStudents"
                             :key="student.id"
                             data-student-card
-                            class="group relative overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4 hover:shadow-md cursor-pointer"
+                            class="group relative overflow-hidden rounded-[20px] border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-black p-4 hover:shadow-xl hover:shadow-zinc-200/40 dark:hover:shadow-none hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer transition-all duration-200"
                             @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                         >
-                            <div class="flex flex-col mb-3">
-                                <div class="flex items-start justify-between gap-3 w-full">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <!-- Photo/Avatar -->
-                                        <div v-if="student.photo" class="h-10 w-10 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                                            <img :src="student.photo" class="h-full w-full object-cover" />
-                                        </div>
-                                        <div v-else :class="['h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', getAvatarGradient(student.name)]">
-                                            <span class="text-xs font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ student.name.charAt(0) }}</span>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <h4 class="font-serif font-bold text-sm line-clamp-2 break-words group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white" :title="student.name">
-                                                {{ student.name }}
-                                            </h4>
-                                            <p class="text-[10px] text-zinc-500 font-mono">
-                                                {{ student.student_number }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="shrink-0">
-                                        <Badge 
-                                            variant="outline" 
-                                            class="text-[9px] font-bold px-1.5 py-0"
-                                            :class="{
-                                                'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400': (student.attendance_percentage ?? 100) < 80,
-                                                'border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400': (student.attendance_percentage ?? 100) >= 80
-                                            }"
-                                        >
-                                            {{ student.attendance_percentage ?? 100 }}% Rate
-                                        </Badge>
-                                    </div>
+                            <!-- top row: avatar + name + badge -->
+                            <div class="flex items-start gap-3 mb-3">
+                                <div v-if="student.photo" class="h-11 w-11 shrink-0 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
+                                    <img :src="student.photo" class="h-full w-full object-cover" />
                                 </div>
-                                <div 
-                                    v-if="activeTab === 'active'"
-                                    class="flex flex-wrap gap-1 mt-3"
+                                <div v-else :class="['h-11 w-11 shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', getAvatarGradient(student.name)]">
+                                    <span class="text-lg font-serif font-black text-white dark:text-zinc-100 drop-shadow-sm uppercase">{{ student.name.charAt(0) }}</span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="font-serif font-black text-sm leading-tight line-clamp-2 break-words group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors" :title="student.name">
+                                        {{ student.name }}
+                                    </h4>
+                                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
+                                        {{ student.student_number }}
+                                    </p>
+                                </div>
+                                <Badge 
+                                    variant="outline" 
+                                    class="text-[9px] font-black px-1.5 py-0 shrink-0"
+                                    :class="{
+                                        'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400': (student.attendance_percentage ?? 100) < 80,
+                                        'border-zinc-200 bg-zinc-50 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400': (student.attendance_percentage ?? 100) >= 80
+                                    }"
                                 >
-                                    <template v-for="s in student.today_statuses">
-                                        <div 
-                                            class="h-5 flex items-center gap-1 rounded-full px-1.5 py-0.5 border"
-                                            :class="[
-                                                s.status === 'Present' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-zinc-200 dark:border-zinc-700' :
-                                                s.status === 'Late' ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white border-zinc-300 dark:border-zinc-600' :
-                                                s.status === 'Time Out' ? 'bg-zinc-300 dark:bg-zinc-600 text-zinc-900 dark:text-white border-zinc-400 dark:border-zinc-500' :
-                                                'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
-                                            ]"
-                                            :title="s.status"
-                                        >
-                                            <CheckCircle2 v-if="s.status !== 'Late' && s.status !== 'Absent'" class="w-2.5 h-2.5" />
-                                            <AlertCircle v-else class="w-2.5 h-2.5" />
-                                            <span class="text-[8px] font-bold uppercase tracking-wider">{{ s.time }}</span>
-                                        </div>
-                                    </template>
+                                    {{ student.attendance_percentage ?? 100 }}% Rate
+                                </Badge>
+                            </div>
+
+                            <!-- status chips -->
+                            <div v-if="activeTab === 'active' && student.today_statuses?.length" class="flex flex-wrap gap-1 mb-3">
+                                <div 
+                                    v-for="s in student.today_statuses"
+                                    :key="s.status + s.time"
+                                    class="h-5 flex items-center gap-1 rounded-full px-2 py-0.5 border"
+                                    :class="[
+                                        s.status === 'Present' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-zinc-200 dark:border-zinc-700' :
+                                        s.status === 'Late' ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white border-zinc-300 dark:border-zinc-600' :
+                                        s.status === 'Time Out' ? 'bg-zinc-300 dark:bg-zinc-600 text-zinc-900 dark:text-white border-zinc-400 dark:border-zinc-500' :
+                                        'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100'
+                                    ]"
+                                >
+                                    <CheckCircle2 v-if="s.status !== 'Late' && s.status !== 'Absent'" class="w-2.5 h-2.5 shrink-0" />
+                                    <AlertCircle v-else class="w-2.5 h-2.5 shrink-0" />
+                                    <span class="text-[8px] font-black uppercase tracking-wider">{{ s.time }}</span>
                                 </div>
                             </div>
-                            
-                            <div class="flex items-center justify-between text-[11px]">
-                                <span class="bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-md text-zinc-500 dark:text-zinc-400 font-bold tracking-tight uppercase">
+
+                            <!-- footer: section + status -->
+                            <div class="pt-2.5 border-t border-zinc-50 dark:border-zinc-900 flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400">
                                     {{ student.section || 'N/A' }}
                                 </span>
                                 <span 
                                     v-if="activeTab === 'active'"
-                                    class="font-bold text-[10px] uppercase tracking-widest"
+                                    class="text-[10px] font-black uppercase tracking-widest"
                                     :class="[
                                         student.latest_attendance?.status === 'Present' ? 'text-zinc-900 dark:text-white' :
                                         student.latest_attendance?.status === 'Late' ? 'text-zinc-500' :
@@ -1768,7 +1768,7 @@ onMounted(() => {
                                         'text-zinc-300 dark:text-zinc-600'
                                     ]"
                                 >
-                                    {{ student.latest_attendance?.status || (isScheduledForToday(student) ? 'Scheduled' : 'No record') }}
+                                    {{ student.latest_attendance?.status || (isScheduledForToday(student) ? 'Scheduled' : 'No Record') }}
                                 </span>
                                 <div v-else class="flex gap-1">
                                     <Button size="icon-sm" variant="ghost" class="h-6 w-6 text-emerald-600" title="Restore" @click.stop="restoreStudent(student.id)">

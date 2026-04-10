@@ -421,7 +421,7 @@ onMounted(() => {
                     <div class="text-[8px] sm:text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-1">{{ stat.label }}</div>
                 </div>
             </div>
-
+            
             <!-- Student Leaderboard -->
             <div data-card class="subject-detail-card relative overflow-hidden rounded-[20px] p-4 sm:p-6 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700 isolate">
                 <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-900/5 dark:bg-white/5 blur-3xl -z-10 transition-opacity"></div>

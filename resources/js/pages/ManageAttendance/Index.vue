@@ -166,72 +166,67 @@ onMounted(() => {
                     data-card
                     @mouseenter="router.prefetch(`/manage-attendance/${subject.id}/${selectedDate}`, { method: 'get' })"
                     @click="router.get(`/manage-attendance/${subject.id}/${selectedDate}`)"
-                    class="group relative flex flex-col bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl border border-zinc-100 dark:border-zinc-800/80 rounded-[2rem] p-4 sm:p-5 shadow-xl shadow-zinc-200/40 dark:shadow-none hover:shadow-2xl hover:shadow-zinc-300/50 dark:hover:shadow-indigo-500/5 cursor-pointer overflow-hidden transform-gpu"
+                    class="group relative overflow-hidden rounded-[20px] border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-black p-4 hover:shadow-xl hover:shadow-zinc-200/40 dark:hover:shadow-none hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer transition-all duration-200 flex flex-col h-36"
                 >
-                    <!-- Accent Glow -->
-                    <div 
-                        class="absolute -top-24 -right-24 h-48 w-48 rounded-full blur-[80px] opacity-0 pointer-events-none"
-                        :class="glowClasses(subject.color)"
-                    />
+                    <!-- Background Icon -->
+                    <BookOpen class="absolute right-[-8%] bottom-[-15%] h-32 w-32 text-foreground/[0.02] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-12 pointer-events-none" />
 
-                    <!-- Card Header -->
-                    <div class="relative flex items-start justify-between mb-6 sm:mb-8">
-                        <div class="flex items-center gap-3">
-                            <div class="flex flex-col">
-                                <h3 class="font-serif font-black text-base sm:text-lg tracking-tight leading-tight group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors uppercase italic">
+                    <div class="relative z-10 flex-1 flex flex-col">
+                        <!-- Top Row: Title & Enrolled -->
+                        <div class="flex items-start justify-between min-w-0 mb-3">
+                            <div class="min-w-0 flex-1 pr-3">
+                                <h3 class="font-serif font-black text-lg leading-tight line-clamp-1 break-all group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white" :title="subject.name">
                                     {{ subject.name }}
                                 </h3>
-                                <p class="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">{{ subject.stats?.enrolled || 0 }} enrolled</p>
+                                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
+                                    {{ subject.stats?.enrolled || 0 }} Enrolled
+                                </p>
                             </div>
-                        </div>
-                        
-                        <div class="h-9 w-9 flex items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all duration-300">
-                            <ArrowRight class="h-4 w-4 text-zinc-400 group-hover:text-white dark:group-hover:text-black group-hover:translate-x-0.5 transition-all" />
-                        </div>
-                    </div>
-
-                    <!-- Attendance rate -->
-                    <div class="relative mb-6 sm:mb-8">
-                        <div class="flex items-baseline justify-between mb-2.5">
-                            <div>
-                                <span class="text-3xl sm:text-4xl font-serif font-black tabular-nums transition-all" :class="rateColor(subject.stats?.attendance_rate || 0)">
-                                    {{ subject.stats?.attendance_rate || 0 }}
-                                </span>
-                                <span class="ml-0.5 text-sm sm:text-base font-bold opacity-30">%</span>
-                            </div>
-                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">today's rate</span>
-                        </div>
-                        <div class="w-full h-2.5 rounded-full bg-zinc-100/50 dark:bg-zinc-900 overflow-hidden shadow-inner">
-                            <div
-                                class="h-full rounded-full transition-all duration-1000 ease-out"
-                                :class="progressIndicatorClasses(subject.color)"
-                                :style="{ width: `${subject.stats?.attendance_rate || 0}%` }"
+                            <!-- Small percentage badge -->
+                            <div 
+                                class="shrink-0 flex items-center gap-1 rounded-lg px-2 py-0.5 border"
+                                :class="{
+                                    'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400': (subject.stats?.attendance_rate ?? 0) < 80,
+                                    'border-zinc-200 bg-zinc-50 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400': (subject.stats?.attendance_rate ?? 0) >= 80
+                                }"
                             >
-                                <div class="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                                <span class="text-[9px] font-black">{{ subject.stats?.attendance_rate || 0 }}% Rate</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="mt-auto mb-3">
+                            <div class="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 overflow-hidden border border-zinc-200/50 dark:border-zinc-700/50">
+                                <div
+                                    class="h-full rounded-full transition-all duration-1000 ease-out"
+                                    :class="getProgressBarColor(subject.color)"
+                                    :style="{ width: `${subject.stats?.attendance_rate || 0}%` }"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <!-- Footer: Stats Row -->
+                        <div class="pt-2.5 border-t border-zinc-50 dark:border-zinc-900 flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-zinc-400">P/</span>
+                                    <span class="text-zinc-900 dark:text-zinc-100">{{ subject.stats?.present || 0 }}</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-zinc-400">L/</span>
+                                    <span class="text-amber-600 dark:text-amber-500">{{ subject.stats?.late || 0 }}</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-zinc-400">A/</span>
+                                    <span class="text-rose-600 dark:text-rose-500">{{ subject.stats?.absent || 0 }}</span>
+                                </div>
+                            </div>
+
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity -mr-1">
+                                <ArrowRight class="h-4 w-4 text-zinc-400" />
                             </div>
                         </div>
                     </div>
-
-                    <!-- Stats row (Modern Grid) -->
-                    <div class="grid grid-cols-4 gap-2 text-center mb-0 sm:mb-2">
-                        <div class="bg-emerald-50/40 dark:bg-emerald-500/5 border border-emerald-100/30 dark:border-emerald-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300">
-                            <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400">{{ subject.stats?.present || 0 }}</div>
-                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-emerald-600/60 dark:text-emerald-400/50 tracking-wider">Present</div>
-                        </div>
-                        <div class="bg-amber-50/40 dark:bg-amber-500/5 border border-amber-100/30 dark:border-amber-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300 delay-[50ms]">
-                            <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400">{{ subject.stats?.late || 0 }}</div>
-                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-amber-600/60 dark:text-amber-400/50 tracking-wider">Late</div>
-                        </div>
-                        <div class="bg-rose-50/40 dark:bg-rose-500/5 border border-rose-100/30 dark:border-rose-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300 delay-[100ms]">
-                            <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">{{ subject.stats?.absent || 0 }}</div>
-                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-rose-600/60 dark:text-rose-400/50 tracking-wider">Absent</div>
-                        </div>
-                        <div class="bg-zinc-50/40 dark:bg-zinc-500/5 border border-zinc-100/30 dark:border-zinc-500/10 rounded-xl py-2.5 group-hover:translate-y-[-2px] transition-transform duration-300 delay-[150ms]">
-                            <div class="text-sm sm:text-base font-black text-zinc-500 dark:text-zinc-400">{{ subject.stats?.excused || 0 }}</div>
-                            <div class="text-[7.5px] sm:text-[8px] font-black uppercase text-zinc-500/60 dark:text-zinc-400/50 tracking-wider">Excused</div>
-                        </div>
-                    </div>
-
                 </div>
 
                 <!-- Empty State -->

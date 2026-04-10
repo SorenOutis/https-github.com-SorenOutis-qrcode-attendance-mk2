@@ -24,7 +24,8 @@ import {
     User,
     UserCheck,
     UserX,
-    AlertTriangle
+    AlertTriangle,
+    LogOut
 } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
@@ -1044,16 +1045,20 @@ function openPrintCards() {
 
                             <div class="flex items-center sm:flex-col sm:items-end gap-1.5 sm:gap-2">
                                 <!-- Status Badge (Minimized on mobile) -->
-                                    <span :class="[
+                                    <span v-if="student.attendance" :class="[
                                         'inline-flex items-center rounded-full px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[7px] sm:text-[9px] uppercase font-black tracking-widest shadow-md border backdrop-blur-md',
-                                        student.attendance?.status.toLowerCase() === 'present' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
-                                        student.attendance?.status.toLowerCase() === 'late' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
-                                        student.attendance?.status.toLowerCase() === 'time out' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' :
-                                        student.attendance?.status.toLowerCase() === 'absent' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+                                        student.attendance.status.toLowerCase() === 'present' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                                        student.attendance.status.toLowerCase() === 'late' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                        student.attendance.status.toLowerCase() === 'time out' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' :
+                                        student.attendance.status.toLowerCase() === 'absent' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
                                         'bg-zinc-100 text-zinc-500 border-zinc-200'
                                     ]">
                                         <span class="sm:hidden">{{ student.attendance.status.charAt(0) }}</span>
                                         <span class="hidden sm:block">{{ student.attendance.status }}</span>
+                                    </span>
+                                    <span v-else class="inline-flex items-center rounded-full px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[7px] sm:text-[9px] uppercase font-black tracking-widest shadow-md border backdrop-blur-md bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border-zinc-200 dark:border-zinc-700">
+                                        <span class="sm:hidden">U</span>
+                                        <span class="hidden sm:block">Unmarked</span>
                                     </span>
                                 
                                 <Button 

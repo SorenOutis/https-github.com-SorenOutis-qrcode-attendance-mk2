@@ -6,8 +6,10 @@ use App\Models\Attendance;
 use App\Models\Student;
 use App\Models\Subject;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -181,11 +183,88 @@ class SubjectAttendanceController extends Controller
             'statusDistribution' => $statusDistribution,
             'students' => $paginatedStudents,
             'allStudents' => Student::orderBy('name')->get(['id', 'name', 'student_number', 'email', 'section', 'schedule']),
+            'otherSubjects' => Subject::where('id', '!=', $subject->id)->orderBy('name')->get(['id', 'name', 'schedule']),
             'enrolled' => $enrolledIds->count(),
             'filters' => [
                 'start' => $startDate->toDateString(),
                 'end' => $endDate->toDateString(),
             ],
         ]);
+    }
+
+    public function moveStudents(Request $request, Subject $subject): RedirectResponse
+    {
+        $request->validate([
+            'student_ids' => ['required', 'array'],
+            'student_ids.*' => ['required', 'exists:students,id'],
+            'to_subject_id' => ['required', 'exists:subjects,id', 'different:subject_id'],
+        ]);
+
+        $toSubject = Subject::findOrFail($request->to_subject_id);
+        $studentIds = $request->student_ids;
+
+        DB::transaction(function () use ($subject, $toSubject, $studentIds) {
+            $students = Student::whereIn('id', $studentIds)->get();
+
+            foreach ($students as $student) {
+                $schedule = collect($student->schedule ?? []);
+
+                // 1. Remove current subject from schedule
+                $newSchedule = $schedule->filter(fn ($slot) => (int) ($slot['subject_id'] ?? 0) !== (int) $subject->id);
+
+                // 2. Add new subject schedule
+                if (count($toSubject->schedule ?? []) > 0) {
+                    foreach ($toSubject->schedule as $slot) {
+                        $newSchedule->push([
+                            'day' => $slot['day'],
+                            'subject_id' => $toSubject->id,
+                            'start' => $slot['start'],
+                            'end' => $slot['end'],
+                        ]);
+                    }
+                } else {
+                    // Placeholder if no schedule defined
+                    $newSchedule->push([
+                        'day' => 'Monday',
+                        'subject_id' => $toSubject->id,
+                        'start' => '08:00',
+                        'end' => '09:00',
+                    ]);
+                }
+
+                $student->update([
+                    'schedule' => $newSchedule->values()->all(),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Students moved successfully');
+    }
+
+    public function removeStudents(Request $request, Subject $subject): RedirectResponse
+    {
+        $request->validate([
+            'student_ids' => ['required', 'array'],
+            'student_ids.*' => ['required', 'exists:students,id'],
+        ]);
+
+        $studentIds = $request->student_ids;
+
+        DB::transaction(function () use ($subject, $studentIds) {
+            $students = Student::whereIn('id', $studentIds)->get();
+
+            foreach ($students as $student) {
+                $schedule = collect($student->schedule ?? []);
+
+                // Remove current subject from schedule
+                $newSchedule = $schedule->filter(fn ($slot) => (int) ($slot['subject_id'] ?? 0) !== (int) $subject->id);
+
+                $student->update([
+                    'schedule' => $newSchedule->values()->all(),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Students removed from subject successfully');
     }
 }

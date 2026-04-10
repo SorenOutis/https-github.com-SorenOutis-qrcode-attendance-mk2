@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { store, update, destroy } from '@/routes/students';
 import {
     Chart as ChartJS,
@@ -24,6 +24,8 @@ import {
     Pencil,
     Trash2,
     X,
+    ArrowRightLeft,
+    ChevronDown,
 } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { Line, Pie } from 'vue-chartjs';
@@ -87,6 +89,7 @@ const props = defineProps<{
     statusDistribution: { status: string; count: number }[];
     allStudents: { id: number; name: string; student_number: string; section: string | null }[];
     students: PaginatedStudents;
+    otherSubjects: { id: number; name: string }[];
     enrolled: number;
     filters: { start: string; end: string };
 }>();
@@ -149,6 +152,74 @@ const { success, error } = useToast();
 const showModal = ref(false);
 const isEditing = ref(false);
 const editingStudent = ref<StudentData | null>(null);
+
+// Bulk Move States
+const selectedIds = ref<number[]>([]);
+const showMoveModal = ref(false);
+const targetSubjectId = ref<string>('');
+
+const moveForm = useForm({
+    student_ids: [] as number[],
+    to_subject_id: '',
+});
+
+function toggleAll() {
+    if (selectedIds.value.length === props.students.data.length) {
+        selectedIds.value = [];
+    } else {
+        selectedIds.value = props.students.data.map(s => s.id);
+    }
+}
+
+function toggleStudentSelection(id: number) {
+    const index = selectedIds.value.indexOf(id);
+    if (index === -1) {
+        selectedIds.value.push(id);
+    } else {
+        selectedIds.value.splice(index, 1);
+    }
+}
+
+function openMoveModal(studentId?: number) {
+    moveForm.reset();
+    if (studentId) {
+        moveForm.student_ids = [studentId];
+    } else {
+        moveForm.student_ids = [...selectedIds.value];
+    }
+    showMoveModal.value = true;
+}
+
+function submitMove() {
+    if (!moveForm.to_subject_id) return;
+    
+    moveForm.post(`/subject-attendance/${props.subject.id}/move-students`, {
+        onSuccess: () => {
+            success('Students moved successfully');
+            showMoveModal.value = false;
+            selectedIds.value = [];
+        },
+        onError: () => error('Failed to move students'),
+    });
+}
+
+function bulkRemove() {
+    if (!confirm(`Are you sure you want to remove ${selectedIds.value.length} students from this subject?`)) return;
+
+    router.post(`/subject-attendance/${props.subject.id}/remove-students`, {
+        student_ids: selectedIds.value
+    }, {
+        onSuccess: () => {
+            success('Students removed successfully');
+            selectedIds.value = [];
+        },
+        onError: () => error('Failed to remove students'),
+    });
+}
+
+function clearSelection() {
+    selectedIds.value = [];
+}
 
 const form = useForm({
     name: '',
@@ -403,10 +474,27 @@ onMounted(() => {
                 </div>
 
                 <div v-if="studentRows.length" class="space-y-2">
+                    <!-- Bulk Select Header -->
+                    <div class="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 mb-2">
+                        <input 
+                            type="checkbox" 
+                            :checked="selectedIds.length === studentRows.length && studentRows.length > 0"
+                            @change="toggleAll"
+                            class="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 focus:ring-zinc-900 transition-all cursor-pointer"
+                        />
+                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Select All Students on this page</span>
+                    </div>
+
                     <template v-for="(student, idx) in studentRows" :key="student.id">
                         <div
                             class="flex items-center gap-2 sm:gap-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 px-2 sm:px-4 py-2 sm:py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm hover:shadow-md group w-full"
                         >
+                            <input 
+                                type="checkbox" 
+                                :checked="selectedIds.includes(student.id)"
+                                @change="toggleStudentSelection(student.id)"
+                                class="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 focus:ring-zinc-900 transition-all cursor-pointer shrink-0"
+                            />
                             <span class="w-6 text-center text-[10px] sm:text-xs font-black text-zinc-400 dark:text-zinc-500">{{ studentRankStart + idx }}</span>
                             <Link :href="`/students/${student.id}/analytics`" class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 group/info">
                                 <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0">
@@ -428,6 +516,13 @@ onMounted(() => {
                                     title="Edit Student"
                                 >
                                     <Pencil class="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                    @click="openMoveModal(student.id)"
+                                    class="p-2 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95"
+                                    title="Move Student"
+                                >
+                                    <ArrowRightLeft class="h-3.5 w-3.5" />
                                 </button>
                                 <button
                                     @click="deleteStudent(student)"
@@ -600,4 +695,128 @@ onMounted(() => {
             </form>
         </DialogContent>
     </Dialog>
+
+    <!-- Move Student Modal -->
+    <Dialog :open="showMoveModal" @update:open="showMoveModal = false">
+        <DialogContent class="sm:max-w-[425px] rounded-[2rem] border-zinc-100 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl">
+            <div class="absolute top-4 right-4 z-10">
+                <button
+                    @click="showMoveModal = false"
+                    class="rounded-full p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                    <X class="h-4 w-4" />
+                </button>
+            </div>
+
+            <DialogHeader class="p-8 pb-4 text-left">
+                <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xl">
+                    <ArrowRightLeft class="h-6 w-6" />
+                </div>
+                <DialogTitle class="text-2xl font-serif font-black leading-none tracking-tight text-zinc-900 dark:text-white">
+                    Move Students
+                </DialogTitle>
+                <DialogDescription class="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-400">
+                    Rescheduling {{ moveForm.student_ids.length }} student(s) to another subject roster
+                </DialogDescription>
+            </DialogHeader>
+
+            <div class="p-8 pt-0 space-y-6">
+                <div class="space-y-4">
+                    <div class="grid gap-2">
+                        <Label class="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">Target Subject</Label>
+                        <Select v-model="moveForm.to_subject_id">
+                            <SelectTrigger class="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 px-4 text-sm font-bold dark:border-zinc-800 dark:bg-zinc-900/50 transition-all shadow-inner">
+                                <SelectValue placeholder="Select target subject..." />
+                            </SelectTrigger>
+                            <SelectContent class="rounded-2xl border-zinc-100 dark:border-zinc-800 shadow-2xl">
+                                <SelectItem 
+                                    v-for="subj in props.otherSubjects" 
+                                    :key="subj.id" 
+                                    :value="subj.id.toString()" 
+                                    class="rounded-xl"
+                                >
+                                    {{ subj.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p v-if="moveForm.errors.to_subject_id" class="text-[10px] font-bold text-rose-500 px-1">{{ moveForm.errors.to_subject_id }}</p>
+                    </div>
+
+                    <div class="rounded-xl bg-zinc-50 dark:bg-zinc-900/50 p-4 border border-zinc-100 dark:border-zinc-800/80">
+                        <p class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-relaxed">
+                            <span class="text-zinc-900 dark:text-white">Note:</span> Moving students will update their schedule slots. They will no longer appear in the {{ subject.name }} leaderboard.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button
+                        type="button"
+                        @click="submitMove"
+                        :disabled="moveForm.processing || !moveForm.to_subject_id"
+                        class="w-full h-14 rounded-2xl bg-zinc-900 text-sm font-black uppercase tracking-[0.2em] text-white shadow-2xl transition-all hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                        <span v-if="moveForm.processing" class="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white dark:border-black/20 dark:border-t-black"></span>
+                        {{ moveForm.processing ? 'Moving...' : 'Move Students Now' }}
+                    </button>
+                    <button
+                        type="button"
+                        @click="showMoveModal = false"
+                        class="w-full mt-2 h-10 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </DialogContent>
+    </Dialog>
+
+    <!-- Floating Bulk Action Bar -->
+    <Transition
+        @enter="(el, done) => gsap.fromTo(el, { y: 100, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power4.out', onComplete: done })"
+        @leave="(el, done) => gsap.to(el, { y: 100, opacity: 0, duration: 0.3, ease: 'power4.in', onComplete: done })"
+    >
+        <div v-if="selectedIds.length > 0" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-2xl px-4 py-4 rounded-[1.5rem] bg-zinc-900/90 dark:bg-zinc-50/90 text-white dark:text-zinc-900 backdrop-blur-2xl shadow-2xl border border-white/10 dark:border-black/5 flex items-center justify-between gap-4 overflow-hidden">
+            <div class="flex items-center gap-4 shrink-0 px-2 sm:px-4 border-r border-white/10 dark:border-black/5">
+                <div class="h-8 w-8 rounded-full bg-white/10 dark:bg-black/5 flex items-center justify-center font-serif font-black text-sm">
+                    {{ selectedIds.length }}
+                </div>
+                <div>
+                    <div class="text-[10px] font-black uppercase tracking-widest opacity-60">Students</div>
+                    <div class="text-[9px] font-bold uppercase tracking-widest">Selected</div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth">
+                <button
+                    @click="openMoveModal()"
+                    class="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white transition-all hover:scale-105 active:scale-95 hover:shadow-xl shadow-lg border border-white/20"
+                >
+                    <ArrowRightLeft class="h-4 w-4" />
+                    <span class="text-[10px] sm:text-xs font-black uppercase tracking-widest">Move</span>
+                </button>
+                
+                <button
+                    @click="bulkRemove"
+                    class="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-rose-500/20 dark:bg-rose-500/10 text-rose-400 dark:text-rose-600 transition-all hover:bg-rose-500/30 active:scale-95 hover:scale-105 border border-rose-500/20"
+                >
+                    <Trash2 class="h-4 w-4" />
+                    <span class="text-[10px] sm:text-xs font-black uppercase tracking-widest">Remove</span>
+                </button>
+
+                <div class="h-8 w-px bg-white/10 dark:bg-black/5 mx-1"></div>
+
+                <button
+                    @click="clearSelection"
+                    class="flex items-center gap-2 px-3 sm:px-4 py-2 text-white/60 dark:text-zinc-500 transition-colors hover:text-white dark:hover:text-zinc-900"
+                >
+                    <X class="h-4 w-4" />
+                    <span class="text-[10px] font-black uppercase tracking-widest">Clear</span>
+                </button>
+            </div>
+
+            <!-- Accent Glow -->
+            <div class="absolute -right-8 -top-8 h-24 w-24 bg-white/5 dark:bg-black/5 blur-3xl rounded-full pointer-events-none"></div>
+        </div>
+    </Transition>
 </template>

@@ -96,6 +96,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Subject Attendance
     Route::get('subject-attendance', [SubjectAttendanceController::class, 'index'])->name('subject-attendance.index');
     Route::get('subject-attendance/{subject}', [SubjectAttendanceController::class, 'show'])->name('subject-attendance.show');
+    Route::post('subject-attendance/{subject}/move-students', [SubjectAttendanceController::class, 'moveStudents'])->name('subject-attendance.move-students');
+    Route::post('subject-attendance/{subject}/remove-students', [SubjectAttendanceController::class, 'removeStudents'])->name('subject-attendance.remove-students');
 
     // Exports
     Route::get('exports/attendance', [ExportController::class, 'attendancePdf'])->name('exports.attendance');

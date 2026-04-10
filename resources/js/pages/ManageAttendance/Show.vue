@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import gsap from 'gsap';
+
 import { 
     LayoutGrid,
     Table as TableIcon,
@@ -205,79 +205,10 @@ const cardsRef = ref<HTMLElement | null>(null);
 const gridRef = ref<HTMLElement | null>(null);
 const searchInputRef = ref<any>(null);
 
-function animateGrid() {
-    nextTick(() => {
-        const cards = gridRef.value?.querySelectorAll('[data-student-card]');
-        if (cards && cards.length > 0) {
-            gsap.fromTo(cards, 
-                { y: 20, opacity: 0, scale: 0.98 },
-                { 
-                    y: 0, 
-                    opacity: 1, 
-                    scale: 1, 
-                    duration: 0.5, 
-                    stagger: {
-                        amount: 0.4,
-                        from: "start",
-                        grid: "auto"
-                    },
-                    ease: 'power3.out',
-                    clearProps: 'all'
-                }
-            );
-        }
-    });
-}
+
 
 onMounted(() => {
-    // 1. Entrance Animations for Stats Cards
-    if (cardsRef.value) {
-        const cards = cardsRef.value.querySelectorAll<HTMLElement>('[data-card]');
-        
-        gsap.set(cardsRef.value, { perspective: 1000 });
-        gsap.set(cards, { opacity: 1, visibility: 'visible' });
 
-        gsap.from(cards, {
-            opacity: 0,
-            y: 30,
-            rotationX: -15,
-            z: -20,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: 'power2.out',
-            clearProps: 'all'
-        });
-    }
-
-    // 2. Grid Entrance
-    if (gridRef.value) {
-        gsap.set(gridRef.value, { opacity: 1, visibility: 'visible', perspective: 1200 });
-
-        gsap.from(gridRef.value, {
-            opacity: 0,
-            y: 15,
-            duration: 0.7,
-            ease: 'power2.out',
-            clearProps: 'all'
-        });
-        
-        animateGrid();
-    }
-
-    // 3. Button Press Micro-interactions
-    const buttons = document.querySelectorAll('button');
-    buttons.forEach((btn) => {
-        gsap.set(btn, { transformStyle: "preserve-3d" });
-        btn.addEventListener('mousedown', () => {
-            gsap.to(btn, { scale: 0.95, z: -10, duration: 0.1, ease: 'power1.out' });
-        });
-        btn.addEventListener('mouseup', () => {
-            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'bounce.out' });
-        });
-        btn.addEventListener('mouseleave', () => {
-            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
-        });
-    });
 
     // 4. Keyboard Shortcuts for Rapid Marking
     const handleKeydown = (e: KeyboardEvent) => {
@@ -299,25 +230,11 @@ onMounted(() => {
     });
 });
 
-watch([searchQuery, statusFilter, filteredStudents], () => {
-    animateGrid();
-});
+
 
 watch(stats, (newStats) => {
-    gsap.to(animatedStats.value, {
-        total: newStats.total,
-        present: newStats.present,
-        late: newStats.late,
-        timeout: newStats.timeout,
-        absent: newStats.absent,
-        excused: newStats.excused,
-        marked: newStats.marked,
-        progress: newStats.progress,
-        duration: 0.8,
-        ease: 'power2.out',
-        snap: { total: 1, present: 1, late: 1, timeout: 1, absent: 1, excused: 1, marked: 1, progress: 1 }
-    });
-}, { immediate: true });
+    animatedStats.value = { ...newStats };
+}, { immediate: true, deep: true });
 
 function avatarGradient(name: string): string {
     let hash = 0;
@@ -643,7 +560,7 @@ function openPrintCards() {
     ]">
         <Head :title="`Attendance: ${subject.name}`" />
 
-        <div class="flex min-h-full flex-col gap-2.5 sm:gap-4 p-3 sm:p-5 lg:p-8 pb-20 md:pb-6 w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div class="flex min-h-full flex-col gap-2.5 sm:gap-4 p-3 sm:p-5 lg:p-8 pb-20 md:pb-6 w-full overflow-x-hidden">
             <div class="flex items-center justify-between gap-2 sm:gap-4 pb-3 border-b border-zinc-100 dark:border-zinc-900">
                 <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                     <Button variant="ghost" size="icon" @click="goBack" class="-ml-1 sm:-ml-2 h-8 w-8 sm:h-10 sm:w-10 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all rounded-full border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 shadow-sm active:scale-90 shrink-0">
@@ -768,7 +685,6 @@ function openPrintCards() {
             <div ref="cardsRef" class="grid grid-cols-6 gap-1 sm:gap-3 w-full mt-1 sm:mt-0">
                 <!-- Total -->
                 <div 
-                    v-tilt
                     data-card 
                     class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
@@ -781,7 +697,6 @@ function openPrintCards() {
                 
                 <!-- Present -->
                 <div 
-                    v-tilt
                     data-card 
                     class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
@@ -794,7 +709,6 @@ function openPrintCards() {
 
                 <!-- Late -->
                 <div 
-                    v-tilt
                     data-card 
                     class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
@@ -807,7 +721,6 @@ function openPrintCards() {
 
                 <!-- Time Out -->
                 <div 
-                    v-tilt
                     data-card 
                     class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
@@ -820,7 +733,6 @@ function openPrintCards() {
 
                 <!-- Absent -->
                 <div 
-                    v-tilt
                     data-card 
                     class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
@@ -833,7 +745,6 @@ function openPrintCards() {
 
                 <!-- Excused -->
                 <div 
-                    v-tilt
                     data-card 
                     class="group relative overflow-hidden rounded-lg sm:rounded-2xl p-1 sm:p-4 transition-all bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/5 text-zinc-900 dark:text-white shadow-xl hover:bg-white/60 dark:hover:bg-black/60 preserve-3d shadow-3d"
                 >
@@ -938,7 +849,7 @@ function openPrintCards() {
             <div class="space-y-4">
                 <!-- Unified Responsive Grid View -->
                 <!-- Table View -->
-                <div v-if="viewMode === 'table'" class="overflow-x-auto w-full rounded-[1.5rem] sm:rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm animate-in fade-in zoom-in duration-700 pb-20 sm:pb-0">
+                <div v-if="viewMode === 'table'" class="overflow-x-auto w-full rounded-[1.5rem] sm:rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-sm pb-20 sm:pb-0">
                     <table class="min-w-full text-left text-sm whitespace-nowrap">
                         <thead class="bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-10">
                             <tr>
@@ -965,7 +876,6 @@ function openPrintCards() {
                             <tr 
                                 v-for="(student, index) in filteredStudents" 
                                 :key="student.id"
-                                v-reveal:[index%10*40]
                                 @click="toggleStudentSelection(student.id)"
                                 class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer"
                                 :class="{'bg-zinc-50 dark:bg-zinc-900/30': selectedStudents.includes(student.id)}"
@@ -1056,11 +966,9 @@ function openPrintCards() {
                 </div>
 
                 <!-- Unified 3-Column Grid View -->
-                <div v-else ref="gridRef" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div v-else ref="gridRef" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-6">
                     <div v-for="(student, index) in filteredStudents" :key="student.id" 
                         data-student-card
-                        v-reveal:[index%10*40]
-                        v-tilt
                         :class="[
                             'relative overflow-hidden bg-white dark:bg-black rounded-xl sm:rounded-[2rem] p-2 sm:p-5 shadow-sm border-2 transition-colors duration-200 cursor-pointer flex flex-col hover:bg-zinc-50 dark:hover:bg-zinc-900',
                             student.attendance?.status === 'Present' ? 'border-emerald-500/20' : 
@@ -1136,9 +1044,8 @@ function openPrintCards() {
 
                             <div class="flex items-center sm:flex-col sm:items-end gap-1.5 sm:gap-2">
                                 <!-- Status Badge (Minimized on mobile) -->
-                                <div v-if="student.attendance?.status" class="animate-in fade-in zoom-in duration-500">
                                     <span :class="[
-                                        'inline-flex items-center rounded-full px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[7px] sm:text-[9px] uppercase font-black tracking-widest shadow-md border backdrop-blur-md transition-all',
+                                        'inline-flex items-center rounded-full px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[7px] sm:text-[9px] uppercase font-black tracking-widest shadow-md border backdrop-blur-md',
                                         student.attendance?.status.toLowerCase() === 'present' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
                                         student.attendance?.status.toLowerCase() === 'late' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
                                         student.attendance?.status.toLowerCase() === 'time out' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' :
@@ -1148,7 +1055,6 @@ function openPrintCards() {
                                         <span class="sm:hidden">{{ student.attendance.status.charAt(0) }}</span>
                                         <span class="hidden sm:block">{{ student.attendance.status }}</span>
                                     </span>
-                                </div>
                                 
                                 <Button 
                                     variant="ghost" 
@@ -1212,7 +1118,7 @@ function openPrintCards() {
                     </div>
 
                     <!-- Empty State -->
-                    <div v-if="filteredStudents.length === 0" class="col-span-full bg-zinc-50/50 dark:bg-zinc-900/20 rounded-[2rem] sm:rounded-[3rem] p-10 sm:p-20 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 animate-in fade-in zoom-in duration-700">
+                    <div v-if="filteredStudents.length === 0" class="col-span-full bg-zinc-50/50 dark:bg-zinc-900/20 rounded-[2rem] sm:rounded-[3rem] p-10 sm:p-20 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800">
                         <div class="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-inner">
                             <Users class="w-7 h-7 sm:w-10 sm:h-10 text-zinc-300 dark:text-zinc-700" stroke-width="1.5" />
                         </div>

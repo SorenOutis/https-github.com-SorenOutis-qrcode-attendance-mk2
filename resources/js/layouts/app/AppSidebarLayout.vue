@@ -23,7 +23,7 @@ withDefaults(defineProps<Props>(), {
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
             <div class="w-full min-h-screen">
                 <Transition name="spatial" mode="out-in">
-                    <div :key="($page.url as string)">
+                    <div :key="($page.url as string).split('?')[0]">
                         <slot />
                     </div>
                 </Transition>

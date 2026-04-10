@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { useDraggable, useWindowSize, useStorage } from '@vueuse/core';
+import { useDraggable, useWindowSize, useStorage, watchDebounced } from '@vueuse/core';
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import type { BreadcrumbItem } from '@/types';
@@ -201,36 +201,11 @@ const animatedStats = ref({
 });
 
 watch(stats, (newStats) => {
-    // 1. Animate the counter numbers
-    gsap.to(animatedStats.value, {
-        total: newStats.total,
-        present: newStats.present,
-        late: newStats.late,
-        absent: newStats.absent,
-        duration: 1.5,
-        ease: 'power3.out',
-        snap: { total: 1, present: 1, late: 1, absent: 1 }
-    });
-
-    // 2. 3D "Pop" animation for stat cards
-    const cards = document.querySelectorAll('[data-card]');
-    if (cards.length) {
-        gsap.to(cards, {
-            y: -10,
-            scale: 1.05,
-            duration: 0.2,
-            stagger: 0.05,
-            ease: 'back.out(2)',
-            onComplete: () => {
-                gsap.to(cards, {
-                    y: 0,
-                    scale: 1,
-                    duration: 0.6,
-                    ease: 'elastic.out(1, 0.3)'
-                });
-            }
-        });
-    }
+    // Set stats immediately without animation
+    animatedStats.value.total = newStats.total;
+    animatedStats.value.present = newStats.present;
+    animatedStats.value.late = newStats.late;
+    animatedStats.value.absent = newStats.absent;
 }, { deep: true, immediate: true });
 
 const recentActivity = computed(() => {
@@ -324,18 +299,38 @@ function prevPage() {
     }
 }
 
-watch(searchQuery, (q) => {
-    router.get(dashboard(), 
-        { search: q, only_scheduled: showOnlyScheduledToday.value, status: statusFilter.value }, 
-        { preserveState: true, preserveScroll: true, replace: true }
-    );
-});
+watchDebounced(
+    searchQuery,
+    (q) => {
+        // Update URL manually without triggering a page transition
+        const url = new URL(window.location.href);
+        if (q) {
+            url.searchParams.set('search', q);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.history.replaceState({}, '', url.toString());
+
+        // Partial reload — only refreshes student-related props, no spatial animation fires
+        router.reload({
+            data: { search: q, only_scheduled: showOnlyScheduledToday.value, status: statusFilter.value },
+            only: ['students', 'filters', 'attendanceStats', 'attendanceRate', 'atRiskCount', 'topAtRiskStudents'],
+            preserveScroll: true,
+        });
+    },
+    { debounce: 400, maxWait: 2000 },
+);
 
 watch(showOnlyScheduledToday, (val) => {
-    router.get(dashboard(), 
-        { search: searchQuery.value, only_scheduled: val, status: statusFilter.value }, 
-        { preserveState: true, preserveScroll: true, replace: true }
-    );
+    const url = new URL(window.location.href);
+    url.searchParams.set('only_scheduled', String(val));
+    window.history.replaceState({}, '', url.toString());
+
+    router.reload({
+        data: { search: searchQuery.value, only_scheduled: val, status: statusFilter.value },
+        only: ['students', 'filters', 'attendanceStats', 'attendanceRate', 'atRiskCount', 'topAtRiskStudents'],
+        preserveScroll: true,
+    });
 });
 
 watch([activeTab, statusFilter, viewMode, currentPage], () => {
@@ -343,7 +338,6 @@ watch([activeTab, statusFilter, viewMode, currentPage], () => {
     if (activeTab.value !== 'active') {
         currentPage.value = 1;
     }
-    animateStudents();
 });
 
 const selectedStudent = ref<Student | null>(null);
@@ -366,10 +360,6 @@ const presentCard = ref(null);
 const lateCard = ref(null);
 const absentCard = ref(null);
 
-useTilt(totalStudentsCard);
-useTilt(presentCard);
-useTilt(lateCard);
-useTilt(absentCard);
 
 const el = ref<HTMLElement | null>(null);
 const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -562,48 +552,8 @@ const studentsTableBodyRef = ref<HTMLTableSectionElement | null>(null);
 const photoInput = ref<HTMLInputElement | null>(null);
 const editPhotoInput = ref<HTMLInputElement | null>(null);
 
-function animateStudents() {
-    nextTick(() => {
-        const targets = viewMode.value === 'grid' 
-            ? studentsGridRef.value?.querySelectorAll('[data-student-card]')
-            : studentsTableBodyRef.value?.querySelectorAll('tr');
 
-        if (!targets || targets.length === 0) return;
-
-        gsap.killTweensOf(targets);
-        
-        if (viewMode.value === 'grid') {
-            gsap.fromTo(targets, 
-                { opacity: 0, y: 15, scale: 0.98 },
-                { 
-                    opacity: 1, 
-                    y: 0, 
-                    scale: 1, 
-                    duration: 0.4, 
-                    stagger: 0.03, 
-                    ease: 'power2.out',
-                    clearProps: 'all'
-                }
-            );
-        } else {
-            gsap.fromTo(targets,
-                { opacity: 0, x: -10 },
-                { 
-                    opacity: 1, 
-                    x: 0, 
-                    duration: 0.3, 
-                    stagger: 0.02, 
-                    ease: 'power1.out',
-                    clearProps: 'all'
-                }
-            );
-        }
-    });
-}
-
-watch([searchQuery, activeTab, viewMode, statusFilter, currentPage], () => {
-    animateStudents();
-});
+// Removed animation trigger on data change to allow "instant" appearance
 
 const confirmModalOpen = ref(false);
 const confirmTitle = ref('');
@@ -1126,33 +1076,6 @@ onMounted(() => {
         });
     }
 
-    // 2. Table and Row Entrance
-    if (tableRef.value) {
-        gsap.set(tableRef.value, { opacity: 1, visibility: 'visible', perspective: 1000 });
-
-        gsap.from(tableRef.value, {
-            opacity: 0,
-            y: 20,
-            rotationX: 10,
-            duration: 0.8,
-            delay: 0.2,
-            ease: 'power2.out',
-            clearProps: 'opacity,transform'
-        });
-        
-        const rows = tableRef.value.querySelectorAll('tbody tr');
-        rows.forEach(row => gsap.set(row, { transformStyle: "preserve-3d" }));
-
-        gsap.from(rows, {
-            opacity: 0,
-            x: -30,
-            filter: 'blur(10px)',
-            duration: 0.8,
-            stagger: 0.04,
-            delay: 0.3,
-            ease: 'expo.out',
-        });
-    }
 
     // 3. Status Badge Pulsing
     gsap.to('.status-pulse', {
@@ -1162,21 +1085,6 @@ onMounted(() => {
         repeat: -1,
         yoyo: true,
         ease: 'sine.inOut'
-    });
-
-    // 4. Button Press Micro-interactions
-    const buttons = document.querySelectorAll('button');
-    buttons.forEach((btn) => {
-        gsap.set(btn, { transformStyle: "preserve-3d" });
-        btn.addEventListener('mousedown', () => {
-            gsap.to(btn, { scale: 0.95, z: -10, duration: 0.1, ease: 'power1.out' });
-        });
-        btn.addEventListener('mouseup', () => {
-            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'bounce.out' });
-        });
-        btn.addEventListener('mouseleave', () => {
-            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
-        });
     });
 
     // Keyboard shortcut for search
@@ -1195,8 +1103,6 @@ onMounted(() => {
         window.removeEventListener('keydown', handleKeydown);
     });
 
-    // Initial student animation
-    animateStudents();
 
     // Trigger tour only if we don't show the welcome modal
     if (!showWelcomeModal.value && !hasSeenTour.value) {
@@ -1308,7 +1214,7 @@ onMounted(() => {
             <div class="grid grid-cols-4 gap-2 sm:gap-3">
                 <button
                     @click="openScanner"
-                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
+                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 sm:shadow-sm group"
                 >
                     <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xl shadow-zinc-900/10 sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
                         <Scan class="h-5 w-5 sm:h-4 sm:w-4" />
@@ -1322,7 +1228,7 @@ onMounted(() => {
                 <a
                     href="/reports"
                     data-tour="reports"
-                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
+                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 sm:shadow-sm group"
                 >
                     <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
                         <PieChart class="h-5 w-5 sm:h-4 sm:w-4" />
@@ -1335,7 +1241,7 @@ onMounted(() => {
 
                 <a
                     href="/calendar"
-                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
+                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 sm:shadow-sm group"
                 >
                     <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
                         <Calendar class="h-5 w-5 sm:h-4 sm:w-4" />
@@ -1349,7 +1255,7 @@ onMounted(() => {
                 <button
                     @click="openCreateModal"
                     data-tour="add-student"
-                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 transition-all sm:shadow-sm group"
+                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 sm:shadow-sm group"
                 >
                     <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
                         <UserPlus class="h-5 w-5 sm:h-4 sm:w-4" />
@@ -1491,14 +1397,14 @@ onMounted(() => {
                                 <!-- Tabs -->
                                 <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-0.5 sm:p-1 border border-zinc-200 dark:border-zinc-800 overflow-x-auto max-w-full shrink-0">
                                     <button
-                                        class="rounded-md px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap shrink-0"
+                                        class="rounded-md px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0"
                                         :class="activeTab === 'active' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                         @click="activeTab = 'active'"
                                     >
                                         Active
                                     </button>
                                     <button
-                                        class="rounded-md px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap shrink-0"
+                                        class="rounded-md px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0"
                                         :class="activeTab === 'deleted' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
                                         @click="activeTab = 'deleted'"
                                     >
@@ -1632,8 +1538,7 @@ onMounted(() => {
                             <tr
                                 v-for="(student, index) in paginatedStudents"
                                 :key="student.id"
-                                v-reveal:[index%10*40]
-                                class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer text-zinc-900 dark:text-zinc-100"
+                                class="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer text-zinc-900 dark:text-zinc-100"
                                 @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                             >
                                 <td class="px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium">
@@ -1791,8 +1696,7 @@ onMounted(() => {
                             v-for="(student, index) in paginatedStudents"
                             :key="student.id"
                             data-student-card
-                            v-reveal:[index%10*40]
-                            class="group relative overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4 transition-all hover:shadow-md cursor-pointer"
+                            class="group relative overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4 hover:shadow-md cursor-pointer"
                             @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                         >
                             <div class="flex flex-col mb-3">
@@ -1932,14 +1836,14 @@ onMounted(() => {
                                 <!-- Photo Upload -->
                                 <div class="flex flex-col items-center justify-center p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/30 dark:bg-zinc-900/10">
                                     <div class="relative group cursor-pointer" @click="photoInput?.click()">
-                                        <div class="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-all group-hover:border-zinc-400 dark:group-hover:border-zinc-600 shadow-inner">
+                                        <div class="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center shadow-inner">
                                             <img v-if="photoPreview" :src="photoPreview" class="h-full w-full object-cover" />
                                             <div v-else class="flex flex-col items-center text-zinc-400">
                                                 <Plus class="h-5 w-5 mb-0.5 opacity-50" />
                                                 <span class="text-[9px] font-bold uppercase tracking-tighter">Photo</span>
                                             </div>
                                             <!-- Overlay -->
-                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center">
                                                 <Scan class="h-5 w-5 text-white" />
                                             </div>
                                         </div>
@@ -2123,7 +2027,7 @@ onMounted(() => {
                                     <div
                                         v-for="(slot, i) in infoStudent.schedule"
                                         :key="i"
-                                        class="flex items-center justify-between rounded-md border p-2 hover:bg-muted/50 transition-colors"
+                                        class="flex items-center justify-between rounded-md border p-2 hover:bg-muted/50"
                                     >
                                         <div class="flex flex-col">
                                             <span class="text-xs font-semibold">{{ getSubjectName(slot.subject_id) }}</span>
@@ -2319,14 +2223,14 @@ onMounted(() => {
                                 <!-- Photo Upload -->
                                 <div class="flex flex-col items-center justify-center p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/30 dark:bg-zinc-900/10">
                                     <div class="relative group cursor-pointer" @click="editPhotoInput?.click()">
-                                        <div class="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center transition-all group-hover:border-zinc-400 dark:group-hover:border-zinc-600 shadow-inner">
+                                        <div class="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center shadow-inner">
                                             <img v-if="editPhotoPreview" :src="editPhotoPreview" class="h-full w-full object-cover" />
                                             <div v-else class="flex flex-col items-center text-zinc-400">
                                                 <Plus class="h-5 w-5 mb-0.5 opacity-50" />
                                                 <span class="text-[9px] font-bold uppercase tracking-tighter">Photo</span>
                                             </div>
                                             <!-- Overlay -->
-                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center">
                                                 <Scan class="h-5 w-5 text-white" />
                                             </div>
                                         </div>

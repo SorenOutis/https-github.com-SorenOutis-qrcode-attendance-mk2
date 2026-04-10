@@ -10,6 +10,7 @@ import {
     ChevronLeft, ChevronRight, Mail, Hash, Layers,
     Check, X, AlertCircle, Loader2, Scan, RefreshCw, Clock
 } from 'lucide-vue-next';
+import { watchDebounced, useDebounceFn } from '@vueuse/core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -63,6 +64,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const searchQuery = ref(props.filters.search ?? '');
+const isSearching = ref(false);
 const isCreateModalOpen = ref(false);
 const isEditModalOpen = ref(false);
 const editingStudent = ref<Student | null>(null);
@@ -109,13 +111,32 @@ function toggleSubject(id: number) {
 
 const photoPreview = ref<string | null>(null);
 
-watch(searchQuery, (value) => {
-    router.get('/students', { search: value }, {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true
-    });
-});
+watchDebounced(
+    searchQuery,
+    (value) => {
+        isSearching.value = true;
+
+        // Update the URL query param manually without a full navigation
+        const url = new URL(window.location.href);
+        if (value) {
+            url.searchParams.set('search', value);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.history.replaceState({}, '', url.toString());
+
+        // Partial reload — only refreshes the `students` prop, no page transition fires
+        router.reload({
+            data: { search: value },
+            only: ['students', 'filters'],
+            preserveScroll: true,
+            onFinish: () => {
+                isSearching.value = false;
+            },
+        });
+    },
+    { debounce: 400, maxWait: 2000 },
+);
 
 function openCreateModal() {
     form.reset();
@@ -367,7 +388,7 @@ function formatTimeTo12h(timeStr?: string) {
                     <a :href="`/students/sample`" class="inline-flex items-center justify-center rounded-xl font-bold uppercase tracking-widest text-[10px] h-10 px-4 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors">
                         <Download class="mr-2 h-3.5 w-3.5" /> Template
                     </a>
-                    <Button @click="openCreateModal" class="rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-black font-bold uppercase tracking-widest text-[10px] h-10 px-5 hover:scale-[1.02] transition-transform active:scale-95 shadow-lg shadow-zinc-200 dark:shadow-none">
+                    <Button @click="openCreateModal" class="rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-black font-bold uppercase tracking-widest text-[10px] h-10 px-5 shadow-lg shadow-zinc-200 dark:shadow-none">
                         <UserPlus class="mr-2 h-4 w-4" /> Add Student
                     </Button>
                 </div>
@@ -376,19 +397,34 @@ function formatTimeTo12h(timeStr?: string) {
             <!-- Filters & Search -->
             <div class="flex flex-col sm:flex-row gap-4">
                 <div class="relative flex-1">
-                    <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                    <Input 
+                    <Search
+                        v-if="!isSearching"
+                        class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none"
+                    />
+                    <Loader2
+                        v-else
+                        class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 animate-spin pointer-events-none"
+                    />
+                    <Input
                         v-model="searchQuery"
                         placeholder="Search by name, ID, or section..."
-                        class="pl-10 h-12 rounded-2xl border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm focus:ring-zinc-950 dark:focus:ring-white transition-all"
+                        class="pl-10 h-12 rounded-2xl border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm focus:ring-zinc-950 dark:focus:ring-white"
                     />
+                    <button
+                        v-if="searchQuery"
+                        @click="searchQuery = ''"
+                        class="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-all"
+                        title="Clear search"
+                    >
+                        <X class="h-3 w-3" />
+                    </button>
                 </div>
             </div>
 
             <!-- Students List -->
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 lg:grid-cols-3 gap-4">
                 <div v-for="student in props.students.data" :key="student.id" 
-                    class="group relative bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800 rounded-[28px] p-4 hover:shadow-xl hover:shadow-zinc-200/40 dark:hover:shadow-none transition-all duration-300 hover:-translate-y-1"
+                    class="group relative bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800 rounded-[28px] p-4 hover:shadow-xl hover:shadow-zinc-200/40 dark:hover:shadow-none"
                 >
                     <div class="flex items-start gap-3">
                         <div class="h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-900 overflow-hidden shrink-0 border border-zinc-50 dark:border-zinc-800 shadow-inner">

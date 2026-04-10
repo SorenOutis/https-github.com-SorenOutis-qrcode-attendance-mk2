@@ -163,16 +163,14 @@ onMounted(() => {
                 <div 
                     v-for="(subject, index) in subjects" 
                     :key="subject.id"
-                    v-reveal:[index%10*40]
-                    v-tilt
                     data-card
                     @mouseenter="router.prefetch(`/manage-attendance/${subject.id}/${selectedDate}`, { method: 'get' })"
                     @click="router.get(`/manage-attendance/${subject.id}/${selectedDate}`)"
-                    class="group relative flex flex-col bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl border border-zinc-100 dark:border-zinc-800/80 rounded-[2rem] p-4 sm:p-5 transition-all duration-500 shadow-xl shadow-zinc-200/40 dark:shadow-none hover:shadow-2xl hover:shadow-zinc-300/50 dark:hover:shadow-indigo-500/5 cursor-pointer overflow-hidden transform-gpu hover:-translate-y-1.5 active:translate-y-0"
+                    class="group relative flex flex-col bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl border border-zinc-100 dark:border-zinc-800/80 rounded-[2rem] p-4 sm:p-5 shadow-xl shadow-zinc-200/40 dark:shadow-none hover:shadow-2xl hover:shadow-zinc-300/50 dark:hover:shadow-indigo-500/5 cursor-pointer overflow-hidden transform-gpu"
                 >
                     <!-- Accent Glow -->
                     <div 
-                        class="absolute -top-24 -right-24 h-48 w-48 rounded-full blur-[80px] opacity-0 group-hover:opacity-60 transition-opacity duration-700 pointer-events-none"
+                        class="absolute -top-24 -right-24 h-48 w-48 rounded-full blur-[80px] opacity-0 pointer-events-none"
                         :class="glowClasses(subject.color)"
                     />
 

@@ -36,11 +36,11 @@ function handleClick(action: Action) {
             @click="handleClick(action)"
             class="group flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 p-2 sm:p-5 rounded-[1.5rem] sm:rounded-[2.5rem] border transition-all duration-300 hover:-translate-y-1 active:scale-[0.96]"
             :class="action.primary 
-                ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:border-white dark:text-zinc-900 shadow-xl shadow-zinc-900/10' 
-                : 'bg-white/60 dark:bg-zinc-900/40 backdrop-blur-xl border-zinc-200/50 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm'"
+                ? 'bg-primary border-primary text-primary-foreground shadow-xl' 
+                : 'bg-card/60 backdrop-blur-xl border-border text-muted-foreground hover:border-border hover:text-foreground shadow-sm'"
         >
             <div class="h-9 w-9 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110"
-                :class="action.primary ? 'bg-white/10 dark:bg-zinc-900/10' : 'bg-zinc-50 dark:bg-zinc-800'">
+                :class="action.primary ? 'bg-primary-foreground/10' : 'bg-muted'">
                 <component :is="action.icon" class="h-4 w-4 sm:h-6 sm:w-6" />
             </div>
             <div class="flex flex-col items-center text-center">

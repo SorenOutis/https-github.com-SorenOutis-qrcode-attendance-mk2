@@ -40,13 +40,13 @@ function getStatValue(key: string | null) {
                 @click="toggleFilter(stat.key)"
                 class="group relative overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
                 :class="statusFilter === stat.key 
-                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xl' 
-                    : 'bg-white/60 dark:bg-zinc-900/40 backdrop-blur-xl border border-zinc-200/50 dark:border-white/5 shadow-sm hover:shadow-lg'"
+                    ? 'bg-primary text-primary-foreground shadow-xl' 
+                    : 'bg-card/60 backdrop-blur-xl border border-border shadow-sm hover:shadow-lg'"
             >
                 <div class="relative z-10">
                     <div class="flex items-center justify-between mb-2 sm:mb-4">
                         <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110" 
-                            :class="statusFilter === stat.key ? 'bg-white/20 text-white dark:bg-zinc-900/10 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'">
+                            :class="statusFilter === stat.key ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'">
                             <component :is="stat.icon" class="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                         <div v-if="statusFilter === stat.key" class="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></div>

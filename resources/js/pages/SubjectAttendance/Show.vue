@@ -198,36 +198,50 @@ function closeModal() {
 
 function submit() {
     form.transform((data) => {
-        let schedule = data.schedule.length > 0 ? [...data.schedule] : [];
+        let schedule = Array.isArray(data.schedule) ? [...data.schedule] : [];
         
-        // Ensure the current subject is in the schedule if adding a new student
-        if (!isEditing.value) {
-            const hasSubject = schedule.some(slot => slot.subject_id === props.subject.id);
-            if (!hasSubject) {
-                // Add a dummy slot for the current subject if no schedule exists
-                // This ensures they are "enrolled" and appear in the leaderboard
-                schedule.push({
-                    day: 'Monday', // Default day if none exists
-                    subject_id: props.subject.id,
-                    start: '08:00',
-                    end: '09:00'
-                });
-            }
+        // Ensure the current subject is in the schedule when adding/enrolling or editing on this page
+        // We want the student to effectively be "enrolled" in the subject they are being managed through
+        const hasSubject = schedule.some(slot => slot.subject_id === props.subject.id);
+        if (!hasSubject) {
+            schedule.push({
+                day: 'Monday',
+                subject_id: props.subject.id,
+                start: '08:00',
+                end: '09:00'
+            });
         }
+
+        // Sanitize schedule: Filter out items missing required fields to satisfy backend validation
+        const sanitizedSchedule = schedule.filter(slot => 
+            slot && 
+            slot.day && 
+            slot.subject_id && 
+            slot.start && 
+            slot.end
+        );
 
         return {
             ...data,
-            schedule: schedule.length > 0 ? schedule : null,
+            schedule: sanitizedSchedule.length > 0 ? sanitizedSchedule : null,
         };
     });
 
     if (isEditing.value && editingStudent.value) {
         form.put(update({ student: editingStudent.value.id }).url, {
             onSuccess: () => {
-                success('Student updated successfully');
+                success('Student record updated and enrolled');
                 closeModal();
             },
-            onError: () => error('Failed to update student'),
+            onError: () => error('Failed to update student. Please check the schedule in the Students page if errors persist.'),
+        });
+    } else {
+        form.post(store().url, {
+            onSuccess: () => {
+                success('Student added successfully');
+                closeModal();
+            },
+            onError: () => error('Failed to add student'),
         });
     }
 }
@@ -237,15 +251,18 @@ function selectStudent(studentId: any) {
     const student = props.allStudents.find(s => s.id.toString() === studentId.toString());
     if (!student) return;
 
+    // When an existing student is selected, we switch to "Edit" (Update) mode
+    // but we use it as an "Enrollment" flow.
+    isEditing.value = true;
+    editingStudent.value = student as any;
+
     form.name = student.name;
     form.student_number = student.student_number;
     form.section = student.section ?? '';
-    // Auto-fill email if possible, or leave blank
-    form.email = ''; 
+    form.email = (student as any).email ?? ''; 
+    form.schedule = Array.isArray((student as any).schedule) ? JSON.parse(JSON.stringify((student as any).schedule)) : [];
     
-    // Switch to manual form or just submit if we want "Quick Add"
-    // For now, let's just populate the form so they can review
-    success(`Selected ${student.name}. Review and click Complete Onboarding.`);
+    success(`Selected ${student.name}. Click Complete Onboarding to enroll them.`);
 }
 
 function deleteStudent(student: StudentData) {

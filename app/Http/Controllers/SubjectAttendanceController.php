@@ -180,7 +180,7 @@ class SubjectAttendanceController extends Controller
             'daily' => $daily,
             'statusDistribution' => $statusDistribution,
             'students' => $paginatedStudents,
-            'allStudents' => Student::orderBy('name')->get(['id', 'name', 'student_number', 'section']),
+            'allStudents' => Student::orderBy('name')->get(['id', 'name', 'student_number', 'email', 'section', 'schedule']),
             'enrolled' => $enrolledIds->count(),
             'filters' => [
                 'start' => $startDate->toDateString(),

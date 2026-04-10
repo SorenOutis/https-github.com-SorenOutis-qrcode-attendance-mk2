@@ -15,6 +15,7 @@ type Student = {
     student_number: string;
     section?: string | null;
     qr_token: string;
+    photo?: string | null;
 };
 
 const props = defineProps<{
@@ -131,6 +132,7 @@ async function downloadCard(student: Student) {
     if (!ctx) return;
 
     // 1. Draw Background (Rounded)
+    ctx.save();
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     const r = 20 * scale;
@@ -179,11 +181,13 @@ async function downloadCard(student: Student) {
     ctx.fillText('IDENTITY CARD', w - 16 * scale, 26 * scale);
     ctx.textAlign = 'left';
 
-    // 4. Photo Placeholder
+    // 4. Photo
+    const px = 16 * scale, py = 56 * scale, pw = 80 * scale, ph = 96 * scale;
+    const photoR = 8 * scale;
+    
+    // Draw photo background/container
     ctx.fillStyle = '#fafafa';
     ctx.beginPath();
-    const photoR = 8 * scale;
-    const px = 16 * scale, py = 56 * scale, pw = 80 * scale, ph = 96 * scale;
     ctx.moveTo(px + photoR, py);
     ctx.lineTo(px + pw - photoR, py);
     ctx.quadraticCurveTo(px + pw, py, px + pw, py + photoR);
@@ -194,33 +198,88 @@ async function downloadCard(student: Student) {
     ctx.lineTo(px, py + photoR);
     ctx.quadraticCurveTo(px, py, px + photoR, py);
     ctx.fill();
-    ctx.strokeStyle = '#e4e4e7';
-    const dashSize = 4 * scale;
-    ctx.setLineDash([dashSize, dashSize]);
-    ctx.lineWidth = 0.5 * scale;
-    ctx.stroke();
-    
-    // Draw "PHOTO HERE" text more precisely
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#a1a1aa';
-    
-    // Draw simple User icon
-    ctx.beginPath();
-    ctx.arc(px + pw/2, py + ph/2 - 10 * scale, 12 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(px + pw/2, py + ph/2 + 20 * scale, 20 * scale, Math.PI, 0);
-    ctx.fill();
+    ctx.clip(); // Clip everything to the photo box
 
-    ctx.font = `bold ${6 * scale}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.fillText('PHOTO HERE', px + pw/2, py + ph/2 + 28 * scale);
-    ctx.textAlign = 'left';
+    if (student.photo) {
+        const photoImg = new Image();
+        photoImg.crossOrigin = "anonymous";
+        photoImg.src = student.photo;
+        await new Promise((resolve) => {
+            photoImg.onload = () => {
+                // Center Crop Logic
+                const aspect = photoImg.width / photoImg.height;
+                const containerAspect = pw / ph;
+                let dw = pw, dh = ph, dx = px, dy = py;
+                if (aspect > containerAspect) {
+                    dw = ph * aspect;
+                    dx = px - (dw - pw)/2;
+                } else {
+                    dh = pw / aspect;
+                    dy = py - (dh - ph)/2;
+                }
+                ctx.drawImage(photoImg, dx, dy, dw, dh);
+                resolve(null);
+            };
+            photoImg.onerror = () => {
+                // Fallback to placeholder if image fails
+                ctx.fillStyle = '#a1a1aa';
+                ctx.beginPath();
+                ctx.arc(px + pw/2, py + ph/2 - 10 * scale, 12 * scale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(px + pw/2, py + ph/2 + 20 * scale, 20 * scale, Math.PI, 0);
+                ctx.fill();
+                resolve(null);
+            };
+        });
+    } else {
+        // Draw Placeholder UI
+        ctx.fillStyle = '#a1a1aa';
+        ctx.beginPath();
+        ctx.arc(px + pw/2, py + ph/2 - 10 * scale, 12 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px + pw/2, py + ph/2 + 20 * scale, 20 * scale, Math.PI, 0);
+        ctx.fill();
+        ctx.font = `bold ${6 * scale}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText('PHOTO HERE', px + pw/2, py + ph/2 + 28 * scale);
+        ctx.textAlign = 'left';
+    }
+    
+    // Reset clipping and stroke for photo box
+    ctx.restore(); // Need to save state early or use path again
+    // Re-draw border
+    ctx.strokeStyle = '#e4e4e7';
+    ctx.setLineDash([4 * scale, 4 * scale]);
+    ctx.lineWidth = 0.5 * scale;
+    ctx.beginPath();
+    ctx.moveTo(px + photoR, py);
+    ctx.lineTo(px + pw - photoR, py);
+    ctx.quadraticCurveTo(px + pw, py, px + pw, py + photoR);
+    ctx.lineTo(px + pw, py + ph - photoR);
+    ctx.quadraticCurveTo(px + pw, py + ph, px + pw - photoR, py + ph);
+    ctx.lineTo(px + photoR, py + ph);
+    ctx.quadraticCurveTo(px, py + ph, px, py + ph - photoR);
+    ctx.lineTo(px, py + photoR);
+    ctx.quadraticCurveTo(px, py, px + photoR, py);
+    ctx.setLineDash([]);
+    ctx.stroke();
 
     // 5. Student Details
     ctx.fillStyle = '#09090b';
-    ctx.font = `900 ${16 * scale}px Arial`; // Name should be boldest
-    ctx.fillText(student.name.toUpperCase(), 112 * scale, 76 * scale);
+    let nameFontSize = 16 * scale;
+    ctx.font = `900 ${nameFontSize}px Arial`;
+    const nameMaxW = (w - (112 * scale) - (100 * scale)); // Leave room for QR
+    const nameStr = student.name.toUpperCase();
+    
+    // Scale down name if too long
+    while (ctx.measureText(nameStr).width > nameMaxW && nameFontSize > 8 * scale) {
+        nameFontSize -= 1 * scale;
+        ctx.font = `900 ${nameFontSize}px Arial`;
+    }
+    
+    ctx.fillText(nameStr, 112 * scale, 76 * scale);
 
     const labelFont = `bold ${9 * scale}px Arial`;
     const valueFont = `900 ${11 * scale}px Arial`;
@@ -465,13 +524,18 @@ watch([query, selected], async () => {
 
                                 <!-- Card Body -->
                                 <div class="flex flex-1 p-2.5 sm:p-4 gap-2.5 sm:gap-4">
-                                    <!-- Photo placeholder -->
+                                    <!-- Profile Photo -->
                                     <div class="shrink-0">
-                                        <div class="w-14 h-[4.2rem] sm:w-20 sm:h-24 rounded-md sm:rounded-lg bg-zinc-50 border border-dashed border-zinc-200 flex items-center justify-center overflow-hidden relative">
-                                            <div class="absolute inset-0 flex items-center justify-center opacity-10">
-                                                <UserIcon class="w-8 h-8 sm:w-12 sm:h-12" />
-                                            </div>
-                                            <span class="text-[7px] sm:text-[8px] text-zinc-400 font-bold uppercase text-center px-1 z-10">Photo</span>
+                                        <div class="w-14 h-[4.2rem] sm:w-20 sm:h-24 rounded-md sm:rounded-lg bg-zinc-50 border border-dashed border-zinc-200 flex items-center justify-center overflow-hidden relative shadow-inner">
+                                            <template v-if="student.photo">
+                                                <img :src="student.photo" :alt="student.name" class="h-full w-full object-cover">
+                                            </template>
+                                            <template v-else>
+                                                <div class="absolute inset-0 flex items-center justify-center opacity-10">
+                                                    <UserIcon class="w-8 h-8 sm:w-12 sm:h-12" />
+                                                </div>
+                                                <span class="text-[7px] sm:text-[8px] text-zinc-400 font-bold uppercase text-center px-1 z-10">Photo</span>
+                                            </template>
                                         </div>
                                     </div>
 

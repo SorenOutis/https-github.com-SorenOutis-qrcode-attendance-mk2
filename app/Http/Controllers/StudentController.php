@@ -70,6 +70,7 @@ class StudentController extends Controller
             'student_number',
             'section',
             'qr_token',
+            'photo',
         ]);
 
         return Inertia::render('Students/PrintCards', [

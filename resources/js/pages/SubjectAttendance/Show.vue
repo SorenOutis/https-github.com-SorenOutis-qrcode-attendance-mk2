@@ -487,65 +487,88 @@ onMounted(() => {
                     <div class="student-list-container space-y-2 overflow-hidden">
                         <template v-for="(student, idx) in displayedStudents" :key="student.id">
                             <div
-                                class="student-row flex items-center gap-2 sm:gap-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 px-2 sm:px-4 py-2 sm:py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm hover:shadow-md group w-full"
+                                class="student-row flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-[1.5rem] border border-zinc-200/50 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 p-3 sm:px-4 sm:py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm hover:shadow-md group w-full"
                             >
-                            <input 
-                                type="checkbox" 
-                                :checked="selectedIds.includes(student.id)"
-                                @change="toggleStudentSelection(student.id)"
-                                class="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 focus:ring-zinc-900 transition-all cursor-pointer shrink-0"
-                            />
-                            <span class="w-6 text-center text-[10px] sm:text-xs font-black text-zinc-400 dark:text-zinc-500">{{ studentRankStart + idx }}</span>
-                            <Link :href="`/students/${student.id}/analytics`" class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 group/info">
-                                <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0">
-                                    <img v-if="student.photo" :src="student.photo" class="h-full w-full object-cover" :alt="student.name" />
-                                    <div v-else class="h-full w-full flex items-center justify-center text-xs font-bold text-zinc-500 dark:text-zinc-400">
-                                        {{ student.name.charAt(0) }}
+                                <!-- Top Group: Selection + Identity -->
+                                <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                                    <input 
+                                        type="checkbox" 
+                                        :checked="selectedIds.includes(student.id)"
+                                        @change="toggleStudentSelection(student.id)"
+                                        class="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 focus:ring-zinc-900 cursor-pointer shrink-0"
+                                    />
+                                    <div class="flex items-center justify-center shrink-0 h-6 w-6 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black text-zinc-500">
+                                        {{ studentRankStart + idx }}
+                                    </div>
+                                    <Link :href="`/students/${student.id}/analytics`" class="flex items-center gap-3 min-w-0 flex-1 group/info">
+                                        <div class="h-10 w-10 sm:h-9 sm:w-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0">
+                                            <img v-if="student.photo" :src="student.photo" class="h-full w-full object-cover" :alt="student.name" />
+                                            <div v-else class="h-full w-full flex items-center justify-center text-xs font-bold text-zinc-500 dark:text-zinc-400">
+                                                {{ student.name.charAt(0) }}
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="text-sm font-bold truncate text-zinc-900 dark:text-white group-hover/info:text-zinc-600 dark:group-hover/info:text-zinc-300 transition-colors">{{ student.name }}</div>
+                                            <div class="hidden sm:block text-[9px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                                                {{ student.student_number }} <span v-if="student.section">• {{ student.section }}</span>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </div>
+
+                                <!-- Mobile Sub-info (ID/Section) -->
+                                <div class="sm:hidden flex items-center px-12 -mt-1">
+                                    <div class="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-[0.15em] leading-none">
+                                        {{ student.student_number }} <span class="mx-1.5 opacity-30">•</span> {{ student.section || 'No Section' }}
                                     </div>
                                 </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-xs sm:text-sm font-bold truncate group-hover/info:text-zinc-600 dark:group-hover/info:text-zinc-300 transition-colors text-zinc-900 dark:text-white">{{ student.name }}</div>
-                                    <div class="text-[9px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest mt-0.5">{{ student.student_number }} <span v-if="student.section">• {{ student.section }}</span></div>
-                                </div>
-                            </Link>
 
-                            <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-                                <button
-                                    @click="openEditModal(student)"
-                                    class="p-2 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95"
-                                    title="Edit Student"
-                                >
-                                    <Pencil class="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                    @click="openMoveModal(student.id)"
-                                    class="p-2 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95"
-                                    title="Move Student"
-                                >
-                                    <ArrowRightLeft class="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                    @click="deleteStudent(student)"
-                                    class="p-2 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all active:scale-95"
-                                    title="Remove Student"
-                                >
-                                    <Trash2 class="h-3.5 w-3.5" />
-                                </button>
-                            </div>
+                                <!-- Stats & Actions Group -->
+                                <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-6 mt-1 sm:mt-0 px-2 sm:px-0 sm:flex-1">
+                                    <!-- Attendance Rate -->
+                                    <div class="flex flex-col items-start sm:items-end min-w-[72px]">
+                                        <div class="text-sm sm:text-base font-black leading-none" :class="rateColor(student.attendance_rate)">
+                                            {{ student.attendance_rate }}%
+                                        </div>
+                                        <div class="text-[8px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-1.5 whitespace-nowrap">
+                                            {{ student.total_records }} Records
+                                        </div>
+                                    </div>
 
-                            <div class="text-right shrink-0 min-w-[60px] sm:min-w-[72px]">
-                                <div class="text-sm sm:text-base font-black flex justify-end" :class="rateColor(student.attendance_rate)">
-                                    {{ student.attendance_rate }}%
+                                    <!-- Progress Bar (Desktop Only) -->
+                                    <div class="hidden md:block w-24">
+                                        <div class="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden mix-blend-multiply dark:mix-blend-lighten opacity-80 group-hover:opacity-100 transition-opacity">
+                                            <div class="h-full rounded-full transition-all duration-700" :class="rateBg(student.attendance_rate)" :style="{ width: `${student.attendance_rate}%` }"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="flex items-center gap-1 sm:gap-2">
+                                        <button 
+                                            @click="openEditModal(student)" 
+                                            class="p-2 sm:p-2.5 rounded-xl border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 hover:bg-white dark:hover:bg-zinc-900 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-90"
+                                            title="Edit Student"
+                                        >
+                                            <Pencil class="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                        </button>
+                                        <button 
+                                            @click="openMoveModal(student.id)" 
+                                            class="p-2 sm:p-2.5 rounded-xl border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 hover:bg-white dark:hover:bg-zinc-900 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-90"
+                                            title="Move Student"
+                                        >
+                                            <ArrowRightLeft class="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                        </button>
+                                        <button 
+                                            @click="() => deleteStudent(student)" 
+                                            class="p-2 sm:p-2.5 rounded-xl border border-transparent hover:border-rose-100 dark:hover:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-zinc-400 hover:text-rose-500 transition-all active:scale-90"
+                                            title="Remove Student"
+                                        >
+                                            <Trash2 class="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="text-[8px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">{{ student.total_records }} records</div>
                             </div>
-                            <div class="hidden md:block w-24">
-                                <div class="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden mix-blend-multiply dark:mix-blend-lighten opacity-80 group-hover:opacity-100 transition-opacity shadow-inner">
-                                    <div class="h-full rounded-full transition-all" :class="rateBg(student.attendance_rate)" :style="{ width: `${student.attendance_rate}%` }"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
+                        </template>
                     </div>
 
                     <!-- Show More Button -->

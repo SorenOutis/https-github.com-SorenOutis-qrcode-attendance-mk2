@@ -442,6 +442,18 @@ function closeWelcomeModal() {
     startOnboardingTour();
 }
 
+function rateColor(rate: number) {
+    if (rate >= 90) return 'text-emerald-500';
+    if (rate >= 75) return 'text-amber-500';
+    return 'text-rose-500';
+}
+
+function rateBg(rate: number) {
+    if (rate >= 90) return 'bg-emerald-500';
+    if (rate >= 75) return 'bg-amber-500';
+    return 'bg-rose-500';
+}
+
 // Group attendance records by local date (most-recent date first)
 const groupedAttendanceHistory = computed(() => {
     const groups: { date: string; label: string; records: AttendanceRecord[] }[] = [];
@@ -1231,7 +1243,7 @@ onMounted(() => {
                 <div class="relative flex-1 group w-full">
                     <Search class="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 transition-colors group-focus-within:text-zinc-900 dark:group-focus-within:text-white" />
                     <Input
-                        v-model="search"
+                        v-model="searchQuery"
                         placeholder="Search Students, Sections or IDs..."
                         class="h-12 w-full pl-14 pr-4 rounded-2xl bg-zinc-50/50 dark:bg-black/30 border-0 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white transition-all text-sm font-medium"
                     />
@@ -1239,7 +1251,7 @@ onMounted(() => {
                 
                 <div class="flex items-center gap-3 shrink-0">
                     <button
-                        @click="openAddModal"
+                        @click="openCreateModal"
                         class="flex items-center gap-2 h-12 px-6 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-[0.97] shadow-xl shadow-zinc-900/10 dark:shadow-none"
                     >
                         <Plus class="h-4 w-4" />
@@ -1249,7 +1261,7 @@ onMounted(() => {
                     <div class="h-8 w-px bg-zinc-100 dark:bg-white/10 mx-1 hidden md:block"></div>
                     
                     <button
-                        @click="toggleOnlyScheduledToday"
+                        @click="showOnlyScheduledToday = !showOnlyScheduledToday"
                         class="flex items-center justify-center h-12 w-12 rounded-2xl transition-all active:scale-90"
                         :class="showOnlyScheduledToday ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-transparent hover:bg-zinc-200'"
                         title="Show only today's scheduled students"

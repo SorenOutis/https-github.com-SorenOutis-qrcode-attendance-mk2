@@ -86,7 +86,7 @@ type Paginator<T> = {
 type PageProps = {
     students: Paginator<Student>;
     trashedStudents: Student[];
-    subjects: { id: number; name: string }[];
+    subjects: { id: number; name: string, schedule?: any[] }[];
     attendanceStats?: { Present: number; Late: number; Absent: number; Excused: number; };
     attendanceRate?: number;
     atRiskCount: number;
@@ -485,15 +485,26 @@ const schedules = computed(() => {
     const slots: any[] = [];
     selectedSubjectIds.value.forEach(id => {
         const subject = props.subjects.find(s => s.id === id);
-        if (subject && subject.schedule) {
-            subject.schedule.forEach((s: any) => {
-                slots.push({
-                    day: s.day,
-                    subject_id: subject.id,
-                    start: s.start,
-                    end: s.end
+        if (subject) {
+            if (subject.schedule && subject.schedule.length > 0) {
+                subject.schedule.forEach((s: any) => {
+                    slots.push({
+                        day: s.day,
+                        subject_id: subject.id,
+                        start: s.start,
+                        end: s.end
+                    });
                 });
-            });
+            } else {
+                // FALLBACK: If a subject has NO schedule defined, we must still add a placeholder slot
+                // to the student data so they are technically "enrolled" in that subject_id.
+                slots.push({
+                    day: 'Monday',
+                    subject_id: subject.id,
+                    start: '08:00',
+                    end: '09:00'
+                });
+            }
         }
     });
     return slots;
@@ -503,15 +514,26 @@ const editSchedules = computed(() => {
     const slots: any[] = [];
     editSelectedSubjectIds.value.forEach(id => {
         const subject = props.subjects.find(s => s.id === id);
-        if (subject && subject.schedule) {
-            subject.schedule.forEach((s: any) => {
-                slots.push({
-                    day: s.day,
-                    subject_id: subject.id,
-                    start: s.start,
-                    end: s.end
+        if (subject) {
+            if (subject.schedule && subject.schedule.length > 0) {
+                subject.schedule.forEach((s: any) => {
+                    slots.push({
+                        day: s.day,
+                        subject_id: subject.id,
+                        start: s.start,
+                        end: s.end
+                    });
                 });
-            });
+            } else {
+                // FALLBACK: If a subject has NO schedule defined, we must still add a placeholder slot
+                // to the student data so they are technically "enrolled" in that subject_id.
+                slots.push({
+                    day: 'Monday',
+                    subject_id: subject.id,
+                    start: '08:00',
+                    end: '09:00'
+                });
+            }
         }
     });
     return slots;

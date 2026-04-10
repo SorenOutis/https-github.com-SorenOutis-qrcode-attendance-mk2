@@ -86,15 +86,27 @@ const schedules = computed(() => {
     const slots: any[] = [];
     selectedSubjectIds.value.forEach(id => {
         const subject = props.subjects.find(s => s.id === id);
-        if (subject && subject.schedule) {
-            subject.schedule.forEach((s: any) => {
-                slots.push({
-                    day: s.day,
-                    subject_id: subject.id,
-                    start: s.start,
-                    end: s.end
+        if (subject) {
+            if (subject.schedule && subject.schedule.length > 0) {
+                subject.schedule.forEach((s: any) => {
+                    slots.push({
+                        day: s.day,
+                        subject_id: subject.id,
+                        start: s.start,
+                        end: s.end
+                    });
                 });
-            });
+            } else {
+                // FALLBACK: If a subject has NO schedule defined, we must still add a placeholder slot
+                // to the student data so they are technically "enrolled" in that subject_id.
+                // We'll use a Monday 8-9am default that satisfies backend validation.
+                slots.push({
+                    day: 'Monday',
+                    subject_id: subject.id,
+                    start: '08:00',
+                    end: '09:00'
+                });
+            }
         }
     });
     return slots;

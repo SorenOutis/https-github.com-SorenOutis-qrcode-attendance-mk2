@@ -25,9 +25,9 @@ class SubjectAttendanceController extends Controller
             : CarbonImmutable::now()->endOfDay();
 
         $subjects = Subject::query()
-            ->select(['id', 'name', 'icon', 'color', 'description'])
+            ->select(['id', 'name', 'icon', 'color', 'description', 'schedule'])
             ->orderBy('name', 'asc')
-            ->get(['id', 'name', 'icon', 'color', 'description'])
+            ->get(['id', 'name', 'icon', 'color', 'description', 'schedule'])
             ->map(function ($subject) use ($startDate, $endDate) {
                 $enrolledIds = Student::query()
                     ->select(['id', 'schedule'])
@@ -69,6 +69,7 @@ class SubjectAttendanceController extends Controller
                     'icon' => $subject->icon,
                     'color' => $subject->color,
                     'description' => $subject->description,
+                    'schedule' => $subject->schedule,
                     'enrolled' => $enrolledCount,
                     'attendance_rate' => $rate,
                     'total_records' => $totalRecords,

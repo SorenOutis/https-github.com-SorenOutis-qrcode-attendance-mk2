@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { 
     CalendarDays, BookOpen, ArrowRight, Calendar, Users, Activity, 
     Database, FlaskConical, LayoutGrid, Calculator, ChartBar, Star, 
-    CheckCircle2, XCircle, UserMinus, Percent
+    CheckCircle2, XCircle, UserMinus, Percent, Clock
 } from 'lucide-vue-next';
 import { ref, onMounted, computed } from 'vue';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ type Subject = {
     icon?: string;
     color?: string;
     description?: string;
+    schedule?: any[];
     stats?: {
         enrolled: number;
         present: number;
@@ -103,6 +104,12 @@ const handleDateChange = () => {
     router.get('/manage-attendance', { date: selectedDate.value }, { preserveState: true });
 };
 
+const formatSchedule = (schedule?: any[]) => {
+    if (!schedule || schedule.length === 0) return 'NO SCHEDULE SET';
+    const slots = schedule.map(s => `${s.day.substring(0, 3)} ${s.start}-${s.end}`);
+    return slots.join(' • ');
+};
+
 onMounted(() => {
     if (cardsRef.value) {
         gsap.set(cardsRef.value, { perspective: 1000 });
@@ -178,9 +185,17 @@ onMounted(() => {
                                 <h3 class="font-serif font-black text-lg leading-tight line-clamp-1 break-all group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white" :title="subject.name">
                                     {{ subject.name }}
                                 </h3>
-                                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
-                                    {{ subject.stats?.enrolled || 0 }} Enrolled
-                                </p>
+                                <div class="flex flex-col gap-1 mt-1">
+                                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">
+                                        {{ subject.stats?.enrolled || 0 }} Enrolled
+                                    </p>
+                                    <div class="flex items-center gap-1 py-0.5 px-2 rounded-lg bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-100 dark:border-zinc-800 w-fit">
+                                        <Clock class="h-2.5 w-2.5 text-zinc-400" />
+                                        <span class="text-[8px] font-black uppercase tracking-widest" :class="!subject.schedule || subject.schedule.length === 0 ? 'text-rose-500' : 'text-zinc-500'">
+                                            {{ formatSchedule(subject.schedule) }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                             <!-- Small percentage badge -->
                             <div 

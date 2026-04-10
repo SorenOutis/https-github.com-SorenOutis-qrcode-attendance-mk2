@@ -28,6 +28,7 @@ import {
     Loader2,
     Star,
     Users,
+    Clock,
 } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { Line } from 'vue-chartjs';
@@ -44,6 +45,7 @@ type SubjectData = {
     icon: string | null;
     color: string | null;
     description: string | null;
+    schedule: any[] | null;
     enrolled: number;
     attendance_rate: number;
     total_records: number;
@@ -228,6 +230,13 @@ const sparklineOptions = {
     },
 };
 
+const formatSchedule = (schedule: any[] | null) => {
+    if (!schedule || schedule.length === 0) return 'NO SCHEDULE SET';
+    // Group identical times
+    const slots = (schedule as any[]).map(s => `${s.day.substring(0, 3)} ${s.start}-${s.end}`);
+    return slots.join(' • ');
+};
+
 onMounted(() => {
     if (!cardsRef.value) {
         return;
@@ -368,7 +377,15 @@ onMounted(() => {
                                 <h3 class="font-serif font-black text-base sm:text-lg tracking-tight leading-tight group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
                                     {{ subject.name }}
                                 </h3>
-                                <p class="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">{{ subject.enrolled }} enrolled</p>
+                                <div class="flex flex-col gap-1 mt-1">
+                                    <p class="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">{{ subject.enrolled }} enrolled</p>
+                                    <div class="flex items-center gap-1.5 py-1 px-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 w-fit">
+                                        <Clock class="h-2.5 w-2.5 text-zinc-400" />
+                                        <span class="text-[8px] font-black uppercase tracking-widest" :class="!subject.schedule || subject.schedule.length === 0 ? 'text-rose-500' : 'text-zinc-500'">
+                                            {{ formatSchedule(subject.schedule) }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="h-10 w-10 flex items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 group-hover:bg-zinc-950 dark:group-hover:bg-white group-hover:border-zinc-950 dark:group-hover:border-white transition-all duration-300">

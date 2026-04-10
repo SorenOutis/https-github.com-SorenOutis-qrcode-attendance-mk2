@@ -21,7 +21,7 @@ class ManualAttendanceController extends Controller
         $dayOfWeek = $parsedDate->format('l');
 
         $subjects = Subject::query()
-            ->select('id', 'name', 'icon', 'color', 'description')
+            ->select('id', 'name', 'icon', 'color', 'description', 'schedule')
             ->orderBy('name', 'asc')
             ->get()
             ->map(function ($subject) use ($date) {

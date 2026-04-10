@@ -10,7 +10,7 @@ const props = defineProps<Props>();
 </script>
 
 <template>
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 px-1 pt-6 pb-2">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 px-1 pt-0 sm:pt-6 pb-2">
         <div id="dashboard-welcome">
             <div class="flex items-center gap-2 mb-2">
                 <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>

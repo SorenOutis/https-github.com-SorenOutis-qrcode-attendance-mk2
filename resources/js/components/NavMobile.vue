@@ -78,7 +78,7 @@ const handleItemClick = (item: any, index: number) => {
 </script>
 
 <template>
-    <div class="fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 px-4 md:hidden">
+    <div class="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 px-4 md:hidden">
         <nav class="relative flex h-16 items-center justify-around rounded-[2rem] bg-zinc-900/90 dark:bg-zinc-50/90 px-1 shadow-2xl backdrop-blur-3xl border border-white/10 dark:border-black/5 overflow-hidden">
             
             <!-- Sliding Active Indicator -->

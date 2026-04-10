@@ -16,7 +16,7 @@ withDefaults(
 
 <template>
     <header
-        class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b border-zinc-100/50 dark:border-white/5 px-6 transition-all backdrop-blur-xl bg-white/60 dark:bg-zinc-950/60 md:px-8"
+        class="sticky top-0 z-40 flex h-[calc(4rem+env(safe-area-inset-top))] shrink-0 items-center gap-2 border-b border-zinc-100/50 dark:border-white/5 px-6 pt-[env(safe-area-inset-top)] transition-all backdrop-blur-xl bg-white/60 dark:bg-zinc-950/60 md:px-8"
     >
         <div class="flex items-center gap-4">
             <SidebarTrigger class="-ml-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors" />

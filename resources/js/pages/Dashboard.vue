@@ -556,7 +556,7 @@ const startTour = () => {
     <AppLayout title="Dashboard">
         <Head title="Dashboard" />
 
-        <div class="max-w-[1600px] mx-auto space-y-8 pb-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[1600px] mx-auto space-y-4 sm:space-y-8 pb-20 px-4 sm:px-6 lg:px-8 pt-2 sm:pt-0">
             <!-- Header Section -->
             <DashboardHeader 
                 :greeting="greeting"
@@ -566,8 +566,8 @@ const startTour = () => {
             />
 
             <!-- Stats & Quick Actions -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div class="lg:col-span-8 space-y-6" data-tour="stats" data-section>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
+                <div class="lg:col-span-8 space-y-4 sm:space-y-6" data-tour="stats" data-section>
                     <StatCards 
                         :attendance-stats="props.attendanceStats"
                         :attendance-rate="props.attendanceRate"

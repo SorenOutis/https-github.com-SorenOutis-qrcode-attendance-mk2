@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Users, Table, LayoutGrid, Search, ChevronLeft, ChevronRight, UserCheck, Zap, UserX, Scan, UserPlus, ArrowLeftRight, Trash2 } from 'lucide-vue-next';
+import { Users, Table, LayoutGrid, Search, ChevronLeft, ChevronRight, UserCheck, Zap, UserX, Scan, UserPlus, ArrowLeftRight, Trash2, Plus, Calendar } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 type Student = {
@@ -30,7 +31,16 @@ type Props = {
 };
 
 const props = defineProps<Props>();
-const emit = defineEmits(['update:activeTab', 'update:viewMode', 'nextPage', 'prevPage', 'openInfo', 'openCreate', 'toggleScheduled']);
+const emit = defineEmits([
+    'update:activeTab',
+    'update:viewMode',
+    'update:searchQuery',
+    'update:showOnlyScheduledToday',
+    'nextPage',
+    'prevPage',
+    'openInfo',
+    'openCreate',
+]);
 
 function getAvatarGradient(name: string) {
     const colors = [
@@ -51,6 +61,7 @@ function getAvatarGradient(name: string) {
     <div class="relative overflow-hidden rounded-[1.8rem] sm:rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl shadow-xl">
         <!-- Header -->
         <div class="flex flex-col border-b border-zinc-200/50 dark:border-zinc-800/80 p-4 sm:p-6 gap-4 bg-zinc-50/30 dark:bg-zinc-900/40">
+            <!-- Title row -->
             <div class="flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <div class="h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shrink-0 shadow-lg">
@@ -83,8 +94,45 @@ function getAvatarGradient(name: string) {
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="flex rounded-xl bg-zinc-100 dark:bg-zinc-800/50 p-1 border border-zinc-200/50 dark:border-zinc-700/50 shrink-0">
+            <!-- Search + Actions row -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <!-- Search input -->
+                <div class="relative flex-1 group" data-tour="search">
+                    <Search class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 transition-colors group-focus-within:text-zinc-900 dark:group-focus-within:text-white pointer-events-none" />
+                    <Input
+                        :model-value="searchQuery"
+                        @update:model-value="val => emit('update:searchQuery', val as string)"
+                        placeholder="Search students, sections or IDs…"
+                        class="h-10 w-full pl-11 pr-4 rounded-xl bg-zinc-100/70 dark:bg-zinc-800/50 border-0 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white transition-all text-sm font-bold"
+                    />
+                </div>
+
+                <!-- Quick Add + Calendar toggle -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <button
+                        @click="emit('openCreate')"
+                        class="flex items-center gap-2 h-10 px-4 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-[0.97] shadow-lg shadow-zinc-900/10 dark:shadow-none whitespace-nowrap"
+                    >
+                        <Plus class="h-4 w-4" />
+                        Quick Add
+                    </button>
+
+                    <button
+                        @click="emit('update:showOnlyScheduledToday', !showOnlyScheduledToday)"
+                        class="flex items-center justify-center h-10 w-10 rounded-xl transition-all active:scale-90"
+                        :class="showOnlyScheduledToday
+                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-inner'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-transparent hover:bg-zinc-200 dark:hover:bg-zinc-700'"
+                        title="Show only today's scheduled students"
+                    >
+                        <Calendar class="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab row -->
+            <div class="flex items-center">
+                <div class="flex rounded-xl bg-zinc-100 dark:bg-zinc-800/50 p-1 border border-zinc-200/50 dark:border-zinc-700/50">
                     <button
                         class="rounded-lg px-4 py-1.5 text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all"
                         :class="activeTab === 'active' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'"

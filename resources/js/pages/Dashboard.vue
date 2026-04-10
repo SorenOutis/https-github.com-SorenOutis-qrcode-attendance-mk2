@@ -14,7 +14,6 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import DashboardHeader from '@/components/dashboard/DashboardHeader.vue';
 import StatCards from '@/components/dashboard/StatCards.vue';
 import QuickActions from '@/components/dashboard/QuickActions.vue';
-import SearchBar from '@/components/dashboard/SearchBar.vue';
 import StudentList from '@/components/dashboard/StudentList.vue';
 import AtRiskList from '@/components/dashboard/AtRiskList.vue';
 import AttendanceChart from '@/components/dashboard/AttendanceChart.vue';
@@ -575,12 +574,6 @@ const startTour = () => {
                         :animated-stats="animatedStats"
                         v-model:status-filter="statusFilter"
                     />
-                    
-                    <SearchBar 
-                        v-model:search-query="searchQuery"
-                        v-model:show-only-scheduled-today="showOnlyScheduledToday"
-                        @open-create="createModalOpen = true"
-                    />
                 </div>
 
                 <div class="lg:col-span-4" data-tour="actions" data-section>
@@ -599,8 +592,8 @@ const startTour = () => {
                         :students="paginatedStudents"
                         v-model:active-tab="activeTab"
                         v-model:view-mode="viewMode"
-                        :search-query="searchQuery"
-                        :show-only-scheduled-today="showOnlyScheduledToday"
+                        v-model:search-query="searchQuery"
+                        v-model:show-only-scheduled-today="showOnlyScheduledToday"
                         :today-day-name="todayDayName"
                         :current-page="currentPage"
                         :total-pages="totalPages"
@@ -608,6 +601,7 @@ const startTour = () => {
                         @next-page="currentPage++"
                         @prev-page="currentPage--"
                         @open-info="openStudentInfoModal"
+                        @open-create="createModalOpen = true"
                     />
                 </div>
 

@@ -1,86 +1,120 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, QrCode, User, UserCheck, ClipboardList, MessageCircle } from 'lucide-vue-next';
+import { LayoutGrid, QrCode, User, UserCheck, MessageCircle } from 'lucide-vue-next';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { useScanner } from '@/composables/useScanner';
 import { dashboard } from '@/routes';
 import { edit as profileEdit } from '@/routes/profile';
-import { index as reportsIndex } from '@/routes/reports';
+import { onMounted, ref, watch } from 'vue';
+import { gsap } from 'gsap';
 
 const { isCurrentUrl } = useCurrentUrl();
 const { open: openScanner } = useScanner();
 
 const navItems = [
     {
-        title: 'Dashboard',
+        title: 'Dash',
         href: dashboard().url,
         icon: LayoutGrid,
     },
     {
-        title: 'Attendance',
+        title: 'Sheets',
         href: '/manage-attendance',
         icon: UserCheck,
     },
     {
-        title: 'Scan QR',
+        title: 'Scan',
         icon: QrCode,
         isScanner: true,
     },
     {
-        title: 'Excuses',
+        title: 'Inbox',
         href: '/excuses',
         icon: MessageCircle,
     },
     {
-        title: 'Profile',
+        title: 'Me',
         href: profileEdit().url,
         icon: User,
     },
 ];
 
-const handleItemClick = (item: any) => {
+const activeIndex = ref(-1);
+const itemRefs = ref<HTMLElement[]>([]);
+const indicatorRef = ref<HTMLElement | null>(null);
+
+function updateActiveIndex() {
+    activeIndex.value = navItems.findIndex(item => !item.isScanner && isCurrentUrl(item.href!));
+}
+
+function animateIndicator() {
+    if (activeIndex.value !== -1 && itemRefs.value[activeIndex.value] && indicatorRef.value) {
+        const target = itemRefs.value[activeIndex.value];
+        gsap.to(indicatorRef.value, {
+            x: target.offsetLeft + (target.offsetWidth / 2) - 20,
+            opacity: 1,
+            duration: 0.5,
+            ease: 'power4.out'
+        });
+    } else if (indicatorRef.value) {
+        gsap.to(indicatorRef.value, { opacity: 0, duration: 0.3 });
+    }
+}
+
+onMounted(() => {
+    updateActiveIndex();
+    setTimeout(animateIndicator, 100);
+});
+
+watch(() => activeIndex.value, animateIndicator);
+
+const handleItemClick = (item: any, index: number) => {
     if (item.isScanner) {
         openScanner();
+    } else {
+        activeIndex.value = index;
     }
 };
 </script>
 
 <template>
-    <div class="fixed bottom-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 px-4 md:hidden">
-        <nav class="flex h-16 items-center justify-around rounded-[2.5rem] bg-white px-2 shadow-[0_15px_50px_-12px_rgba(0,0,0,0.15)] ring-1 ring-zinc-950/5 backdrop-blur-md dark:bg-zinc-900 dark:ring-white/10 dark:shadow-[0_15px_50px_-12px_rgba(0,0,0,0.5)]">
-            <template v-for="item in navItems" :key="item.title">
+    <div class="fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 px-4 md:hidden">
+        <nav class="relative flex h-16 items-center justify-around rounded-[2rem] bg-zinc-900/90 dark:bg-zinc-50/90 px-1 shadow-2xl backdrop-blur-3xl border border-white/10 dark:border-black/5 overflow-hidden">
+            
+            <!-- Sliding Active Indicator -->
+            <div 
+                ref="indicatorRef"
+                class="absolute bottom-2 h-1 w-10 rounded-full bg-white dark:bg-zinc-900 opacity-0 pointer-events-none z-0"
+            ></div>
+
+            <template v-for="(item, index) in navItems" :key="item.title">
                 <component
                     :is="item.isScanner ? 'button' : Link"
                     :href="item.href"
-                    class="relative flex flex-1 flex-col items-center justify-center gap-1 transition-all active:scale-90"
-                    @click="handleItemClick(item)"
+                    ref="itemRefs"
+                    class="relative z-10 flex flex-1 flex-col items-center justify-center gap-0.5 transition-all outline-none"
+                    @click="handleItemClick(item, index)"
                 >
-                    <!-- Dot indicator ABOVE the item -->
                     <div 
-                        v-if="!item.isScanner && isCurrentUrl(item.href!)"
-                        class="absolute -top-1 h-1 w-1 rounded-full bg-zinc-950 dark:bg-zinc-50"
-                    ></div>
-
-                    <div 
-                        class="flex items-center justify-center rounded-xl transition-colors"
+                        class="flex items-center justify-center rounded-xl transition-all duration-500"
                         :class="[
-                            !item.isScanner && isCurrentUrl(item.href!) 
-                                ? 'text-zinc-950 dark:text-zinc-50' 
-                                : 'text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500'
+                            !item.isScanner && activeIndex === index
+                                ? 'text-white dark:text-zinc-900 scale-110' 
+                                : 'text-zinc-500 group-hover:text-zinc-300'
                         ]"
                     >
                         <component 
                             :is="item.icon" 
-                            :class="!item.isScanner && isCurrentUrl(item.href!) ? 'size-6.5 stroke-[2.5px]' : 'size-6 stroke-[1.5px]'" 
+                            :class="!item.isScanner && activeIndex === index ? 'size-6 stroke-[2.5px]' : 'size-5.5 stroke-[1.5px]'" 
                         />
                     </div>
                     
                     <span 
-                        class="text-[10px] font-medium tracking-tight transition-colors"
+                        class="text-[8px] font-black uppercase tracking-[0.15em] transition-all duration-500"
                         :class="[
-                            !item.isScanner && isCurrentUrl(item.href!) 
-                                ? 'font-bold text-zinc-950 dark:text-zinc-50' 
-                                : 'text-zinc-400 dark:text-zinc-500'
+                            !item.isScanner && activeIndex === index 
+                                ? 'text-white dark:text-zinc-900 opacity-100' 
+                                : 'text-zinc-500 opacity-60'
                         ]"
                     >
                         {{ item.title }}
@@ -92,10 +126,11 @@ const handleItemClick = (item: any) => {
 </template>
 
 <style scoped>
-/* Ensure smooth transitions */
-.transition-all {
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 </style>

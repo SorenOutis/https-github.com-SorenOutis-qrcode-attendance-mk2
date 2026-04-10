@@ -1140,153 +1140,123 @@ onMounted(() => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex min-h-full flex-1 flex-col gap-4 sm:gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
-            <!-- Welcome Header -->
-            <div class="flex items-center justify-between gap-4 px-1">
-                <div id="dashboard-welcome" class="flex flex-col gap-0.5 sm:gap-1">
-                    <h1 class="text-xl sm:text-3xl font-serif font-bold tracking-tight">
-                        {{ greeting }}, {{ userName }}!
-                    </h1>
-                    <p class="text-xs sm:text-sm text-muted-foreground font-medium">
-                        {{ greetingSubtext }}
-                    </p>
-                    <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] text-muted-foreground mt-0.5 sm:mt-1">
-                        <Calendar class="h-3 sm:h-3.5 w-3 sm:w-3.5" />
-                        <span>{{ formattedCurrentDate }}</span>
+            <!-- Hero Header -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 px-1 py-4">
+                <div id="dashboard-welcome">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500">Live Portal</span>
                     </div>
+                    <h1 class="text-4xl sm:text-6xl font-serif font-black tracking-tighter text-zinc-900 dark:text-white leading-none">
+                        {{ greeting }}, <span class="text-zinc-400 dark:text-zinc-600 italic font-medium">{{ userName }}.</span>
+                    </h1>
                 </div>
 
-                <!-- Desktop Scan Button -->
-                <Button 
-                    variant="outline" 
-                    size="lg" 
-                    data-tour="scan"
-                    class="flex h-10 sm:h-12 items-center gap-2 sm:gap-3 rounded-2xl border-zinc-200/50 bg-white px-3 sm:px-5 text-sm font-bold shadow-sm transition-all hover:bg-zinc-50 hover:text-zinc-900 hover:shadow-md active:scale-95 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 group shrink-0"
-                    @click="openScanner"
-                >
-                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 group-hover:scale-110 transition-transform">
-                        <QrCode class="size-4" />
+                <div class="flex flex-col items-end gap-1">
+                    <div class="text-4xl sm:text-5xl font-serif font-black" :class="rateColor(attendanceRate ?? 0)">
+                        {{ (attendanceRate ?? 0).toFixed(1) }}<span class="text-xl opacity-40">%</span>
                     </div>
-                    <span class="hidden sm:inline">Scan QR Code</span>
-                </Button>
+                    <div class="text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] px-1">Average Attendance</div>
+                </div>
             </div>
 
-            <!-- Consolidated stats card (mobile + desktop) -->
-            <div ref="cardsRef" data-tour="stats" class="relative overflow-hidden rounded-2xl border border-white/20 dark:border-white/5 bg-white/40 dark:bg-black/40 backdrop-blur-xl shadow-xl p-4 sm:p-5">
-                <Users class="absolute right-[-2%] top-1/2 -translate-y-1/2 h-24 w-24 sm:h-28 sm:w-28 text-zinc-900/[0.04] dark:text-white/[0.04] pointer-events-none" />
-                <div class="relative z-10">
-                    <div class="mb-4">
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Total Students</p>
-                        <p class="mt-1.5 text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-white">{{ searchQuery ? filteredStudents.length : Math.round(animatedStats.total) }}</p>
-                    </div>
-
-                    <div v-if="!props.attendanceStats" class="grid grid-cols-2 gap-3">
-                        <SkeletonCard variant="stat" v-for="i in 4" :key="i" />
-                    </div>
-                    <div v-else class="grid grid-cols-2 gap-3">
-                        <button
-                            data-card
-                            @click="statusFilter = statusFilter === 'Present' ? null : 'Present'; router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })"
-                            class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
-                            :class="statusFilter === 'Present' ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'border-white/20 dark:border-white/5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md text-zinc-900 dark:text-zinc-100 hover:border-emerald-300 hover:bg-emerald-500/10'"
-                        >
-                            <CheckCircle2 class="absolute -right-2 -bottom-2 h-14 w-14 text-emerald-400/10 pointer-events-none" />
-                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Present</p>
-                            <p class="text-2xl font-bold">{{ Math.round(animatedStats.present) }}</p>
-                        </button>
-
-                        <button
-                            data-card
-                            @click="statusFilter = statusFilter === 'Late' ? null : 'Late'; router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })"
-                            class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
-                            :class="statusFilter === 'Late' ? 'border-amber-400/50 bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'border-white/20 dark:border-white/5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md text-zinc-900 dark:text-zinc-100 hover:border-amber-300 hover:bg-amber-500/10'"
-                        >
-                            <Zap class="absolute -right-2 -bottom-2 h-14 w-14 text-amber-400/10 pointer-events-none" />
-                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Late</p>
-                            <p class="text-2xl font-bold">{{ Math.round(animatedStats.late) }}</p>
-                        </button>
-
-                        <button
-                            data-card
-                            @click="statusFilter = statusFilter === 'Absent' ? null : 'Absent'; router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })"
-                            class="relative rounded-xl border p-3 text-left text-xs font-semibold transition-all overflow-hidden"
-                            :class="statusFilter === 'Absent' ? 'border-rose-400/50 bg-rose-500/10 text-rose-700 dark:text-rose-400' : 'border-white/20 dark:border-white/5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md text-zinc-900 dark:text-zinc-100 hover:border-rose-300 hover:bg-rose-500/10'"
-                        >
-                            <UserX class="absolute -right-2 -bottom-2 h-14 w-14 text-rose-400/10 pointer-events-none" />
-                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Absent</p>
-                            <p class="text-2xl font-bold">{{ Math.round(animatedStats.absent) }}</p>
-                        </button>
-
-                        <div 
-                            data-card
-                            class="relative rounded-xl border border-white/20 dark:border-white/5 p-3 text-left text-xs font-semibold bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md text-zinc-900 dark:text-zinc-100 overflow-hidden"
-                        >
-                            <PieChart class="absolute -right-2 -bottom-2 h-14 w-14 text-zinc-400/10 pointer-events-none" />
-                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mb-1">Attendance Rate</p>
-                            <p v-if="props.attendanceRate !== undefined" class="text-2xl font-bold">{{ attendanceRate.toFixed(1) }}%</p>
-                            <p v-else class="h-8 w-16 bg-zinc-200 dark:bg-zinc-800 animate-pulse rounded mt-1"></p>
-                            <div class="mt-2 h-1.5 w-full rounded-full bg-emerald-100 dark:bg-emerald-900/30 overflow-hidden">
-                                <div :class="['h-full transition-all duration-700', attendanceRateClass]" :style="{ width: Math.min(attendanceRate, 100) + '%' }"></div>
+            <!-- Stats Grid - High End Responsive -->
+            <div ref="cardsRef" data-tour="stats" class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 px-1">
+                <template v-if="!props.attendanceStats">
+                    <SkeletonCard v-for="i in 4" :key="i" variant="stat" />
+                </template>
+                <template v-else>
+                    <button
+                        v-for="stat in [
+                            { label: 'Present', val: animatedStats.present, key: 'Present', color: 'emerald', icon: UserCheck },
+                            { label: 'Late', val: animatedStats.late, key: 'Late', color: 'amber', icon: Zap },
+                            { label: 'Absent', val: animatedStats.absent, key: 'Absent', color: 'rose', icon: UserX },
+                            { label: 'Total', val: animatedStats.total, key: null, color: 'zinc', icon: Users },
+                        ]"
+                        :key="stat.label"
+                        data-card
+                        @click="stat.key ? (statusFilter = statusFilter === stat.key ? null : stat.key, router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })) : null"
+                        class="group relative overflow-hidden rounded-[2.5rem] p-5 sm:p-7 transition-all duration-500 hover:-translate-y-2"
+                        :class="statusFilter === stat.key 
+                            ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xl' 
+                            : 'bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-white/50 dark:border-white/5 shadow-sm hover:shadow-2xl'"
+                    >
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110" 
+                                    :class="statusFilter === stat.key ? 'bg-white/20 text-white dark:bg-zinc-900/10 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'">
+                                    <component :is="stat.icon" class="h-5 w-5" />
+                                </div>
+                                <div v-if="statusFilter === stat.key" class="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></div>
                             </div>
+                            <div class="text-3xl sm:text-4xl font-serif font-black tabular-nums">{{ Math.round(stat.val) }}</div>
+                            <div class="text-[10px] font-black uppercase tracking-[0.15em] opacity-60 mt-1">{{ stat.label }}</div>
                         </div>
-                    </div>
-                </div>
+                        
+                        <!-- Accent Glow -->
+                        <div class="absolute -right-6 -bottom-6 h-24 w-24 blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-700" :class="`bg-${stat.color}-500`"></div>
+                    </button>
+                </template>
             </div>
 
             <!-- Quick Actions Row -->
-            <div class="grid grid-cols-4 gap-2 sm:gap-3">
+            <div class="grid grid-cols-4 gap-2 sm:gap-4 px-1">
                 <button
-                    @click="openScanner"
-                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 sm:shadow-sm group"
+                    v-for="action in [
+                        { label: 'Scan QR', sub: 'Record now', icon: Scan, onClick: openScanner, color: 'zinc', primary: true },
+                        { label: 'Reports', sub: 'View data', icon: PieChart, href: '/reports', color: 'zinc' },
+                        { label: 'Calendar', sub: 'Schedule', icon: Calendar, href: '/calendar', color: 'zinc' },
+                        { label: 'Add Student', sub: 'New entry', icon: UserPlus, onClick: openCreateModal, color: 'zinc' }
+                    ]"
+                    :key="action.label"
+                    @click="action.onClick ? action.onClick() : router.visit(action.href!)"
+                    class="group flex flex-col items-center justify-center gap-2 p-2 sm:p-4 rounded-[2rem] border transition-all hover:-translate-y-1 active:scale-95"
+                    :class="action.primary 
+                        ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:border-white dark:text-zinc-900 shadow-xl shadow-zinc-900/10' 
+                        : 'bg-white dark:bg-zinc-900/50 border-zinc-100 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:border-zinc-200 dark:hover:border-white/10 shadow-sm'"
                 >
-                    <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xl shadow-zinc-900/10 sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
-                        <Scan class="h-5 w-5 sm:h-4 sm:w-4" />
+                    <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110"
+                        :class="action.primary ? 'bg-white/10 dark:bg-zinc-900/10' : 'bg-zinc-50 dark:bg-zinc-800'">
+                        <component :is="action.icon" class="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
-                    <div class="flex flex-col min-w-0 items-center sm:items-start w-full">
-                        <p class="text-[9px] sm:text-xs font-bold text-zinc-900 dark:text-white truncate w-full">Scan QR</p>
-                        <p class="hidden sm:block text-[10px] text-zinc-500 dark:text-zinc-400 truncate w-full">Record attendance</p>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-none">{{ action.label }}</span>
+                        <span class="hidden sm:block text-[8px] font-medium opacity-40 mt-1 uppercase tracking-wider">{{ action.sub }}</span>
                     </div>
                 </button>
+            </div>
 
-                <a
-                    href="/reports"
-                    data-tour="reports"
-                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 sm:shadow-sm group"
-                >
-                    <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
-                        <PieChart class="h-5 w-5 sm:h-4 sm:w-4" />
-                    </div>
-                    <div class="flex flex-col min-w-0 items-center sm:items-start w-full">
-                        <p class="text-[9px] sm:text-xs font-bold text-zinc-700 sm:text-zinc-900 dark:text-zinc-300 dark:sm:text-white truncate w-full">Reports</p>
-                        <p class="hidden sm:block text-[10px] text-zinc-500 dark:text-zinc-400 truncate w-full">View summaries</p>
-                    </div>
-                </a>
-
-                <a
-                    href="/calendar"
-                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 sm:shadow-sm group"
-                >
-                    <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
-                        <Calendar class="h-5 w-5 sm:h-4 sm:w-4" />
-                    </div>
-                    <div class="flex flex-col min-w-0 items-center sm:items-start w-full">
-                        <p class="text-[9px] sm:text-xs font-bold text-zinc-700 sm:text-zinc-900 dark:text-zinc-300 dark:sm:text-white truncate w-full">Calendar</p>
-                        <p class="hidden sm:block text-[10px] text-zinc-500 dark:text-zinc-400 truncate w-full">Schedule view</p>
-                    </div>
-                </a>
-
-                <button
-                    @click="openCreateModal"
-                    data-tour="add-student"
-                    class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800 sm:bg-white dark:sm:bg-black sm:p-4 p-1 text-center sm:text-left sm:hover:bg-zinc-50 dark:sm:hover:bg-zinc-900 sm:shadow-sm group"
-                >
-                    <div class="flex h-[52px] w-[52px] sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full sm:rounded-xl bg-white sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:border-transparent text-zinc-700 dark:text-zinc-300 shadow-sm sm:shadow-none transition-transform sm:group-hover:scale-110 active:scale-95">
-                        <UserPlus class="h-5 w-5 sm:h-4 sm:w-4" />
-                    </div>
-                    <div class="flex flex-col min-w-0 items-center sm:items-start w-full">
-                        <p class="text-[9px] sm:text-xs font-bold text-zinc-700 sm:text-zinc-900 dark:text-zinc-300 dark:sm:text-white truncate w-full">Add Student</p>
-                        <p class="hidden sm:block text-[10px] text-zinc-500 dark:text-zinc-400 truncate w-full">Register new</p>
-                    </div>
-                </button>
+            <!-- Toolbar / Search - Floating Professional Style -->
+            <div class="sticky top-20 z-30 flex flex-col md:flex-row items-center gap-4 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-2xl p-3 sm:p-4 rounded-[2.5rem] border border-white/50 dark:border-white/5 shadow-2xl shadow-zinc-200/50 dark:shadow-none mx-1">
+                <div class="relative flex-1 group w-full">
+                    <Search class="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 transition-colors group-focus-within:text-zinc-900 dark:group-focus-within:text-white" />
+                    <Input
+                        v-model="search"
+                        placeholder="Search Students, Sections or IDs..."
+                        class="h-12 w-full pl-14 pr-4 rounded-2xl bg-zinc-50/50 dark:bg-black/30 border-0 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white transition-all text-sm font-medium"
+                    />
+                </div>
+                
+                <div class="flex items-center gap-3 shrink-0">
+                    <button
+                        @click="openAddModal"
+                        class="flex items-center gap-2 h-12 px-6 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-[0.97] shadow-xl shadow-zinc-900/10 dark:shadow-none"
+                    >
+                        <Plus class="h-4 w-4" />
+                        Quick Add
+                    </button>
+                    
+                    <div class="h-8 w-px bg-zinc-100 dark:bg-white/10 mx-1 hidden md:block"></div>
+                    
+                    <button
+                        @click="toggleOnlyScheduledToday"
+                        class="flex items-center justify-center h-12 w-12 rounded-2xl transition-all active:scale-90"
+                        :class="showOnlyScheduledToday ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-transparent hover:bg-zinc-200'"
+                        title="Show only today's scheduled students"
+                    >
+                        <Calendar class="h-5 w-5" />
+                    </button>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 items-start">

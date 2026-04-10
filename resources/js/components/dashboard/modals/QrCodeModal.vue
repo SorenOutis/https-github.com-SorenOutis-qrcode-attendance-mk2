@@ -11,6 +11,7 @@ type Student = {
     student_number: string;
     section?: string | null;
     qr_token: string;
+    photo?: string | null;
 };
 
 type Props = {
@@ -53,6 +54,19 @@ function handleCopy() {
     copied.value = true;
     setTimeout(() => copied.value = false, 2000);
 }
+
+function handleDownload() {
+    if (!localCanvasRef.value || !props.student) return;
+    const link = document.createElement('a');
+    link.download = `qr-${props.student.student_number}.png`;
+    link.href = localCanvasRef.value.toDataURL('image/png');
+    link.click();
+}
+
+function handlePrint() {
+    if (!props.student) return;
+    window.open(`/students/print-cards?ids=${props.student.id}`, '_blank');
+}
 </script>
 
 <template>
@@ -86,8 +100,13 @@ function handleCopy() {
 
                         <!-- Profile Card -->
                         <div class="mt-8 flex items-center gap-4 p-5 rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5">
-                            <div class="h-12 w-12 rounded-xl bg-zinc-900 dark:bg-zinc-800 flex items-center justify-center text-sm font-black text-white shrink-0">
-                                {{ student.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() }}
+                            <div class="h-12 w-12 rounded-xl bg-zinc-900 dark:bg-zinc-800 flex items-center justify-center text-sm font-black text-white shrink-0 overflow-hidden shadow-lg shadow-zinc-950/20 dark:shadow-white/5">
+                                <template v-if="student.photo">
+                                    <img :src="student.photo" :alt="student.name" class="h-full w-full object-cover">
+                                </template>
+                                <template v-else>
+                                    {{ student.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() }}
+                                </template>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-base font-bold text-zinc-900 dark:text-white truncate leading-none mb-1.5">{{ student.name }}</p>
@@ -146,12 +165,12 @@ function handleCopy() {
                         <RefreshCw class="h-3.5 w-3.5 mr-2" />
                         Regenerate
                     </Button>
-                    <Button variant="outline" size="sm" class="h-11 rounded-[1.2rem] text-[9px] font-black uppercase tracking-widest border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 flex-1 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all" @click="emit('download')">
+                    <Button variant="outline" size="sm" class="h-11 rounded-[1.2rem] text-[9px] font-black uppercase tracking-widest border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 flex-1 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all" @click="handleDownload">
                         <Download class="h-3.5 w-3.5 mr-2" />
                         Save PNG
                     </Button>
                 </div>
-                <Button size="sm" class="h-11 w-full sm:w-auto rounded-[1.2rem] text-[9px] font-black uppercase tracking-widest bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-8 hover:scale-[1.02] active:scale-[0.98] transition-all" @click="emit('print')">
+                <Button size="sm" class="h-11 w-full sm:w-auto rounded-[1.2rem] text-[9px] font-black uppercase tracking-widest bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-8 hover:scale-[1.02] active:scale-[0.98] transition-all" @click="handlePrint">
                     <Printer class="h-3.5 w-3.5 mr-2" />
                     Print ID Card
                 </Button>

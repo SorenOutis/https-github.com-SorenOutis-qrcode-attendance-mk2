@@ -6,6 +6,7 @@ import gsap from 'gsap';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { useToast } from '@/composables/useToast';
+import { useScanner } from '@/composables/useScanner';
 
 // Layout & UI Components
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -93,6 +94,7 @@ interface PageProps {
 const page = usePage<any>();
 const props = computed(() => page.props as unknown as PageProps);
 const toast = useToast();
+const { open: openScanner } = useScanner();
 
 // --- State ---
 const activeTab = ref<'active' | 'deleted'>('active');
@@ -222,7 +224,7 @@ const mappedActivity = computed(() => {
 
 // --- Action Configs ---
 const quickActions = [
-    { label: 'Scanner', sub: 'Live Check-in', icon: Scan, onClick: () => router.visit('/attendance/scan'), primary: true, tourId: 'tour-scan' },
+    { label: 'Scanner', sub: 'Live Check-in', icon: Scan, onClick: openScanner, primary: true, tourId: 'tour-scan' },
     { label: 'Records', sub: 'View History', icon: PieChart, href: '/manage-attendance', tourId: 'tour-reports' },
     { label: 'Schedule', sub: 'Class Timing', icon: Calendar, href: '/subject-attendance', tourId: 'tour-schedule' },
     { label: 'Add', sub: 'New Student', icon: UserPlus, onClick: () => { createModalOpen.value = true; }, tourId: 'tour-add-student' },

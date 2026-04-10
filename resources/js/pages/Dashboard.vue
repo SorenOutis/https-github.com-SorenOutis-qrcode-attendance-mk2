@@ -1,198 +1,143 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { useDraggable, useWindowSize, useStorage, watchDebounced } from '@vueuse/core';
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
-import type { BreadcrumbItem } from '@/types';
-import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
-import { Doughnut } from 'vue-chartjs';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { useStorage } from '@vueuse/core';
 import gsap from 'gsap';
-import { Users, Search, Plus, LayoutGrid, Table, Clock, XCircle, Calendar, PieChart, AlertTriangle, AlertCircle, RefreshCw, Trash2, Check, QrCode, Scan, Download, UserPlus, CheckCircle2, UserCheck, UserX, Zap, ChevronLeft, ChevronRight } from 'lucide-vue-next';
-import QRCode from 'qrcode';
-import { ref, computed, onMounted, onUnmounted, nextTick, watch, toValue } from 'vue';
+import { driver } from 'driver.js';
+import 'driver.js/dist/driver.css';
 import { useToast } from '@/composables/useToast';
-import { useScanner } from '@/composables/useScanner';
-import { useTilt } from '@/composables/useTilt';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 
-ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale);
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import SkeletonCard from '@/components/SkeletonCard.vue';
-import TimeInput from '@/components/TimeInput.vue';
+// Layout & UI Components
 import AppLayout from '@/layouts/AppLayout.vue';
-import { dashboard } from '@/routes';
-import commentsRoutes from '@/routes/comments';
-import ratingsRoutes from '@/routes/ratings';
 
-type AttendanceRecord = {
+// Dashboard Components
+import DashboardHeader from '@/components/dashboard/DashboardHeader.vue';
+import StatCards from '@/components/dashboard/StatCards.vue';
+import QuickActions from '@/components/dashboard/QuickActions.vue';
+import SearchBar from '@/components/dashboard/SearchBar.vue';
+import StudentList from '@/components/dashboard/StudentList.vue';
+import AtRiskList from '@/components/dashboard/AtRiskList.vue';
+import AttendanceChart from '@/components/dashboard/AttendanceChart.vue';
+import LiveScanFeed from '@/components/dashboard/LiveScanFeed.vue';
+
+// Modal Components
+import StudentInfoModal from '@/components/dashboard/modals/StudentInfoModal.vue';
+import StudentFormModal from '@/components/dashboard/modals/StudentFormModal.vue';
+import QrCodeModal from '@/components/dashboard/modals/QrCodeModal.vue';
+import ImportModal from '@/components/dashboard/modals/ImportModal.vue';
+import ConfirmModal from '@/components/dashboard/modals/ConfirmModal.vue';
+import WelcomeModal from '@/components/dashboard/modals/WelcomeModal.vue';
+
+// Icons for QuickActions
+import { Scan, PieChart, Calendar, UserPlus } from 'lucide-vue-next';
+
+interface User {
     id: number;
-    status: string;
-    scanned_at: string;
-    slot_start?: string;
-    slot_end?: string;
-};
+    name: string;
+    email: string;
+}
 
-type Student = {
+interface Student {
     id: number;
     name: string;
     student_number: string;
-    email?: string | null;
-    section?: string | null;
+    email: string | null;
+    section: string | null;
+    photo: string | null;
     qr_token: string;
-    schedule?: { day: string; start: string; end: string; subject_id?: string | null }[];
-    today_statuses?: { status: string; time: string; subject_id?: string | number }[];
+    attendance_percentage: number;
+    deleted_at: string | null;
     latest_attendance?: {
         id: number;
         status: string;
         scanned_at: string;
-        subject_id?: string | number;
     } | null;
-    deleted_at?: string | null;
-    attendance_percentage?: number;
-    total_records?: number;
-    photo?: string | null;
-};
+    today_statuses?: {
+        status: string;
+        time: string;
+        subject_id?: number | string;
+        subject_name?: string;
+    }[];
+    schedule?: {
+        day: string;
+        start: string;
+        end: string;
+        subject_id: number;
+    }[];
+}
 
-const daysOfWeek = [
-    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-];
+interface Subject {
+    id: number;
+    name: string;
+    description: string | null;
+}
 
-type Paginator<T> = {
-    data: T[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    links: { url: string | null; label: string; active: boolean }[];
-};
-
-type PageProps = {
-    students: Paginator<Student>;
-    trashedStudents: Student[];
-    subjects: { id: number; name: string, schedule?: any[] }[];
-    attendanceStats?: { Present: number; Late: number; Absent: number; Excused: number; };
-    attendanceRate?: number;
-    atRiskCount: number;
-    topAtRiskStudents?: Student[];
-    recentActivity?: { name: string; photo?: string | null; status: string; time: string; subject_id?: string | number; subject_name?: string }[];
-    filters: {
-        search: string | null;
-        status: string | null;
-        only_scheduled: boolean;
+interface PageProps {
+    students: {
+        data: Student[];
     };
-};
+    trashedCount: number;
+    subjects: Subject[];
+    attendanceStats?: {
+        Present: number;
+        Late: number;
+        Absent: number;
+        Excused: number;
+    };
+    attendanceRate: number;
+    recentActivity: Student[];
+    auth: {
+        user: User;
+    };
+}
 
-const props = defineProps<PageProps>();
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-    },
-];
-
-const page = usePage();
-
-const students = computed(() => props.students?.data ?? []);
-const searchQuery = ref(props.filters.search ?? '');
-const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
-const searchInputRef = ref<{ $el: HTMLInputElement } | null>(null);
+const page = usePage<any>();
+const props = computed(() => page.props as unknown as PageProps);
 const toast = useToast();
-const { open: openScanner } = useScanner();
 
-const statusFilter = ref<'Present' | 'Late' | 'Absent' | null>(props.filters.status as any);
-const showOnlyScheduledToday = ref(props.filters.only_scheduled);
+// --- State ---
+const activeTab = ref<'active' | 'deleted'>('active');
+const viewMode = ref<'table' | 'grid'>('grid');
+const searchQuery = ref('');
+const statusFilter = ref<string | null>(null);
+const showOnlyScheduledToday = ref(false);
 
-const filteredStudents = computed(() => {
-    return students.value;
+const currentPage = ref(1);
+const itemsPerPage = 12;
+
+// --- Modals State ---
+const infoModalOpen = ref(false);
+const createModalOpen = ref(false);
+const editModalOpen = ref(false);
+const qrModalOpen = ref(false);
+const importModalOpen = ref(false);
+const confirmModalOpen = ref(false);
+const welcomeModalOpen = ref(false);
+
+const infoStudent = ref<Student | null>(null);
+const selectedStudent = ref<Student | null>(null);
+const editingStudentId = ref<number | null>(null);
+
+// Form State
+const form = ref({
+    name: '',
+    student_number: '',
+    email: '',
+    section: '',
+    photo: null as File | null,
+    photoPreview: null as string | null,
+    selectedSubjectIds: [] as number[],
 });
 
-const filteredTrashedStudents = computed(() => {
-    if (!searchQuery.value) return props.trashedStudents ?? [];
-    const q = searchQuery.value.toLowerCase();
-    return (props.trashedStudents ?? []).filter(s => 
-        s.name.toLowerCase().includes(q) || 
-        s.student_number.toLowerCase().includes(q) ||
-        (s.section && s.section.toLowerCase().includes(q))
-    );
-});
+const formErrors = ref<Record<string, string | string[]>>({});
+const submitting = ref(false);
 
-const userName = computed(() => {
-    const user = page.props.auth.user;
-    if (!user || !user.name) return 'User';
-    return user.name.split(' ')[0];
-});
+// History State
+const attendanceHistory = ref<any[]>([]);
+const historyLoading = ref(false);
+const updatingRecordId = ref<number | null>(null);
 
-const greeting = computed(() => {
-    const hour = new Date().getHours();
-    let text = 'Good morning';
-    if (hour < 12) text = 'Good morning';
-    else if (hour < 17) text = 'Good afternoon';
-    else if (hour < 21) text = 'Good evening';
-    else text = 'Good night';
-    
-    return text;
-});
-
-const greetingSubtext = computed(() => {
-    if (props.atRiskCount > 0) {
-        return `You have ${props.atRiskCount} student(s) with low attendance.`;
-    }
-    return 'Everything looks good today!';
-});
-
-const formattedCurrentDate = computed(() => {
-    return new Date().toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-});
-
-const stats = computed(() => {
-    return {
-        total: props.students?.total ?? 0,
-        present: statsPresent.value,
-        late: statsLate.value,
-        absent: statsAbsent.value,
-        trashed: props.trashedStudents?.length || 0
-    };
-});
-
-const attendanceRate = computed(() => {
-    const rate = props.attendanceRate ?? 0;
-    return Number.isFinite(rate) ? rate : 0;
-});
-
-const attendanceRateClass = computed(() => {
-    if (attendanceRate.value >= 90) return 'bg-emerald-500 text-white';
-    if (attendanceRate.value >= 75) return 'bg-amber-500 text-white';
-    return 'bg-rose-500 text-white';
-});
-
-// Since we use pagination, we need the overall status counts from props
-const statsPresent = computed(() => props.attendanceStats?.Present ?? 0);
-const statsLate = computed(() => props.attendanceStats?.Late ?? 0);
-const statsAbsent = computed(() => props.attendanceStats?.Absent ?? 0);
-
+// Stats Animation State
 const animatedStats = ref({
     total: 0,
     present: 0,
@@ -200,599 +145,95 @@ const animatedStats = ref({
     absent: 0
 });
 
-watch(stats, (newStats) => {
-    // Set stats immediately without animation
-    animatedStats.value.total = newStats.total;
-    animatedStats.value.present = newStats.present;
-    animatedStats.value.late = newStats.late;
-    animatedStats.value.absent = newStats.absent;
-}, { deep: true, immediate: true });
-
-const recentActivity = computed(() => {
-    return props.recentActivity || [];
+// Confirm Modal State
+const confirmConfig = ref({
+    title: '',
+    description: '',
+    isDestructive: false,
+    onConfirm: () => {}
 });
 
-const chartData = computed(() => {
-    return {
-        labels: ['Present', 'Late', 'Absent', 'Excused'],
-        datasets: [
-            {
-                backgroundColor: ['#09090b', '#3f3f46', '#a1a1aa', '#e4e4e7'],
-                borderColor: ['#000000', '#27272a', '#71717a', '#d4d4d8'],
-                borderWidth: 1,
-                data: [
-                    props.attendanceStats?.Present || 0,
-                    props.attendanceStats?.Late || 0,
-                    props.attendanceStats?.Absent || 0,
-                    props.attendanceStats?.Excused || 0
-                ]
-            }
-        ]
-    };
-});
-
-const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: { 
-            position: 'bottom' as const,
-            labels: {
-                color: '#8b8b8b'
-            }
-        }
-    }
-};
-
-const atRiskStudents = computed(() => {
-    return props.topAtRiskStudents || [];
-});
-
-const viewMode = ref<'table' | 'grid'>('grid');
-const createModalOpen = ref(false);
-const editModalOpen = ref(false);
-const activeTab = ref<'active' | 'deleted'>('active');
-
-const itemsPerPage = ref(10);
-const currentPage = ref(1);
-
-const visibleStudents = computed(() => {
-    return activeTab.value === 'active' ? filteredStudents.value : filteredTrashedStudents.value;
-});
-
-const paginatedStudents = computed(() => {
-    // For active tab, we use server-side pagination
-    if (activeTab.value === 'active') {
-        return visibleStudents.value;
-    }
-    
-    // For trashed tab, we still use client-side pagination as it's not paginated on server yet
-    const start = (currentPage.value - 1) * itemsPerPage.value;
-    const end = start + itemsPerPage.value;
-    return visibleStudents.value.slice(start, end);
-});
-
-const totalPages = computed(() => {
-    if (activeTab.value === 'active') {
-        return props.students?.last_page ?? 1;
-    }
-    return Math.ceil(visibleStudents.value.length / itemsPerPage.value);
-});
-
-function nextPage() {
-    if (activeTab.value === 'active') {
-        if (props.students.last_page > props.students.current_page) {
-            router.get(dashboard(), { page: props.students.current_page + 1 }, { preserveScroll: true });
-        }
-    } else {
-        if (currentPage.value < totalPages.value) currentPage.value++;
-    }
-}
-
-function prevPage() {
-    if (activeTab.value === 'active') {
-        if (props.students.current_page > 1) {
-            router.get(dashboard(), { page: props.students.current_page - 1 }, { preserveScroll: true });
-        }
-    } else {
-        if (currentPage.value > 1) currentPage.value--;
-    }
-}
-
-watchDebounced(
-    searchQuery,
-    (q) => {
-        // Update URL manually without triggering a page transition
-        const url = new URL(window.location.href);
-        if (q) {
-            url.searchParams.set('search', q);
-        } else {
-            url.searchParams.delete('search');
-        }
-        window.history.replaceState({}, '', url.toString());
-
-        // Partial reload — only refreshes student-related props, no spatial animation fires
-        router.reload({
-            data: { search: q, only_scheduled: showOnlyScheduledToday.value, status: statusFilter.value },
-            only: ['students', 'filters', 'attendanceStats', 'attendanceRate', 'atRiskCount', 'topAtRiskStudents'],
-            preserveScroll: true,
-        });
-    },
-    { debounce: 400, maxWait: 2000 },
-);
-
-watch(showOnlyScheduledToday, (val) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('only_scheduled', String(val));
-    window.history.replaceState({}, '', url.toString());
-
-    router.reload({
-        data: { search: searchQuery.value, only_scheduled: val, status: statusFilter.value },
-        only: ['students', 'filters', 'attendanceStats', 'attendanceRate', 'atRiskCount', 'topAtRiskStudents'],
-        preserveScroll: true,
-    });
-});
-
-watch([activeTab, statusFilter, viewMode, currentPage], () => {
-    // Only reset currentPage if it's not a server-side pagination change
-    if (activeTab.value !== 'active') {
-        currentPage.value = 1;
-    }
-});
-
-const selectedStudent = ref<Student | null>(null);
-const qrModalOpen = ref(false);
-
-const studentInfoModalOpen = ref(false);
-const infoStudent = ref<Student | null>(null);
-const attendanceHistory = ref<AttendanceRecord[]>([]);
-const historyExpanded = ref(false);
-const historyLoading = ref(false);
-const updatingRecordId = ref<number | null>(null);
-
-const importModalOpen = ref(false);
+// Import State
 const importFile = ref<File | null>(null);
 const importing = ref(false);
 
-// Summary Card Refs
-const totalStudentsCard = ref(null);
-const presentCard = ref(null);
-const lateCard = ref(null);
-const absentCard = ref(null);
-
-
-const el = ref<HTMLElement | null>(null);
-const { width: windowWidth, height: windowHeight } = useWindowSize();
-
-// Automatic switching for mobile
-watch(windowWidth, (w) => {
-    if (Number(w) < 768) {
-        viewMode.value = 'grid';
-    }
-}, { immediate: true });
-
-const { x, y, isDragging } = useDraggable(el as any, {
-  initialValue: { x: window.innerWidth - 100, y: window.innerHeight - 100 },
-  preventDefault: true,
-  onEnd: () => {
-      // Chathead snapping logic: snap to nearest left/right edge
-      const margin = 20;
-      const buttonWidth = 100;
-      const threshold = Number(windowWidth.value) / 2;
-      
-      if (x.value < threshold) {
-          x.value = margin;
-      } else {
-          x.value = Number(windowWidth.value) - buttonWidth - margin;
-      }
-  }
+// --- Computed ---
+const greeting = computed(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
 });
 
-// Boundary and resize handling
-watch([windowWidth, windowHeight], ([newW, newH]) => {
-    // Keep within viewport with margins
-    const margin = 20;
-    const buttonWidth = 100;
-    const buttonHeight = 56;
+const todayDayName = computed(() => {
+    return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
+});
+
+const visibleStudents = computed(() => {
+    let list = props.value.students.data || [];
     
-    const w = Number(newW);
-    const h = Number(newH);
-
-    if (x.value > w - buttonWidth - margin) x.value = w - buttonWidth - margin;
-    if (x.value < margin) x.value = margin;
-    if (y.value > h - buttonHeight - margin) y.value = h - buttonHeight - margin;
-    if (y.value < margin) y.value = margin;
-}, { immediate: true });
-
-const handleScanClick = () => {
-    // Global scanner is handled via the bottom nav or sidebar
-};
-
-function handleFileChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    if (target.files && target.files.length > 0) {
-        importFile.value = target.files[0];
-    }
-}
-
-async function submitImport() {
-    if (!importFile.value) return;
-
-    importing.value = true;
-    const formData = new FormData();
-    formData.append('file', importFile.value);
-
-    router.post('/students/import', formData, {
-        onSuccess: () => {
-            importModalOpen.value = false;
-            importFile.value = null;
-            toast.success('Students imported successfully');
-        },
-        onError: (errors) => {
-            toast.error(errors.file || 'Error importing students');
-        },
-        onFinish: () => {
-            importing.value = false;
-        },
-    });
-}
-
-function closeWelcomeModal() {
-    showWelcomeModal.value = false;
-    startOnboardingTour();
-}
-
-function rateColor(rate: number) {
-    if (rate >= 90) return 'text-emerald-500';
-    if (rate >= 75) return 'text-amber-500';
-    return 'text-rose-500';
-}
-
-function rateBg(rate: number) {
-    if (rate >= 90) return 'bg-emerald-500';
-    if (rate >= 75) return 'bg-amber-500';
-    return 'bg-rose-500';
-}
-
-// Group attendance records by local date (most-recent date first)
-const groupedAttendanceHistory = computed(() => {
-    const groups: { date: string; label: string; records: AttendanceRecord[] }[] = [];
-    const seen = new Map<string, AttendanceRecord[]>();
-
-    const list = historyExpanded.value
-        ? attendanceHistory.value
-        : attendanceHistory.value.slice(0, 10);
-
-    for (const record of list) {
-        const d = new Date(record.scanned_at);
-        const key = d.toLocaleDateString();
-        if (!seen.has(key)) {
-            const isToday = key === new Date().toLocaleDateString();
-            const isYesterday = key === new Date(Date.now() - 86400000).toLocaleDateString();
-            const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : key;
-            seen.set(key, []);
-            groups.push({ date: key, label, records: seen.get(key)! });
+    if (activeTab.value === 'active') {
+        list = list.filter(s => !s.deleted_at);
+        if (showOnlyScheduledToday.value) {
+            list = list.filter(s => s.schedule?.some(slot => slot.day === todayDayName.value));
         }
-        seen.get(key)!.push(record);
-    }
-    return groups;
-});
-
-const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-
-function isScheduledForToday(student: Student) {
-    return student.schedule?.some(s => s.day === todayDayName) ?? false;
-}
-
-const name = ref('');
-const photo = ref<File | null>(null);
-const photoPreview = ref<string | null>(null);
-const studentNumber = ref('');
-const email = ref('');
-const section = ref('');
-const selectedSubjectIds = ref<number[]>([]);
-const editSelectedSubjectIds = ref<number[]>([]);
-
-const schedules = computed(() => {
-    const slots: any[] = [];
-    selectedSubjectIds.value.forEach(id => {
-        const subject = props.subjects.find(s => s.id === id);
-        if (subject) {
-            if (subject.schedule && subject.schedule.length > 0) {
-                subject.schedule.forEach((s: any) => {
-                    slots.push({
-                        day: s.day,
-                        subject_id: subject.id,
-                        start: s.start,
-                        end: s.end
-                    });
-                });
-            } else {
-                // FALLBACK: If a subject has NO schedule defined, we must still add a placeholder slot
-                // to the student data so they are technically "enrolled" in that subject_id.
-                slots.push({
-                    day: 'Monday',
-                    subject_id: subject.id,
-                    start: '08:00',
-                    end: '09:00'
-                });
-            }
-        }
-    });
-    return slots;
-});
-
-const editSchedules = computed(() => {
-    const slots: any[] = [];
-    editSelectedSubjectIds.value.forEach(id => {
-        const subject = props.subjects.find(s => s.id === id);
-        if (subject) {
-            if (subject.schedule && subject.schedule.length > 0) {
-                subject.schedule.forEach((s: any) => {
-                    slots.push({
-                        day: s.day,
-                        subject_id: subject.id,
-                        start: s.start,
-                        end: s.end
-                    });
-                });
-            } else {
-                // FALLBACK: If a subject has NO schedule defined, we must still add a placeholder slot
-                // to the student data so they are technically "enrolled" in that subject_id.
-                slots.push({
-                    day: 'Monday',
-                    subject_id: subject.id,
-                    start: '08:00',
-                    end: '09:00'
-                });
-            }
-        }
-    });
-    return slots;
-});
-
-function toggleSubject(id: number) {
-    const index = selectedSubjectIds.value.indexOf(id);
-    if (index === -1) {
-        selectedSubjectIds.value.push(id);
     } else {
-        selectedSubjectIds.value.splice(index, 1);
+        list = list.filter(s => s.deleted_at);
     }
-}
-
-function toggleEditSubject(id: number) {
-    const index = editSelectedSubjectIds.value.indexOf(id);
-    if (index === -1) {
-        editSelectedSubjectIds.value.push(id);
-    } else {
-        editSelectedSubjectIds.value.splice(index, 1);
+    
+    if (searchQuery.value) {
+        const q = searchQuery.value.toLowerCase();
+        list = list.filter(s => 
+            s.name.toLowerCase().includes(q) || 
+            s.student_number.toLowerCase().includes(q) || 
+            s.section?.toLowerCase().includes(q)
+        );
     }
-}
-const editName = ref('');
-const editStudentNumber = ref('');
-const editEmail = ref('');
-const editSection = ref('');
-const editingStudentId = ref<number | null>(null);
-const editPhoto = ref<File | null>(null);
-const editPhotoPreview = ref<string | null>(null);
-
-const submitting = ref(false);
-const formErrors = ref<Record<string, string[]>>({});
-
-const cardsRef = ref<HTMLDivElement | null>(null);
-const tableRef = ref<HTMLDivElement | null>(null);
-const studentsGridRef = ref<HTMLDivElement | null>(null);
-const studentsTableBodyRef = ref<HTMLTableSectionElement | null>(null);
-const photoInput = ref<HTMLInputElement | null>(null);
-const editPhotoInput = ref<HTMLInputElement | null>(null);
-
-
-// Removed animation trigger on data change to allow "instant" appearance
-
-const confirmModalOpen = ref(false);
-const confirmTitle = ref('');
-const confirmDescription = ref('');
-const confirmAction = ref<(() => void) | null>(null);
-const confirmIsDestructive = ref(false);
-
-function showConfirm(title: string, description: string, action: () => void, isDestructive = false) {
-    confirmTitle.value = title;
-    confirmDescription.value = description;
-    confirmAction.value = action;
-    confirmIsDestructive.value = isDestructive;
-    confirmModalOpen.value = true;
-}
-const handleConfirm = () => {
-    if (confirmAction.value) {
-        confirmAction.value();
+    
+    if (statusFilter.value && activeTab.value === 'active') {
+        list = list.filter(s => s.latest_attendance?.status === statusFilter.value);
     }
-    confirmModalOpen.value = false;
-};
+    
+    return list;
+});
 
-function handlePhotoChange(event: Event, type: 'create' | 'edit') {
-    const target = event.target as HTMLInputElement;
-    if (target.files && target.files.length > 0) {
-        const file = target.files[0];
-        if (type === 'create') {
-            photo.value = file;
-            photoPreview.value = URL.createObjectURL(file);
-        } else {
-            editPhoto.value = file;
-            editPhotoPreview.value = URL.createObjectURL(file);
-        }
-    }
-}
-function resetForm() {
-    name.value = '';
-    studentNumber.value = '';
-    email.value = '';
-    section.value = '';
-    selectedSubjectIds.value = [];
-    photo.value = null;
-    photoPreview.value = null;
-    formErrors.value = {};
-}
+const totalPages = computed(() => Math.ceil(visibleStudents.value.length / itemsPerPage));
 
-function openCreateModal() {
-    resetForm();
-    createModalOpen.value = true;
-}
+const paginatedStudents = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage;
+    return visibleStudents.value.slice(start, start + itemsPerPage);
+});
 
-function closeCreateModal() {
-    createModalOpen.value = false;
-}
+const atRiskStudents = computed(() => {
+    return (props.value.students.data || [])
+        .filter(s => !s.deleted_at && (s.attendance_percentage ?? 100) < 80)
+        .sort((a, b) => (a.attendance_percentage ?? 0) - (b.attendance_percentage ?? 0))
+        .slice(0, 10);
+});
 
-async function submitStudent() {
-    submitting.value = true;
-    formErrors.value = {};
+const mappedActivity = computed(() => {
+    return (props.value.recentActivity || []).map(s => ({
+        name: s.name,
+        photo: s.photo,
+        status: s.latest_attendance?.status || 'Active',
+        time: s.latest_attendance?.scanned_at ? formatTime(s.latest_attendance.scanned_at) : 'Just now',
+        subject_name: s.latest_attendance?.subject_name
+    }));
+});
 
-    router.post(
-        '/students',
-        {
-            name: name.value,
-            student_number: studentNumber.value,
-            email: email.value || null,
-            section: section.value || null,
-            schedule: schedules.value,
-            photo: photo.value,
-        },
-        {
-            onSuccess: () => {
-                closeCreateModal();
-                toast.success('Student added successfully');
-            },
-            onError: (errors) => {
-                formErrors.value = errors as any;
-                toast.error('Failed to add student');
-            },
-            onFinish: () => {
-                submitting.value = false;
-            },
-            preserveScroll: true,
-        },
-    );
-}
+// --- Action Configs ---
+const quickActions = [
+    { label: 'Scanner', sub: 'Live Check-in', icon: Scan, onClick: () => router.visit('/attendance/scan'), primary: true, tourId: 'tour-scan' },
+    { label: 'Records', sub: 'View History', icon: PieChart, href: '/manage-attendance', tourId: 'tour-reports' },
+    { label: 'Schedule', sub: 'Class Timing', icon: Calendar, href: '/subject-attendance', tourId: 'tour-schedule' },
+    { label: 'Add', sub: 'New Student', icon: UserPlus, onClick: () => { createModalOpen.value = true; }, tourId: 'tour-add-student' },
+];
 
+// --- Methods ---
 
-
-function deleteStudent(id: number) {
-    showConfirm(
-        'Delete Student?',
-        'Are you sure you want to move this student to the Trash? You can restore them later.',
-        () => {
-            router.delete(`/students/${id}`, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    closeStudentInfoModal();
-                }
-            });
-        },
-        true
-    );
-}
-
-function restoreStudent(id: number) {
-    router.post(`/students/${id}/restore`, {}, {
-        preserveScroll: true,
-    });
-}
-
-function forceDeleteStudent(id: number) {
-    showConfirm(
-        'Permanently Delete?',
-        'This will permanently delete the student and all their records. This action cannot be undone. Are you sure?',
-        () => {
-            router.delete(`/students/${id}/force-delete`, {
-                preserveScroll: true,
-            });
-        },
-        true
-    );
-}
-
-function openStudentInfoModal(student: Student) {
-    infoStudent.value = student;
-    attendanceHistory.value = [];
-    historyExpanded.value = false;
-    historyLoading.value = true;
-    studentInfoModalOpen.value = true;
-
-    window.fetch(`/students/${student.id}/attendance`, {
-        credentials: 'same-origin',
-        headers: {
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN':
-                (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)
-                    ?.content ?? '',
-        },
-    })
-        .then((r) => r.json())
-        .then((data: { history: AttendanceRecord[] }) => {
-            attendanceHistory.value = data.history;
-        })
-        .catch(() => {})
-        .finally(() => {
-            historyLoading.value = false;
-        });
-}
-
-function closeStudentInfoModal() {
-    studentInfoModalOpen.value = false;
-    infoStudent.value = null;
-    attendanceHistory.value = [];
-}
-
-function openEditFromInfo() {
-    const student = infoStudent.value;
-    if (!student) return;
-    closeStudentInfoModal();
-    // small delay so modal closes first
-    setTimeout(() => openEditModal(student), 80);
-}
-
-function openQrFromInfo() {
-    const student = infoStudent.value;
-    if (!student) return;
-    closeStudentInfoModal();
-    // small delay so modal closes first
-    setTimeout(() => openQrModal(student), 80);
-}
-
-function openPrintCardsFromInfo() {
-    const student = infoStudent.value;
-    if (!student) return;
-    window.open(`/students/print-cards?ids=${student.id}`, '_blank', 'noopener,noreferrer');
-}
-
-function openEditModal(student: Student) {
-    editingStudentId.value = student.id;
-    editName.value = student.name;
-    editStudentNumber.value = student.student_number;
-    editEmail.value = student.email || '';
-    editSection.value = student.section || '';
-    const subjectIds = new Set<number>();
-    if (student.schedule) {
-        student.schedule.forEach((s: any) => {
-            if (s.subject_id) subjectIds.add(Number(s.subject_id));
-        });
-    }
-    editSelectedSubjectIds.value = Array.from(subjectIds);
-    editPhoto.value = null;
-    editPhotoPreview.value = (student as any).photo || null;
-    formErrors.value = {};
-    editModalOpen.value = true;
-}
-
-function formatDateTime(iso: string) {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-}
-
-function getSubjectName(subjectId: string | number | null | undefined): string {
-    if (!subjectId) return 'N/A';
-    const subject = props.subjects?.find(s => s.id.toString() === subjectId.toString());
-    return subject ? subject.name : 'Unknown';
+function formatTime(dateStr: string) {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 function formatTimeTo12h(timeStr?: string) {
@@ -802,1792 +243,501 @@ function formatTimeTo12h(timeStr?: string) {
     let h = parseInt(parts[0]);
     const m = parts[1];
     const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12;
+    h = h % 12 || 12;
     return `${h}:${m} ${ampm}`;
 }
 
-function updateLatestStatus(student: Student, status: string) {
-    if (!student.latest_attendance?.id) return;
+function getSubjectName(id: number | string | null | undefined) {
+    if (id === null || id === undefined) return 'Unknown Subject';
+    return props.value.subjects.find(s => s.id === Number(id))?.name || 'Unknown Subject';
+}
 
-    router.put(
-        `/attendance/${student.latest_attendance.id}`,
-        { status },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.visit(dashboard().url, {
-                    only: ['students'],
-                    preserveScroll: true,
-                });
-            },
+function handlePhotoChange(e: Event) {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+        form.value.photo = file;
+        form.value.photoPreview = URL.createObjectURL(file);
+    }
+}
+
+function toggleSubject(id: number) {
+    const idx = form.value.selectedSubjectIds.indexOf(id);
+    if (idx > -1) form.value.selectedSubjectIds.splice(idx, 1);
+    else form.value.selectedSubjectIds.push(id);
+}
+
+// --- API Methods ---
+
+async function submitStudent() {
+    submitting.value = true;
+    formErrors.value = {};
+    
+    const url = editingStudentId.value ? `/students/${editingStudentId.value}` : '/students';
+    const method = editingStudentId.value ? 'PUT' : 'POST';
+    
+    router.post(url, {
+        _method: method,
+        name: form.value.name,
+        student_number: form.value.student_number,
+        email: form.value.email || null,
+        section: form.value.section || null,
+        subjects: form.value.selectedSubjectIds,
+        photo: form.value.photo,
+    }, {
+        onSuccess: () => {
+            createModalOpen.value = false;
+            editModalOpen.value = false;
+            resetForm();
+            toast.success(editingStudentId.value ? 'Student updated' : 'Student enrolled');
         },
-    );
+        onError: (errors) => {
+            formErrors.value = errors as any;
+            toast.error('Operation failed');
+        },
+        onFinish: () => submitting.value = false,
+        preserveScroll: true,
+    });
+}
+
+function resetForm() {
+    form.value = {
+        name: '',
+        student_number: '',
+        email: '',
+        section: '',
+        photo: null,
+        photoPreview: null,
+        selectedSubjectIds: [],
+    };
+    editingStudentId.value = null;
+    formErrors.value = {};
+}
+
+function openStudentInfoModal(student: Student) {
+    infoStudent.value = student;
+    infoModalOpen.value = true;
+    fetchAttendanceHistory(student.id);
+}
+
+async function fetchAttendanceHistory(studentId: number) {
+    historyLoading.value = true;
+    try {
+        const response = await fetch(`/students/${studentId}/attendance-history`);
+        attendanceHistory.value = await response.json();
+    } catch (e) {
+        toast.error('Failed to load history');
+    } finally {
+        historyLoading.value = false;
+    }
+}
+
+function openEditFromInfo() {
+    if (!infoStudent.value) return;
+    const s = infoStudent.value;
+    editingStudentId.value = s.id;
+    form.value = {
+        name: s.name,
+        student_number: s.student_number,
+        email: s.email || '',
+        section: s.section || '',
+        photo: null,
+        photoPreview: s.photo,
+        selectedSubjectIds: s.schedule?.map(sc => sc.subject_id) || [],
+    };
+    infoModalOpen.value = false;
+    editModalOpen.value = true;
+}
+
+function deleteStudent(id: number) {
+    confirmConfig.value = {
+        title: 'Archive Student?',
+        description: 'This student will be moved to trash. You can restore them later.',
+        isDestructive: true,
+        onConfirm: () => {
+            router.delete(`/students/${id}`, {
+                onSuccess: () => {
+                    infoModalOpen.value = false;
+                    confirmModalOpen.value = false;
+                    toast.success('Student archived');
+                }
+            });
+        }
+    };
+    confirmModalOpen.value = true;
+}
+
+function restoreStudent(id: number) {
+    router.post(`/students/${id}/restore`, {}, {
+        onSuccess: () => toast.success('Student restored')
+    });
+}
+
+function forceDeleteStudent(id: number) {
+    confirmConfig.value = {
+        title: 'Permanent Delete?',
+        description: 'This action cannot be undone. All attendance records will be lost.',
+        isDestructive: true,
+        onConfirm: () => {
+            router.delete(`/students/${id}/force`, {
+                onSuccess: () => {
+                    confirmModalOpen.value = false;
+                    toast.success('Deleted permanently');
+                }
+            });
+        }
+    };
+    confirmModalOpen.value = true;
 }
 
 function updateHistoryStatus(recordId: number, status: string) {
     if (updatingRecordId.value) return;
     updatingRecordId.value = recordId;
 
-    router.put(
-        `/attendance/${recordId}`,
-        { status },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                // Update local history
-                const record = attendanceHistory.value.find((r) => r.id === recordId);
-                if (record) {
-                    record.status = status;
-                }
-            },
-            onFinish: () => {
-                updatingRecordId.value = null;
-            },
+    router.put(`/attendance/${recordId}`, { status }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            const record = attendanceHistory.value.find(r => r.id === recordId);
+            if (record) record.status = status;
+            toast.success('Status updated');
         },
-    );
+        onFinish: () => updatingRecordId.value = null
+    });
 }
 
-function closeEditModal() {
-    editModalOpen.value = false;
-    editingStudentId.value = null;
-}
-
-
-async function submitEditStudent() {
-    if (!editingStudentId.value) return;
-
-    submitting.value = true;
-    formErrors.value = {};
-
-    router.post(
-        `/students/${editingStudentId.value}`,
-        {
-            _method: 'PUT',
-            name: editName.value,
-            student_number: editStudentNumber.value,
-            email: editEmail.value || null,
-            section: editSection.value || null,
-            schedule: editSchedules.value,
-            photo: editPhoto.value,
-        },
-        {
-            onSuccess: () => {
-                closeEditModal();
-                toast.success('Student updated');
-            },
-            onError: (errors) => {
-                formErrors.value = errors as any;
-                toast.error('Update failed');
-            },
-            onFinish: () => {
-                submitting.value = false;
-            },
-            preserveScroll: true,
-        },
-    );
-}
-
-function openQrModal(student: Student) {
-    selectedStudent.value = student;
+// QR Methods
+function openQrFromInfo() {
+    if (!infoStudent.value) return;
+    selectedStudent.value = infoStudent.value;
     qrModalOpen.value = true;
-}
-
-function closeQrModal() {
-    qrModalOpen.value = false;
-    selectedStudent.value = null;
 }
 
 function regenerateQr() {
     if (!selectedStudent.value) return;
-
-    router.post(
-        `/students/${selectedStudent.value.id}/qr/regenerate`,
-        {},
-        {
-            onSuccess: () => {
-                router.visit(dashboard().url, {
-                    only: ['students'],
-                    preserveScroll: true,
-                    onSuccess: (page) => {
-                        const updated = (page.props as unknown as PageProps)
-                            .students.data.find(
-                                (s: Student) => s.id === selectedStudent.value?.id,
-                            );
-                        if (updated) {
-                            selectedStudent.value = updated;
-                            nextTick(() => drawQrToCanvas());
-                        }
-                    },
-                });
-            },
-        },
-    );
-}
-
-function qrData(token: string) {
-    return token;
-}
-
-async function drawQrToCanvas() {
-    const canvas = document.querySelector<HTMLCanvasElement>('#qr-canvas');
-    const student = selectedStudent.value;
-    if (!canvas || !student?.qr_token) return;
-
-    try {
-        await QRCode.toCanvas(canvas, student.qr_token, {
-            width: 192,
-            margin: 1,
-            color: { dark: '#000000', light: '#ffffff' },
-        });
-    } catch (e) {
-        console.error('QR code draw failed:', e);
-    }
-}
-
-watch(
-    [qrModalOpen, selectedStudent],
-    ([open, student]) => {
-        if (open && student) {
-            nextTick(() => drawQrToCanvas());
+    router.post(`/students/${selectedStudent.value.id}/qr/regenerate`, {}, {
+        onSuccess: () => {
+            toast.success('QR Token regenerated');
+            router.visit(window.location.href, {
+                only: ['students'],
+                preserveScroll: true,
+                onSuccess: (p) => {
+                    const updated = (p.props as any).students.data.find((s: any) => s.id === selectedStudent.value?.id);
+                    if (updated) selectedStudent.value = updated;
+                }
+            });
         }
-    },
-    { immediate: true },
-);
+    });
+}
 
 function downloadQr() {
-    const canvas = document.querySelector<HTMLCanvasElement>('#qr-canvas');
-    if (!canvas || !selectedStudent.value) return;
-
+    if (!selectedStudent.value) return;
+    const canvas = document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
     const link = document.createElement('a');
+    link.download = `qr-${selectedStudent.value.student_number}.png`;
     link.href = canvas.toDataURL('image/png');
-    link.download = `${selectedStudent.value.name}-qr.png`;
     link.click();
 }
 
-function studentPortalUrl(token: string) {
-    const base = window.location.origin;
-    return `${base}/portal/${encodeURIComponent(token)}`;
-}
-
-async function copyStudentPortalLink() {
-    const token = selectedStudent.value?.qr_token;
-    if (!token) return;
-    const url = studentPortalUrl(token);
-
-    try {
-        await navigator.clipboard.writeText(url);
-    } catch {
-        // Fallback for older browsers / blocked clipboard
-        const input = document.createElement('input');
-        input.value = url;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-    }
-}
-
-function openPrintCards() {
-    if (!selectedStudent.value) return;
-    window.open(`/students/print-cards?ids=${selectedStudent.value.id}`, '_blank', 'noopener,noreferrer');
-}
-
-function getAvatarGradient(name: string) {
-    const colors = [
-        'from-zinc-200 to-zinc-400 dark:from-zinc-700 dark:to-zinc-900',
-        'from-zinc-300 to-zinc-500 dark:from-zinc-600 dark:to-zinc-800',
-        'from-zinc-100 to-zinc-300 dark:from-zinc-800 dark:to-zinc-950',
-        'from-zinc-400 to-zinc-600 dark:from-zinc-500 dark:to-zinc-700'
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
-}
-
-// Onboarding Tour
-const hasSeenTour = useStorage('has-seen-onboarding-tour-v1', false);
-
-const startOnboardingTour = () => {
-    if (hasSeenTour.value) return;
-
-    const driverObj = driver({
-        showProgress: true,
-        steps: [
-            { 
-                element: '#dashboard-welcome', 
-                popover: { 
-                    title: 'Welcome!', 
-                    description: 'Welcome to your new Attendance Portal. Let\'s take a quick look around.',
-                    side: "bottom",
-                    align: 'start'
-                } 
-            },
-            { 
-                element: '[data-tour="stats"]', 
-                popover: { 
-                    title: 'Real-time Stats', 
-                    description: 'Monitor attendance rates and student counts at a glance.',
-                    side: "bottom",
-                    align: 'start'
-                } 
-            },
-            { 
-                element: '[data-tour="search"]', 
-                popover: { 
-                    title: 'Quick Search', 
-                    description: 'Find any student instantly. Use Ctrl+K to focus here anytime.',
-                    side: "bottom",
-                    align: 'start'
-                } 
-            },
-            { 
-                element: '[data-tour="scan"]', 
-                popover: { 
-                    title: 'QR Scanner', 
-                    description: 'Record attendance instantly by scanning student QR codes.',
-                    side: "left",
-                    align: 'center'
-                } 
-            },
-            { 
-                element: '[data-tour="add-student"]', 
-                popover: { 
-                    title: 'Add Students', 
-                    description: 'Enroll new students manually or import them in bulk.',
-                    side: "bottom",
-                    align: 'end'
-                } 
-            },
-            { 
-                element: '[data-tour="reports"]', 
-                popover: { 
-                    title: 'Detailed Reports', 
-                    description: 'Access and export comprehensive attendance data for your classes.',
-                    side: "bottom",
-                    align: 'center',
-                    nextBtnText: 'Done',
-                    onNextClick: () => {
-                        hasSeenTour.value = true;
-                        driverObj.destroy();
-                    }
-                } 
-            },
-        ],
-        onDestroyStarted: () => {
-            hasSeenTour.value = true;
-        },
-        onDismis: () => {
-            hasSeenTour.value = true;
-        },
-        onCloseClick: () => {
-            hasSeenTour.value = true;
-        }
-    });
-
-    driverObj.drive();
+const studentPortalUrl = (token: string) => {
+    return `${window.location.origin}/portal/${encodeURIComponent(token)}`;
 };
 
+function copyPortalLink() {
+    const url = studentPortalUrl(selectedStudent.value?.qr_token || '');
+    navigator.clipboard.writeText(url);
+    toast.success('Link copied to clipboard');
+}
+
+// --- Import Logic ---
+function handleFileChange(e: Event) {
+    importFile.value = (e.target as HTMLInputElement).files?.[0] || null;
+}
+
+async function submitImport() {
+    if (!importFile.value) return;
+    importing.value = true;
+    
+    const formData = new FormData();
+    formData.append('file', importFile.value);
+    
+    router.post('/students/import', formData as any, {
+        onSuccess: () => {
+            importModalOpen.value = false;
+            importFile.value = null;
+            toast.success('Students imported successfully');
+        },
+        onError: () => toast.error('Import failed'),
+        onFinish: () => importing.value = false
+    });
+}
+
+// --- Lifecycle & Animations ---
 onMounted(() => {
-    // 1. Entrance Animations for Cards
-    if (cardsRef.value) {
-        const cards = cardsRef.value.querySelectorAll<HTMLElement>('[data-card]');
-        
-        gsap.set(cardsRef.value, { perspective: 1200 });
-        gsap.set(cards, { opacity: 0, y: 40, rotationX: -10, z: -50 });
+    nextTick(() => {
+        animateStats();
 
-        gsap.to(cards, {
-            opacity: 1,
-            y: 0,
-            rotationX: 0,
-            z: 0,
-            duration: 1,
-            stagger: 0.08,
-            ease: 'expo.out',
-            clearProps: 'all'
-        });
-    }
-
-
-    // 3. Status Badge Pulsing
-    gsap.to('.status-pulse', {
-        scale: 1.05,
-        opacity: 0.8,
-        duration: 1.5,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut'
-    });
-
-    // Keyboard shortcut for search
-    const handleKeydown = (e: KeyboardEvent) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            const inputEl = searchInputRef.value?.$el;
-            if (inputEl) {
-                inputEl.focus();
-            }
+        // Entrance animations — target all major dashboard sections
+        const targets = document.querySelectorAll('[data-card], [data-section]');
+        if (targets.length) {
+            gsap.from(targets, {
+                opacity: 0,
+                y: 24,
+                stagger: 0.08,
+                duration: 0.7,
+                ease: 'power3.out',
+                clearProps: 'all',
+            });
         }
-    };
-    window.addEventListener('keydown', handleKeydown);
-
-    onUnmounted(() => {
-        window.removeEventListener('keydown', handleKeydown);
     });
 
-
-    // Trigger tour only if we don't show the welcome modal
-    if (!showWelcomeModal.value && !hasSeenTour.value) {
-        setTimeout(() => {
-            startOnboardingTour();
-        }, 500); // Small delay for visual comfort after loading screen fades
+    const tourStore = useStorage('has-seen-tour-v2', false);
+    if (!tourStore.value) {
+        setTimeout(startTour, 1800);
     }
 });
+
+function animateStats() {
+    const stats = props.value.attendanceStats || { Present: 0, Late: 0, Absent: 0, Excused: 0 };
+    const total = props.value.students.data?.length || 0;
+
+    gsap.to(animatedStats.value, {
+        total,
+        present: stats.Present,
+        late: stats.Late,
+        absent: stats.Absent,
+        duration: 1.8,
+        ease: 'power4.out',
+        snap: { total: 1, present: 1, late: 1, absent: 1 },
+    });
+}
+
+watch(() => props.value.attendanceStats, animateStats, { deep: true });
+
+// --- Chart Logic ---
+const chartData = computed(() => {
+    const s = props.value.attendanceStats || { Present: 0, Late: 0, Absent: 0, Excused: 0 };
+    return {
+        labels: ['Present', 'Late', 'Absent', 'Excused'],
+        datasets: [{
+            data: [s.Present, s.Late, s.Absent, s.Excused],
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6366f1'],
+            borderWidth: 0,
+            hoverOffset: 10
+        }]
+    };
+});
+
+const chartOptions = {
+    cutout: '75%',
+    plugins: {
+        legend: { display: false }
+    },
+    responsive: true,
+    maintainAspectRatio: false
+};
+
+// --- Tour ---
+const startTour = () => {
+    const d = driver({
+        showProgress: true,
+        steps: [
+            { element: '#dashboard-welcome', popover: { title: 'Welcome', description: 'Your new premium management dashboard.', side: 'bottom' } },
+            { element: '[data-tour="stats"]', popover: { title: 'Live Stats', description: 'Real-time attendance performance metrics.', side: 'bottom' } },
+            { element: '[data-tour="search"]', popover: { title: 'Global Search', description: 'Instantly find students, sections, or IDs.', side: 'bottom' } },
+            { element: '#tour-scan', popover: { title: 'QR Scanner', description: 'Tap to launch the high-speed attendance scanner.', side: 'left' } },
+            { element: '#tour-add-student', popover: { title: 'Enrollment', description: 'Add students manually or import in bulk.', side: 'bottom' } }
+        ]
+    });
+    d.drive();
+    useStorage('has-seen-tour-v2', true).value = true;
+};
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <AppLayout title="Dashboard">
+        <Head title="Dashboard" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex min-h-full flex-1 flex-col gap-4 sm:gap-6 overflow-x-hidden p-3 sm:p-4 pb-20 md:pb-4">
-            <!-- Hero Header -->
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 px-1 py-4">
-                <div id="dashboard-welcome">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500">Live Portal</span>
-                    </div>
-                    <h1 class="text-4xl sm:text-6xl font-serif font-black tracking-tighter text-zinc-900 dark:text-white leading-none">
-                        {{ greeting }}, <span class="text-zinc-400 dark:text-zinc-600 italic font-medium">{{ userName }}.</span>
-                    </h1>
-                </div>
+        <div class="max-w-[1600px] mx-auto space-y-8 pb-20 px-4 sm:px-6 lg:px-8">
+            <!-- Header Section -->
+            <DashboardHeader 
+                :greeting="greeting"
+                :user-name="props.auth.user.name"
+                :attendance-rate="props.attendanceRate"
+                :rate-color-class="props.attendanceRate >= 90 ? 'text-emerald-500' : props.attendanceRate >= 75 ? 'text-amber-500' : 'text-rose-500'"
+            />
 
-                <div class="flex flex-col items-end gap-1">
-                    <div class="text-4xl sm:text-5xl font-serif font-black" :class="rateColor(attendanceRate ?? 0)">
-                        {{ (attendanceRate ?? 0).toFixed(1) }}<span class="text-xl opacity-40">%</span>
-                    </div>
-                    <div class="text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] px-1">Average Attendance</div>
-                </div>
-            </div>
-
-            <!-- Stats Grid - High End Responsive -->
-            <div ref="cardsRef" data-tour="stats" class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 px-1">
-                <template v-if="!props.attendanceStats">
-                    <SkeletonCard v-for="i in 4" :key="i" variant="stat" />
-                </template>
-                <template v-else>
-                    <button
-                        v-for="stat in [
-                            { label: 'Present', val: animatedStats.present, key: 'Present', color: 'emerald', icon: UserCheck },
-                            { label: 'Late', val: animatedStats.late, key: 'Late', color: 'amber', icon: Zap },
-                            { label: 'Absent', val: animatedStats.absent, key: 'Absent', color: 'rose', icon: UserX },
-                            { label: 'Total', val: animatedStats.total, key: null, color: 'zinc', icon: Users },
-                        ]"
-                        :key="stat.label"
-                        data-card
-                        @click="stat.key ? (statusFilter = statusFilter === stat.key ? null : stat.key, router.get(dashboard(), { status: statusFilter, search: searchQuery, only_scheduled: showOnlyScheduledToday }, { preserveState: true, preserveScroll: true, replace: true })) : null"
-                        class="group relative overflow-hidden rounded-[2.5rem] p-5 sm:p-7 transition-all duration-500 hover:-translate-y-2"
-                        :class="statusFilter === stat.key 
-                            ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xl' 
-                            : 'bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-white/50 dark:border-white/5 shadow-sm hover:shadow-2xl'"
-                    >
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110" 
-                                    :class="statusFilter === stat.key ? 'bg-white/20 text-white dark:bg-zinc-900/10 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'">
-                                    <component :is="stat.icon" class="h-5 w-5" />
-                                </div>
-                                <div v-if="statusFilter === stat.key" class="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></div>
-                            </div>
-                            <div class="text-3xl sm:text-4xl font-serif font-black tabular-nums">{{ Math.round(stat.val) }}</div>
-                            <div class="text-[10px] font-black uppercase tracking-[0.15em] opacity-60 mt-1">{{ stat.label }}</div>
-                        </div>
-                        
-                        <!-- Accent Glow -->
-                        <div class="absolute -right-6 -bottom-6 h-24 w-24 blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-700" :class="`bg-${stat.color}-500`"></div>
-                    </button>
-                </template>
-            </div>
-
-            <!-- Quick Actions Row -->
-            <div class="grid grid-cols-4 gap-2 sm:gap-4 px-1">
-                <button
-                    v-for="action in [
-                        { label: 'Scan QR', sub: 'Record now', icon: Scan, onClick: openScanner, color: 'zinc', primary: true },
-                        { label: 'Reports', sub: 'View data', icon: PieChart, href: '/reports', color: 'zinc' },
-                        { label: 'Calendar', sub: 'Schedule', icon: Calendar, href: '/calendar', color: 'zinc' },
-                        { label: 'Add Student', sub: 'New entry', icon: UserPlus, onClick: openCreateModal, color: 'zinc' }
-                    ]"
-                    :key="action.label"
-                    @click="action.onClick ? action.onClick() : router.visit(action.href!)"
-                    class="group flex flex-col items-center justify-center gap-2 p-2 sm:p-4 rounded-[2rem] border transition-all hover:-translate-y-1 active:scale-95"
-                    :class="action.primary 
-                        ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:border-white dark:text-zinc-900 shadow-xl shadow-zinc-900/10' 
-                        : 'bg-white dark:bg-zinc-900/50 border-zinc-100 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:border-zinc-200 dark:hover:border-white/10 shadow-sm'"
-                >
-                    <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110"
-                        :class="action.primary ? 'bg-white/10 dark:bg-zinc-900/10' : 'bg-zinc-50 dark:bg-zinc-800'">
-                        <component :is="action.icon" class="h-5 w-5 sm:h-6 sm:w-6" />
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-none">{{ action.label }}</span>
-                        <span class="hidden sm:block text-[8px] font-medium opacity-40 mt-1 uppercase tracking-wider">{{ action.sub }}</span>
-                    </div>
-                </button>
-            </div>
-
-            <!-- Toolbar / Search - Floating Professional Style -->
-            <div class="sticky top-20 z-30 flex flex-col md:flex-row items-center gap-4 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-2xl p-3 sm:p-4 rounded-[2.5rem] border border-white/50 dark:border-white/5 shadow-2xl shadow-zinc-200/50 dark:shadow-none mx-1">
-                <div class="relative flex-1 group w-full">
-                    <Search class="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 transition-colors group-focus-within:text-zinc-900 dark:group-focus-within:text-white" />
-                    <Input
-                        v-model="searchQuery"
-                        placeholder="Search Students, Sections or IDs..."
-                        class="h-12 w-full pl-14 pr-4 rounded-2xl bg-zinc-50/50 dark:bg-black/30 border-0 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white transition-all text-sm font-medium"
+            <!-- Stats & Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <div class="lg:col-span-8 space-y-6" data-tour="stats" data-section>
+                    <StatCards 
+                        :attendance-stats="props.attendanceStats"
+                        :attendance-rate="props.attendanceRate"
+                        :animated-stats="animatedStats"
+                        v-model:status-filter="statusFilter"
+                    />
+                    
+                    <SearchBar 
+                        v-model:search-query="searchQuery"
+                        v-model:show-only-scheduled-today="showOnlyScheduledToday"
+                        @open-create="createModalOpen = true"
                     />
                 </div>
-                
-                <div class="flex items-center gap-3 shrink-0">
-                    <button
-                        @click="openCreateModal"
-                        class="flex items-center gap-2 h-12 px-6 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-[0.97] shadow-xl shadow-zinc-900/10 dark:shadow-none"
-                    >
-                        <Plus class="h-4 w-4" />
-                        Quick Add
-                    </button>
-                    
-                    <div class="h-8 w-px bg-zinc-100 dark:bg-white/10 mx-1 hidden md:block"></div>
-                    
-                    <button
-                        @click="showOnlyScheduledToday = !showOnlyScheduledToday"
-                        class="flex items-center justify-center h-12 w-12 rounded-2xl transition-all active:scale-90"
-                        :class="showOnlyScheduledToday ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-transparent hover:bg-zinc-200'"
-                        title="Show only today's scheduled students"
-                    >
-                        <Calendar class="h-5 w-5" />
-                    </button>
+
+                <div class="lg:col-span-4" data-tour="actions" data-section>
+                    <QuickActions 
+                        :actions="quickActions"
+                        @action="href => router.visit(href)"
+                    />
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 items-start">
-                <!-- Sidebar: 1/4 width on desktop, right side aligned with Add Student -->
-                <div class="lg:col-span-1 flex flex-col gap-4 order-last lg:order-last">
-
-                    <!-- Students at Risk -->
-                    <div v-if="atRiskStudents.length > 0" class="overflow-hidden rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-white dark:bg-black shadow-sm">
-                        <div class="border-b border-rose-100 dark:border-rose-900/30 p-4 flex items-center justify-between bg-rose-50 dark:bg-rose-950/20">
-                            <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-rose-600 dark:text-rose-400">
-                                <AlertTriangle class="h-3.5 w-3.5" />
-                                Students at Risk
-                            </h2>
-                            <span class="text-[10px] bg-rose-100 dark:bg-rose-900/50 text-rose-600 px-2 py-0.5 rounded-full font-bold">{{ atRiskStudents.length }}</span>
-                        </div>
-                        <div class="p-0">
-                            <div class="divide-y divide-zinc-200 dark:divide-zinc-800 max-h-64 overflow-y-auto">
-                                <div v-for="student in atRiskStudents" :key="'risk-' + student.id" class="flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer" @click="openStudentInfoModal(student)">
-                                    <div class="flex flex-col min-w-0">
-                                        <span class="text-xs font-semibold text-zinc-900 dark:text-white line-clamp-2 break-words" :title="student.name">{{ student.name }}</span>
-                                        <span class="text-[10px] text-zinc-500">{{ student.student_number }}</span>
-                                    </div>
-                                    <div class="flex flex-col items-end gap-1 shrink-0">
-                                        <span class="text-xs font-bold text-rose-600 dark:text-rose-400">{{ student.attendance_percentage }}%</span>
-                                        <span class="text-[9px] text-zinc-400">Attendance</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Attendance Overview Chart -->
-                    <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
-                        <div class="border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
-                            <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
-                                <PieChart class="h-3.5 w-3.5" />
-                                Overall Attendance
-                            </h2>
-                        </div>
-                        <div class="p-4 h-64 flex items-center justify-center relative">
-                            <SkeletonCard v-if="!props.attendanceStats" variant="chart" />
-                            <template v-else>
-                                <Doughnut v-if="(props.attendanceStats?.Present || props.attendanceStats?.Late || props.attendanceStats?.Absent || props.attendanceStats?.Excused)" :data="chartData" :options="chartOptions" />
-                                <div v-else class="text-xs text-muted-foreground italic absolute">No data yet</div>
-                            </template>
-                        </div>
-                    </div>
-
-                    <!-- Recent Activity Feed -->
-                    <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl">
-                        <div class="border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
-                            <h2 class="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
-                                <Scan class="h-3.5 w-3.5" />
-                                Live Scan Feed
-                            </h2>
-                            <span class="text-[10px] text-zinc-400 dark:text-zinc-500 italic">Last 5</span>
-                        </div>
-                        <div class="p-0">
-                            <div v-if="recentActivity.length === 0" class="text-center py-8 text-sm text-zinc-500 dark:text-zinc-400 italic">
-                                No activity today.
-                            </div>
-                            <div v-else class="divide-y divide-zinc-200 dark:divide-zinc-800">
-                                <div v-for="(act, i) in recentActivity" :key="i" class="flex items-center justify-between p-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors group">
-                                    <div class="flex items-center gap-3">
-                                        <!-- Photo/Avatar -->
-                                        <div v-if="act.photo" class="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                                            <img :src="act.photo" class="h-full w-full object-cover" />
-                                        </div>
-                                        <div v-else :class="['h-8 w-8 rounded-full flex items-center justify-center shrink-0 border border-white/20 shadow-inner bg-gradient-to-br', getAvatarGradient(act.name)]">
-                                            <span class="text-[10px] font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ act.name.charAt(0) }}</span>
-                                        </div>
-                                        <div class="flex flex-col overflow-hidden">
-                                            <span class="text-xs font-semibold group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors text-zinc-900 dark:text-white truncate">{{ act.name }}</span>
-                                            <div class="flex items-center gap-1.5 mt-0.5">
-                                                <span 
-                                                    class="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest"
-                                                    :class="{
-                                                        'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700': act.status === 'Present',
-                                                        'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-600': act.status === 'Late',
-                                                        'bg-zinc-300 dark:bg-zinc-600 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-500': act.status === 'Time Out',
-                                                        'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900': act.status === 'Absent'
-                                                    }"
-                                                >
-                                                    {{ act.status }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col items-end gap-1 shrink-0">
-                                        <span class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400">{{ act.time }}</span>
-                                        <span v-if="act.subject_name" class="text-[9px] text-zinc-400 dark:text-zinc-500 line-clamp-1 max-w-[80px] text-right" :title="act.subject_name">
-                                            {{ act.subject_name }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Main Content Area -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Left: Student List -->
+                <div class="lg:col-span-8 space-y-6" data-section>
+                    <StudentList 
+                        :students="paginatedStudents"
+                        v-model:active-tab="activeTab"
+                        v-model:view-mode="viewMode"
+                        :search-query="searchQuery"
+                        :show-only-scheduled-today="showOnlyScheduledToday"
+                        :today-day-name="todayDayName"
+                        :current-page="currentPage"
+                        :total-pages="totalPages"
+                        :trashed-count="props.trashedCount"
+                        @next-page="currentPage++"
+                        @prev-page="currentPage--"
+                        @open-info="openStudentInfoModal"
+                    />
                 </div>
 
-                <!-- Main: 3/4 width on desktop, left side aligned Scan QR→Calendar -->
-                <div class="lg:col-span-3 order-first lg:order-first">
-                    <div
-                        ref="tableRef"
-                        class="relative overflow-hidden rounded-[28px] border border-zinc-100 dark:border-zinc-800/80 bg-white dark:bg-black shadow-xl"
-                    >
-                        <!-- Header -->
-                        <div class="relative overflow-hidden flex flex-col border-b border-zinc-100 dark:border-zinc-800/80 p-4 sm:p-6 gap-4 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl">
-                            <!-- Subtle decorative icon -->
-                            <Users class="absolute right-4 top-1/2 -translate-y-1/2 h-28 w-28 text-zinc-900/[0.025] dark:text-white/[0.025] pointer-events-none" />
+                <!-- Right: High Impact Widgets -->
+                <div class="lg:col-span-4 space-y-6" data-section>
+                    <AtRiskList 
+                        :at-risk-students="atRiskStudents" 
+                        @select="openStudentInfoModal"
+                    />
 
-                            <!-- Title + meta row -->
-                            <div class="relative z-10 flex items-center justify-between gap-3">
-                                <div class="flex items-center gap-3">
-                                    <div class="h-10 w-10 rounded-2xl bg-zinc-950 dark:bg-white flex items-center justify-center shrink-0 shadow-lg shadow-zinc-200 dark:shadow-none">
-                                        <Users class="h-5 w-5 text-white dark:text-black" />
-                                    </div>
-                                    <div>
-                                        <h2 class="text-lg sm:text-2xl font-serif font-black tracking-tight leading-none">
-                                            Today's Attendance
-                                        </h2>
-                                        <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Live status overview</p>
-                                    </div>
-                                </div>
-                                <!-- View Switcher -->
-                                <div class="hidden md:flex rounded-2xl bg-zinc-100 dark:bg-zinc-900 p-1 shrink-0 border border-zinc-200 dark:border-zinc-800">
-                                    <button
-                                        class="rounded-xl p-2 transition-all outline-none"
-                                        :class="viewMode === 'table' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                        title="Table View"
-                                        @click="viewMode = 'table'"
-                                    >
-                                        <Table class="h-4 w-4" />
-                                    </button>
-                                    <button
-                                        class="rounded-xl p-2 transition-all outline-none"
-                                        :class="viewMode === 'grid' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                        title="Grid View"
-                                        @click="viewMode = 'grid'"
-                                    >
-                                        <LayoutGrid class="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
+                    <AttendanceChart 
+                        :attendance-stats="props.attendanceStats"
+                        :chart-data="chartData"
+                        :chart-options="chartOptions"
+                    />
 
-                            <!-- Controls row -->
-                            <div class="relative z-10 flex flex-wrap items-center gap-2">
-                                <!-- Checkbox filter -->
-                                <label class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors shrink-0">
-                                    <input 
-                                        type="checkbox" 
-                                        id="today-toggle" 
-                                        v-model="showOnlyScheduledToday" 
-                                        class="w-3.5 h-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 accent-zinc-900 dark:accent-white"
-                                    />
-                                    <span class="text-[10px] font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-                                        Scheduled Today
-                                    </span>
-                                </label>
-
-                                <!-- Tabs -->
-                                <div class="flex rounded-xl bg-zinc-100 dark:bg-zinc-900 p-0.5 border border-zinc-200 dark:border-zinc-800 shrink-0">
-                                    <button
-                                        class="rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all"
-                                        :class="activeTab === 'active' ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                        @click="activeTab = 'active'"
-                                    >
-                                        Active
-                                    </button>
-                                    <button
-                                        class="rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all"
-                                        :class="activeTab === 'deleted' ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"
-                                        @click="activeTab = 'deleted'"
-                                    >
-                                        Trash ({{ props.trashedStudents.length }})
-                                    </button>
-                                </div>
-
-                                <!-- Search -->
-                                <div class="relative flex-1 min-w-[180px]" data-tour="search">
-                                    <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
-                                    <Input
-                                        ref="searchInputRef"
-                                        v-model="searchQuery"
-                                        type="search"
-                                        placeholder="Search students..."
-                                        class="pl-9 pr-16 h-9 rounded-xl border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-white text-xs font-medium"
-                                    />
-                                    <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                        <kbd class="hidden sm:inline-flex h-5 items-center gap-0.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-1.5 font-mono text-[10px] font-medium text-zinc-400">
-                                            <span class="text-xs">⌘</span>K
-                                        </kbd>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                <div v-if="viewMode === 'table'" class="max-h-[520px] overflow-x-auto overflow-y-auto w-full">
-                    <table class="min-w-full text-left text-sm whitespace-nowrap">
-                        <thead
-                            class="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-black/95 backdrop-blur text-zinc-500 dark:text-zinc-400"
-                        >
-                            <tr>
-                                <th class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider">
-                                    Name
-                                </th>
-                                <th class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider">
-                                    Student #
-                                </th>
-                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
-                                    Rate
-                                </th>
-                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
-                                    Present
-                                </th>
-                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
-                                    Late
-                                </th>
-                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
-                                    Time Out
-                                </th>
-                                <th class="px-1 lg:px-2 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-center">
-                                    Absent
-                                </th>
-                                <th class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider">
-                                    Section
-                                </th>
-                                <th class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs font-semibold uppercase tracking-wider">
-                                    Email
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody ref="studentsTableBodyRef" class="divide-y divide-zinc-200 dark:divide-zinc-800">
-                            <tr
-                                v-if="visibleStudents.length === 0"
-                            >
-                                <td
-                                    colspan="10"
-                                    class="px-3 lg:px-4 py-8 lg:py-12 text-center"
-                                >
-                                    <div class="flex flex-col items-center justify-center space-y-3">
-                                        <div class="rounded-full bg-zinc-50 dark:bg-zinc-900 p-4 border border-zinc-100 dark:border-zinc-800">
-                                            <Search v-if="searchQuery" class="h-6 w-6 text-zinc-400" />
-                                            <Users v-else class="h-6 w-6 text-zinc-400" />
-                                        </div>
-                                        <div class="max-w-[280px] mx-auto">
-                                            <p v-if="searchQuery" class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                                No matches for "{{ searchQuery }}"
-                                            </p>
-                                            <p v-else-if="showOnlyScheduledToday && activeTab === 'active' && students.length > 0" class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                                No students scheduled for {{ todayDayName }}
-                                            </p>
-                                            <p v-else-if="activeTab === 'deleted'" class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                                Trash is empty
-                                            </p>
-                                            <p v-else class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                                No students found
-                                            </p>
-                                            <p class="text-xs text-zinc-500 mt-1">
-                                                <span v-if="searchQuery">Try adjusting your search or filters to find what you're looking for.</span>
-                                                <span v-else-if="showOnlyScheduledToday && activeTab === 'active' && students.length > 0">
-                                                    Check another day or 
-                                                    <button @click="showOnlyScheduledToday = false" class="text-zinc-900 dark:text-white font-semibold underline underline-offset-4 hover:text-zinc-600 transition-colors">
-                                                        view all students
-                                                    </button>.
-                                                </span>
-                                                <span v-else-if="activeTab === 'deleted'">Students you delete will appear here for 30 days before being permanently removed.</span>
-                                                <span v-else>Get started by adding your first student to this subject's roster.</span>
-                                            </p>
-                                        </div>
-                                        <Button v-if="!searchQuery && !showOnlyScheduledToday && activeTab === 'active'" variant="outline" size="sm" class="rounded-full mt-2" @click="createModalOpen = true">
-                                            <Plus class="mr-2 h-3.5 w-3.5" />
-                                            Add Student
-                                        </Button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr
-                                v-for="(student, index) in paginatedStudents"
-                                :key="student.id"
-                                class="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer text-zinc-900 dark:text-zinc-100"
-                                @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
-                            >
-                                <td class="px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium">
-                                    <div class="flex items-center gap-2.5">
-                                        <!-- Photo/Avatar -->
-                                        <div v-if="student.photo" class="h-7 w-7 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                                            <img :src="student.photo" class="h-full w-full object-cover" />
-                                        </div>
-                                        <div v-else :class="['h-7 w-7 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', getAvatarGradient(student.name)]">
-                                            <span class="text-[10px] font-bold text-zinc-900 dark:text-white drop-shadow-sm">{{ student.name.charAt(0) }}</span>
-                                        </div>
-                                        <span class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="" :title="student.name">{{ student.name }}</span>
-                                            <div 
-                                                v-if="activeTab === 'active'"
-                                                class="h-1 w-1 lg:h-1.5 lg:w-1.5 rounded-full status-pulse shrink-0"
-                                                :class="[
-                                                    student.latest_attendance?.status === 'Present'  ? 'bg-zinc-900 dark:bg-white shadow-sm' :
-                                                    student.latest_attendance?.status === 'Late'     ? 'bg-zinc-500 dark:bg-zinc-400' :
-                                                    student.latest_attendance?.status === 'Time Out' ? 'bg-zinc-300 dark:bg-zinc-600' :
-                                                    'bg-zinc-200 dark:bg-zinc-800'
-                                                ]"
-                                            ></div>
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-zinc-500 dark:text-zinc-400">
-                                    {{ student.student_number }}
-                                </td>
-                                <!-- Attendance Rate Badge -->
-                                <td class="px-1 lg:px-2 py-2 text-center" @click.stop>
-                                    <Badge 
-                                        variant="outline" 
-                                        class="text-[9px] lg:text-[10px] font-bold px-1.5 py-0"
-                                        :class="{
-                                            'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400': (student.attendance_percentage ?? 100) < 80,
-                                            'border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400': (student.attendance_percentage ?? 100) >= 80
-                                        }"
-                                    >
-                                        {{ student.attendance_percentage ?? 100 }}%
-                                    </Badge>
-                                </td>
-                                <!-- Status indicator columns (active students) -->
-                                <template v-if="activeTab === 'active'">
-                                    <!-- Present -->
-                                    <td class="px-1 lg:px-2 py-2 text-center" @click.stop>
-                                        <div v-if="student.today_statuses?.some(s => s.status === 'Present')" class="flex flex-col items-center gap-1">
-                                            <template v-for="s in student.today_statuses?.filter(st => st.status === 'Present')">
-                                                <span class="inline-flex items-center gap-0.5 lg:gap-1 text-[9px] lg:text-[10px] font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-1.5 lg:px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700 whitespace-nowrap">
-                                                    <CheckCircle2 class="w-2.5 h-2.5 lg:w-3 lg:h-3 shrink-0" />
-                                                    {{ s.time }}
-                                                </span>
-                                            </template>
-                                        </div>
-                                        <span v-else class="inline-block w-3 lg:w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
-                                    </td>
-                                    <!-- Late -->
-                                    <td class="px-1 lg:px-2 py-2 text-center" @click.stop>
-                                        <div v-if="student.today_statuses?.some(s => s.status === 'Late')" class="flex flex-col items-center gap-1">
-                                            <template v-for="s in student.today_statuses?.filter(st => st.status === 'Late')">
-                                                <span class="inline-flex items-center gap-0.5 lg:gap-1 text-[9px] lg:text-[10px] font-bold text-zinc-900 dark:text-white bg-zinc-200 dark:bg-zinc-700 px-1.5 lg:px-2 py-0.5 rounded-full border border-zinc-300 dark:border-zinc-600 whitespace-nowrap">
-                                                    <AlertCircle class="w-2.5 h-2.5 lg:w-3 lg:h-3 shrink-0" />
-                                                    {{ s.time }}
-                                                </span>
-                                            </template>
-                                        </div>
-                                        <span v-else class="inline-block w-3 lg:w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
-                                    </td>
-                                    <!-- Time Out -->
-                                    <td class="px-1 lg:px-2 py-2 text-center" @click.stop>
-                                        <div v-if="student.today_statuses?.some(s => s.status === 'Time Out')" class="flex flex-col items-center gap-1">
-                                            <template v-for="s in student.today_statuses?.filter(st => st.status === 'Time Out')">
-                                                <span class="inline-flex items-center gap-0.5 lg:gap-1 text-[9px] lg:text-[10px] font-bold text-zinc-900 dark:text-white bg-zinc-300 dark:bg-zinc-600 px-1.5 lg:px-2 py-0.5 rounded-full border border-zinc-400 dark:border-zinc-500 whitespace-nowrap">
-                                                    <CheckCircle2 class="w-2.5 h-2.5 lg:w-3 lg:h-3 shrink-0" />
-                                                    {{ s.time }}
-                                                </span>
-                                            </template>
-                                        </div>
-                                        <span v-else class="inline-block w-3 lg:w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
-                                    </td>
-                                    <!-- Absent -->
-                                    <td class="px-1 lg:px-2 py-2 text-center" @click.stop v-if="activeTab === 'active'">
-                                        <span v-if="(isScheduledForToday(student) && (!student.today_statuses || student.today_statuses.length === 0)) || student.today_statuses?.some(s => s.status === 'Absent')"
-                                            class="inline-flex items-center justify-center w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border border-zinc-900 dark:border-zinc-100"
-                                            title="Absent"
-                                        >
-                                            <Check class="w-3 h-3 lg:w-3.5 lg:h-3.5" stroke-width="3" />
-                                        </span>
-                                        <span v-else class="inline-block w-3 lg:w-4 h-px bg-zinc-200 dark:bg-zinc-800"></span>
-                                    </td>
-                                </template>
-                                <!-- Deleted students: span across 4 status cols + show restore/delete buttons -->
-                                <template v-else>
-                                    <td colspan="4" class="px-4 py-2" @click.stop>
-                                        <div class="flex items-center gap-2">
-                                            <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800" title="Restore" @click="restoreStudent(student.id)">
-                                                <RefreshCw class="w-4 h-4" />
-                                            </Button>
-                                            <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete Permanently" @click="forceDeleteStudent(student.id)">
-                                                <Trash2 class="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </td>
-                                </template>
-                                <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-muted-foreground">
-                                    {{ student.section || '—' }}
-                                </td>
-                                <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-muted-foreground" v-if="activeTab === 'active'">
-                                    {{ student.email || '—' }}
-                                </td>
-                                <td class="px-2 lg:px-4 py-2 text-[10px] lg:text-xs text-rose-500 font-medium" v-else>
-                                    Deleted {{ formatDateTime(student.deleted_at!) }}
-                                </td>
-                                <!-- <td class="px-4 py-2 text-right text-xs text-muted-foreground" @click.stop>
-                                    <button
-                                        type="button"
-                                        class="underline-offset-2 hover:underline"
-                                        @click="openQrModal(student)"
-                                    >
-                                        View QR
-                                    </button>
-                                </td> -->
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Grid View -->
-                <div v-else class="p-4 max-h-[520px] overflow-y-auto">
-                    <div 
-                        v-if="visibleStudents.length === 0"
-                        class="flex flex-col items-center justify-center py-16 text-center"
-                    >
-                        <div class="rounded-full bg-zinc-50 dark:bg-zinc-900 p-5 mb-4 border border-zinc-100 dark:border-zinc-800">
-                            <Search v-if="searchQuery" class="h-8 w-8 text-zinc-300" />
-                            <Users v-else class="h-8 w-8 text-zinc-300" />
-                        </div>
-                        <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                            {{ searchQuery ? `No matches for "${searchQuery}"` : 'No students found' }}
-                        </h3>
-                        <p class="text-xs text-zinc-500 mt-1 max-w-[240px]">
-                            {{ searchQuery ? 'Try a different search term or clear your filters.' : 'Your student roster will appear here once you add some students.' }}
-                        </p>
-                        <Button v-if="!searchQuery && activeTab === 'active'" variant="outline" size="sm" class="rounded-full mt-4" @click="createModalOpen = true">
-                            <Plus class="mr-2 h-3.5 w-3.5" />
-                            Add First Student
-                        </Button>
-                    </div>
-                    <div 
-                        v-else
-                        ref="studentsGridRef"
-                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
-                    >
-                        <div 
-                            v-for="(student, index) in paginatedStudents"
-                            :key="student.id"
-                            data-student-card
-                            class="group relative overflow-hidden rounded-[20px] border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-black p-4 hover:shadow-xl hover:shadow-zinc-200/40 dark:hover:shadow-none hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer transition-all duration-200"
-                            @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
-                        >
-                            <!-- top row: avatar + name + badge -->
-                            <div class="flex items-start gap-3 mb-3">
-                                <div v-if="student.photo" class="h-11 w-11 shrink-0 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 shadow-sm">
-                                    <img :src="student.photo" class="h-full w-full object-cover" />
-                                </div>
-                                <div v-else :class="['h-11 w-11 shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br border border-white/20 shadow-inner', getAvatarGradient(student.name)]">
-                                    <span class="text-lg font-serif font-black text-white dark:text-zinc-100 drop-shadow-sm uppercase">{{ student.name.charAt(0) }}</span>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <h4 class="font-serif font-black text-sm leading-tight line-clamp-2 break-words group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors" :title="student.name">
-                                        {{ student.name }}
-                                    </h4>
-                                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
-                                        {{ student.student_number }}
-                                    </p>
-                                </div>
-                                <Badge 
-                                    variant="outline" 
-                                    class="text-[9px] font-black px-1.5 py-0 shrink-0"
-                                    :class="{
-                                        'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400': (student.attendance_percentage ?? 100) < 80,
-                                        'border-zinc-200 bg-zinc-50 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400': (student.attendance_percentage ?? 100) >= 80
-                                    }"
-                                >
-                                    {{ student.attendance_percentage ?? 100 }}% Rate
-                                </Badge>
-                            </div>
-
-                            <!-- status chips -->
-                            <div v-if="activeTab === 'active' && student.today_statuses?.length" class="flex flex-wrap gap-1 mb-3">
-                                <div 
-                                    v-for="s in student.today_statuses"
-                                    :key="s.status + s.time"
-                                    class="h-5 flex items-center gap-1 rounded-full px-2 py-0.5 border"
-                                    :class="[
-                                        s.status === 'Present' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-zinc-200 dark:border-zinc-700' :
-                                        s.status === 'Late' ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white border-zinc-300 dark:border-zinc-600' :
-                                        s.status === 'Time Out' ? 'bg-zinc-300 dark:bg-zinc-600 text-zinc-900 dark:text-white border-zinc-400 dark:border-zinc-500' :
-                                        'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100'
-                                    ]"
-                                >
-                                    <CheckCircle2 v-if="s.status !== 'Late' && s.status !== 'Absent'" class="w-2.5 h-2.5 shrink-0" />
-                                    <AlertCircle v-else class="w-2.5 h-2.5 shrink-0" />
-                                    <span class="text-[8px] font-black uppercase tracking-wider">{{ s.time }}</span>
-                                </div>
-                            </div>
-
-                            <!-- footer: section + status -->
-                            <div class="pt-2.5 border-t border-zinc-50 dark:border-zinc-900 flex items-center justify-between">
-                                <span class="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400">
-                                    {{ student.section || 'N/A' }}
-                                </span>
-                                <span 
-                                    v-if="activeTab === 'active'"
-                                    class="text-[10px] font-black uppercase tracking-widest"
-                                    :class="[
-                                        student.latest_attendance?.status === 'Present' ? 'text-zinc-900 dark:text-white' :
-                                        student.latest_attendance?.status === 'Late' ? 'text-zinc-500' :
-                                        student.latest_attendance?.status === 'Time Out' ? 'text-zinc-400' :
-                                        'text-zinc-300 dark:text-zinc-600'
-                                    ]"
-                                >
-                                    {{ student.latest_attendance?.status || (isScheduledForToday(student) ? 'Scheduled' : 'No Record') }}
-                                </span>
-                                <div v-else class="flex gap-1">
-                                    <Button size="icon-sm" variant="ghost" class="h-6 w-6 text-emerald-600" title="Restore" @click.stop="restoreStudent(student.id)">
-                                        <RefreshCw class="w-3.5 h-3.5" />
-                                    </Button>
-                                    <Button size="icon-sm" variant="ghost" class="h-6 w-6 text-rose-600" title="Delete" @click.stop="forceDeleteStudent(student.id)">
-                                        <Trash2 class="w-3.5 h-3.5" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                        <!-- Pagination Footer -->
-                        <div v-if="totalPages > 1" class="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-3 sm:p-4 shrink-0">
-                            <div class="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
-                                Showing <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ Math.min(currentPage * itemsPerPage, visibleStudents.length) }}</span> of <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ visibleStudents.length }}</span> results
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    :disabled="currentPage === 1"
-                                    @click="prevPage"
-                                    class="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-800"
-                                >
-                                    <ChevronLeft class="h-3 w-3 sm:mr-1" />
-                                    <span class="hidden sm:inline">Prev</span>
-                                </Button>
-                                <div class="flex items-center gap-1">
-                                    <span class="text-[10px] sm:text-xs font-medium text-zinc-900 dark:text-zinc-100">
-                                        Page {{ currentPage }} of {{ totalPages }}
-                                    </span>
-                                </div>
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    :disabled="currentPage === totalPages"
-                                    @click="nextPage"
-                                    class="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-800"
-                                >
-                                    <span class="hidden sm:inline">Next</span>
-                                    <ChevronRight class="h-3 w-3 sm:ml-1" />
-                                </Button>
-                            </div>
-                        </div>
-
-                    </div>
+                    <LiveScanFeed 
+                        :recent-activity="mappedActivity"
+                    />
                 </div>
             </div>
         </div>
 
-    <Dialog v-model:open="createModalOpen">
-                <DialogContent class="max-w-[400px] md:max-w-2xl flex flex-col max-h-[90dvh] md:max-h-none overflow-hidden">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Add student
-                        </DialogTitle>
-                    </DialogHeader>
+        <!-- Modals -->
+        <StudentInfoModal 
+            v-model:open="infoModalOpen"
+            :student="infoStudent"
+            :attendance-history="attendanceHistory"
+            :history-loading="historyLoading"
+            :updating-record-id="updatingRecordId"
+            :get-subject-name="getSubjectName"
+            :format-time-to-12h="formatTimeTo12h"
+            @edit="openEditFromInfo"
+            @view-qr="openQrFromInfo"
+            @delete="deleteStudent(infoStudent!.id)"
+            @update-status="updateHistoryStatus"
+            @mark-manually="subjId => router.visit(`/manage-attendance/${subjId}/${new Date().toISOString().split('T')[0]}`)"
+        />
 
-                    <form class="flex flex-col flex-1 min-h-0" @submit.prevent="submitStudent">
-                        <div class="flex-1 overflow-y-auto md:overflow-visible space-y-4 pr-0.5">
-                            <div class="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
-                                <!-- Photo Upload -->
-                                <div class="flex flex-col items-center justify-center p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/30 dark:bg-zinc-900/10">
-                                    <div class="relative group cursor-pointer" @click="photoInput?.click()">
-                                        <div class="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center shadow-inner">
-                                            <img v-if="photoPreview" :src="photoPreview" class="h-full w-full object-cover" />
-                                            <div v-else class="flex flex-col items-center text-zinc-400">
-                                                <Plus class="h-5 w-5 mb-0.5 opacity-50" />
-                                                <span class="text-[9px] font-bold uppercase tracking-tighter">Photo</span>
-                                            </div>
-                                            <!-- Overlay -->
-                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center">
-                                                <Scan class="h-5 w-5 text-white" />
-                                            </div>
-                                        </div>
-                                        <input 
-                                            type="file" 
-                                            ref="photoInput" 
-                                            class="hidden" 
-                                            accept="image/*" 
-                                            @change="e => handlePhotoChange(e, 'create')"
-                                        />
-                                        <div class="absolute -bottom-1 -right-1 bg-foreground text-background p-1.5 rounded-2xl shadow-lg">
-                                            <Plus class="h-3 w-3" />
-                                        </div>
-                                    </div>
-                                    <p class="text-[9px] text-zinc-500 mt-2 font-bold uppercase tracking-widest text-center">Student Portrait</p>
-                                    <p v-if="formErrors.photo" class="text-[10px] text-destructive mt-1 text-center">
-                                        {{ Array.isArray(formErrors.photo) ? formErrors.photo[0] : formErrors.photo }}
-                                    </p>
-                                </div>
+        <StudentFormModal 
+            v-model:open="createModalOpen"
+            mode="create"
+            :submitting="submitting"
+            :form-errors="formErrors"
+            :subjects="props.subjects"
+            v-model:name="form.name"
+            v-model:student-number="form.student_number"
+            v-model:email="form.email"
+            v-model:section="form.section"
+            v-model:selected-subject-ids="form.selectedSubjectIds"
+            :photo-preview="form.photoPreview"
+            :schedules="[]"
+            :get-subject-name="getSubjectName"
+            :format-time-to-12h="formatTimeTo12h"
+            @handle-photo-change="handlePhotoChange"
+            @toggle-subject="toggleSubject"
+            @submit="submitStudent"
+        />
 
-                                <div class="space-y-3">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div class="space-y-1.5">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                Full name
-                                            </label>
-                                            <Input v-model="name" placeholder="e.g. Juan Dela Cruz" class="h-9 text-xs" />
-                                            <p v-if="formErrors.name" class="text-[10px] text-destructive">
-                                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
-                                            </p>
-                                        </div>
+        <StudentFormModal 
+            v-model:open="editModalOpen"
+            mode="edit"
+            :submitting="submitting"
+            :form-errors="formErrors"
+            :subjects="props.subjects"
+            v-model:name="form.name"
+            v-model:student-number="form.student_number"
+            v-model:email="form.email"
+            v-model:section="form.section"
+            v-model:selected-subject-ids="form.selectedSubjectIds"
+            :photo-preview="form.photoPreview"
+            :schedules="[]"
+            :get-subject-name="getSubjectName"
+            :format-time-to-12h="formatTimeTo12h"
+            @handle-photo-change="handlePhotoChange"
+            @toggle-subject="toggleSubject"
+            @submit="submitStudent"
+        />
 
-                                        <div class="space-y-1.5">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                Student number
-                                            </label>
-                                            <Input v-model="studentNumber" placeholder="e.g. 2026-0001" class="h-9 text-xs" />
-                                            <p v-if="formErrors.student_number" class="text-[10px] text-destructive">
-                                                {{ Array.isArray(formErrors.student_number) ? formErrors.student_number[0] : formErrors.student_number }}
-                                            </p>
-                                        </div>
-                                    </div>
+        <QrCodeModal 
+            v-model:open="qrModalOpen"
+            :student="selectedStudent"
+            :qr-canvas="null"
+            :student-portal-url="studentPortalUrl"
+            @regenerate="regenerateQr"
+            @download="downloadQr"
+            @print="() => (window as any).open(`/students/print-cards?ids=${selectedStudent?.id}`, '_blank')"
+            @copy-link="copyPortalLink"
+        />
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div class="space-y-1.5">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                Section
-                                            </label>
-                                            <Input v-model="section" placeholder="e.g. BSIT-3A" class="h-9 text-xs" />
-                                            <p v-if="formErrors.section" class="text-[10px] text-destructive">
-                                                {{ Array.isArray(formErrors.section) ? formErrors.section[0] : formErrors.section }}
-                                            </p>
-                                        </div>
+        <ImportModal 
+            v-model:open="importModalOpen"
+            :importing="importing"
+            :import-file="importFile"
+            @file-change="handleFileChange"
+            @submit="submitImport"
+        />
 
-                                        <div class="space-y-1.5">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                Email (Optional)
-                                            </label>
-                                            <Input v-model="email" type="email" placeholder="Optional" class="h-9 text-xs" />
-                                            <p v-if="formErrors.email" class="text-[10px] text-destructive">
-                                                {{ Array.isArray(formErrors.email) ? formErrors.email[0] : formErrors.email }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+        <ConfirmModal 
+            v-model:open="confirmModalOpen"
+            :title="confirmConfig.title"
+            :description="confirmConfig.description"
+            :is-destructive="confirmConfig.isDestructive"
+            @confirm="confirmConfig.onConfirm"
+        />
 
-                                <div class="flex items-center justify-between">
-                                    <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                        Enrolled Subjects
-                                    </label>
-                                </div>
+        <WelcomeModal 
+            v-model:open="welcomeModalOpen"
+            :user-name="props.auth.user.name"
+            :student-count="props.students.data.length"
+            :at-risk-count="atRiskStudents.length"
+            @close="welcomeModalOpen = false"
+        />
 
-                                <div class="flex flex-wrap gap-1.5">
-                                    <button
-                                        v-for="subj in props.subjects"
-                                        :key="subj.id"
-                                        type="button"
-                                        @click="toggleSubject(subj.id)"
-                                        :class="[
-                                            'px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight border transition-all',
-                                            selectedSubjectIds.includes(subj.id)
-                                                ? 'bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 border-transparent shadow-sm'
-                                                : 'bg-zinc-50 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
-                                        ]"
-                                    >
-                                        {{ subj.name }}
-                                    </button>
-                                </div>
-
-                                <!-- Preview of schedule -->
-                                <div v-if="schedules.length > 0" class="mt-4 p-3 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50">
-                                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-3 ml-1">Schedule Preview</p>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <div 
-                                            v-for="(slot, i) in schedules" 
-                                            :key="i"
-                                            class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 shadow-[0_1px_2px_rgba(0,0,0,0.02)] border border-zinc-100 dark:border-zinc-800/80"
-                                        >
-                                            <div class="h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 shrink-0" />
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-[10px] font-bold truncate leading-tight">{{ getSubjectName(slot.subject_id) }}</p>
-                                                <p class="text-[9px] text-zinc-500 font-semibold tabular-nums mt-0.5">
-                                                    {{ slot.day }} · {{ formatTimeTo12h(slot.start) }} – {{ formatTimeTo12h(slot.end) }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                        </div>
-
-                        <DialogFooter class="mt-4 flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
-                            <DialogClose as-child>
-                                <Button type="button" variant="outline" size="sm" class="text-xs h-9">
-                                    Cancel
-                                </Button>
-                            </DialogClose>
-                            <Button type="submit" :disabled="submitting" size="sm" class="text-xs h-9 px-6 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900">
-                                {{ submitting ? 'Saving…' : 'Save student' }}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            <!-- Student Info Modal -->
-            <Dialog v-model:open="studentInfoModalOpen">
-                <DialogContent class="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Student Info</DialogTitle>
-                    </DialogHeader>
-
-                    <div v-if="infoStudent" class="space-y-4">
-                        <!-- Profile card -->
-                        <div class="rounded-lg border bg-muted/30 p-4 space-y-4">
-                            <div class="flex items-center gap-4">
-                                <!-- Student Photo -->
-                                <div class="shrink-0">
-                                    <div v-if="infoStudent.photo" class="h-16 w-16 rounded-full overflow-hidden border-2 border-white dark:border-zinc-800 shadow-sm">
-                                        <img :src="infoStudent.photo" class="h-full w-full object-cover" />
-                                    </div>
-                                    <div v-else :class="['h-16 w-16 rounded-full flex items-center justify-center bg-gradient-to-br border-2 border-white dark:border-zinc-800 shadow-sm text-lg font-bold text-zinc-900 dark:text-white', getAvatarGradient(infoStudent.name)]">
-                                        {{ infoStudent.name.charAt(0) }}
-                                    </div>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="flex items-start justify-between gap-2">
-                                        <div class="min-w-0">
-                                            <p class="text-lg font-bold leading-tight truncate" :title="infoStudent.name">
-                                                {{ infoStudent.name }}
-                                            </p>
-                                            <p class="text-xs text-muted-foreground mt-0.5 font-medium tracking-tight">
-                                                {{ infoStudent.student_number }}
-                                                <span v-if="infoStudent.section"> · {{ infoStudent.section }}</span>
-                                            </p>
-                                        </div>
-                                        <!-- Today's status badge -->
-                                        <span
-                                            v-if="infoStudent.latest_attendance"
-                                            :class="[
-                                                'shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                                                infoStudent.latest_attendance.status === 'Present' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' :
-                                                infoStudent.latest_attendance.status === 'Late'    ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white' :
-                                                infoStudent.latest_attendance.status === 'Absent'  ? 'bg-rose-500 text-white' :
-                                                                                                     'bg-muted text-muted-foreground'
-                                            ]"
-                                        >
-                                            {{ infoStudent.latest_attendance.status }}
-                                        </span>
-                                    </div>
-                                    <p v-if="infoStudent.email" class="text-xs text-muted-foreground mt-1 truncate">
-                                        {{ infoStudent.email }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Schedule -->
-                            <div v-if="infoStudent.schedule && infoStudent.schedule.length > 0" class="pt-1">
-                                <p class="text-[11px] font-medium uppercase text-muted-foreground mb-1">Schedule</p>
-                                <div class="space-y-2">
-                                    <div
-                                        v-for="(slot, i) in infoStudent.schedule"
-                                        :key="i"
-                                        class="flex items-center justify-between rounded-md border p-2 hover:bg-muted/50"
-                                    >
-                                        <div class="flex flex-col">
-                                            <span class="text-xs font-semibold">{{ getSubjectName(slot.subject_id) }}</span>
-                                            <span class="text-[10px] font-mono text-muted-foreground">{{ slot.day }}: {{ formatTimeTo12h(slot.start) }} – {{ formatTimeTo12h(slot.end) }}</span>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            class="h-7 text-[10px] px-2 gap-1"
-                                            @click="() => {
-                                                const today = new Date().toISOString().split('T')[0];
-                                                router.visit(`/manage-attendance/${slot.subject_id}/${today}`);
-                                            }"
-                                        >
-                                            <Clock class="h-3 w-3" />
-                                            Mark Manually
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Attendance History -->
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                    Attendance History
-                                </p>
-                                <button
-                                    v-if="attendanceHistory.length > 5"
-                                    type="button"
-                                    class="flex items-center gap-1 text-[11px] text-primary hover:underline"
-                                    @click="historyExpanded = !historyExpanded"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="12" height="12"
-                                        viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        :class="['transition-transform', historyExpanded ? 'rotate-180' : '']"
-                                    >
-                                        <path d="m6 9 6 6 6-6"/>
-                                    </svg>
-                                    {{ historyExpanded ? 'Collapse' : `Show all (${attendanceHistory.length})` }}
-                                </button>
-                            </div>
-
-                            <!-- Loading state -->
-                            <div v-if="historyLoading" class="py-4 text-center text-xs text-muted-foreground">
-                                Loading history…
-                            </div>
-
-                            <!-- Empty state -->
-                            <div
-                                v-else-if="attendanceHistory.length === 0"
-                                class="py-4 text-center text-xs text-muted-foreground"
-                            >
-                                No attendance records found.
-                            </div>
-
-                            <!-- History list grouped by date -->
-                            <div
-                                v-else
-                                :class="['overflow-y-auto rounded-lg border transition-all', historyExpanded ? 'max-h-72' : 'max-h-52']"
-                            >
-                                <template v-for="group in groupedAttendanceHistory" :key="group.date">
-                                    <!-- Date header -->
-                                    <div class="sticky top-0 z-10 flex items-center gap-2 bg-muted/80 backdrop-blur px-3 py-1.5 border-b">
-                                        <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                                            {{ group.label }}
-                                        </span>
-                                        <span class="ml-auto text-[10px] text-muted-foreground/60">
-                                            {{ group.records.length }} record{{ group.records.length !== 1 ? 's' : '' }}
-                                        </span>
-                                    </div>
-                                    <!-- Records for this date -->
-                                    <div
-                                        v-for="record in group.records"
-                                        :key="record.id"
-                                        class="flex items-center justify-between px-3 py-2 text-xs border-b last:border-b-0"
-                                    >
-                                        <div class="flex flex-col">
-                                            <span class="font-medium">
-                                                {{ new Date(record.scanned_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) }}
-                                            </span>
-                                            <span v-if="record.slot_start" class="text-[10px] text-muted-foreground">
-                                                {{ formatTimeTo12h(record.slot_start || undefined) }} – {{ formatTimeTo12h(record.slot_end || undefined) }}
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center gap-1">
-                                            <Select 
-                                                :model-value="record.status" 
-                                                @update:model-value="(val) => updateHistoryStatus(record.id, String(val))"
-                                                :disabled="updatingRecordId === record.id"
-                                            >
-                                                <SelectTrigger class="h-6 min-w-[80px] border-none bg-transparent p-0 hover:bg-muted/50 focus:ring-0">
-                                                    <div v-if="updatingRecordId === record.id" class="flex items-center justify-center w-full">
-                                                        <span class="animate-pulse text-[10px] text-muted-foreground italic">Saving...</span>
-                                                    </div>
-                                                    <SelectValue v-else :placeholder="record.status">
-                                                        <span
-                                                            :class="[
-                                                                'rounded-full px-2 py-0.5 text-[10px] font-bold',
-                                                                record.status === 'Present'  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
-                                                                record.status === 'Late'     ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                                                                record.status === 'Time Out' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' :
-                                                                record.status === 'Absent'   ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
-                                                                                               'bg-muted text-muted-foreground'
-                                                            ]"
-                                                        >
-                                                            {{ record.status }}
-                                                        </span>
-                                                    </SelectValue>
-                                                </SelectTrigger>
-                                                <SelectContent class="min-w-[120px]">
-                                                    <SelectItem value="Present" class="text-xs">Present</SelectItem>
-                                                    <SelectItem value="Late" class="text-xs">Late</SelectItem>
-                                                    <SelectItem value="Time Out" class="text-xs">Time Out</SelectItem>
-                                                    <SelectItem value="Absent" class="text-xs">Absent</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-
-                    <DialogFooter class="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
-                        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                @click="openEditFromInfo"
-                            >
-                                Edit student
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                @click="openQrFromInfo"
-                            >
-                                View QR
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                @click="openPrintCardsFromInfo"
-                            >
-                                Print Card
-                            </Button>
-                                <Button
-                                    v-if="infoStudent"
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    class="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300"
-                                    @click="deleteStudent(infoStudent.id)"
-                                >
-                                    Delete
-                                </Button>
-                        </div>
-                        <Button
-                            type="button"
-                            size="sm"
-                            class="w-full sm:w-auto"
-                            @click="closeStudentInfoModal"
-                        >
-                            Close
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog v-model:open="editModalOpen">
-                <DialogContent class="max-w-[400px] md:max-w-2xl flex flex-col max-h-[90dvh] md:max-h-none overflow-hidden">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Edit student
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <form class="flex flex-col flex-1 min-h-0" @submit.prevent="submitEditStudent">
-                        <div class="flex-1 overflow-y-auto md:overflow-visible space-y-4 pr-0.5">
-                            <div class="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
-                                <!-- Photo Upload -->
-                                <div class="flex flex-col items-center justify-center p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/30 dark:bg-zinc-900/10">
-                                    <div class="relative group cursor-pointer" @click="editPhotoInput?.click()">
-                                        <div class="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center shadow-inner">
-                                            <img v-if="editPhotoPreview" :src="editPhotoPreview" class="h-full w-full object-cover" />
-                                            <div v-else class="flex flex-col items-center text-zinc-400">
-                                                <Plus class="h-5 w-5 mb-0.5 opacity-50" />
-                                                <span class="text-[9px] font-bold uppercase tracking-tighter">Photo</span>
-                                            </div>
-                                            <!-- Overlay -->
-                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center">
-                                                <Scan class="h-5 w-5 text-white" />
-                                            </div>
-                                        </div>
-                                        <input 
-                                            type="file" 
-                                            ref="editPhotoInput" 
-                                            class="hidden" 
-                                            accept="image/*" 
-                                            @change="e => handlePhotoChange(e, 'edit')"
-                                        />
-                                        <div class="absolute -bottom-1 -right-1 bg-foreground text-background p-1.5 rounded-2xl shadow-lg">
-                                            <RefreshCw class="h-3 w-3" />
-                                        </div>
-                                    </div>
-                                    <p class="text-[9px] text-zinc-500 mt-2 font-bold uppercase tracking-widest text-center">Update Portrait</p>
-                                    <p v-if="formErrors.photo" class="text-[10px] text-destructive mt-1 text-center">
-                                        {{ Array.isArray(formErrors.photo) ? formErrors.photo[0] : formErrors.photo }}
-                                    </p>
-                                </div>
-
-                                <div class="space-y-3">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div class="space-y-1.5">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                Full name
-                                            </label>
-                                            <Input v-model="editName" placeholder="e.g. Juan Dela Cruz" class="h-9 text-xs" />
-                                            <p v-if="formErrors.name" class="text-[10px] text-destructive">
-                                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
-                                            </p>
-                                        </div>
-
-                                        <div class="space-y-1.5">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                Student number
-                                            </label>
-                                            <Input v-model="editStudentNumber" placeholder="e.g. 2026-0001" class="h-9 text-xs" />
-                                            <p v-if="formErrors.student_number" class="text-[10px] text-destructive">
-                                                {{ Array.isArray(formErrors.student_number) ? formErrors.student_number[0] : formErrors.student_number }}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div class="space-y-1.5">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                Section
-                                            </label>
-                                            <Input v-model="editSection" placeholder="e.g. BSIT-3A" class="h-9 text-xs" />
-                                            <p v-if="formErrors.section" class="text-[10px] text-destructive">
-                                                {{ Array.isArray(formErrors.section) ? formErrors.section[0] : formErrors.section }}
-                                            </p>
-                                        </div>
-
-                                        <div class="space-y-1.5">
-                                            <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                Email (Optional)
-                                            </label>
-                                            <Input v-model="editEmail" type="email" placeholder="Optional" class="h-9 text-xs" />
-                                            <p v-if="formErrors.email" class="text-[10px] text-destructive">
-                                                {{ Array.isArray(formErrors.email) ? formErrors.email[0] : formErrors.email }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                                <div class="flex items-center justify-between">
-                                    <label class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                        Enrolled Subjects
-                                    </label>
-                                </div>
-
-                                <div class="flex flex-wrap gap-1.5">
-                                    <button
-                                        v-for="subj in props.subjects"
-                                        :key="subj.id"
-                                        type="button"
-                                        @click="toggleEditSubject(subj.id)"
-                                        :class="[
-                                            'px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight border transition-all',
-                                            editSelectedSubjectIds.includes(subj.id)
-                                                ? 'bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 border-transparent shadow-sm'
-                                                : 'bg-zinc-50 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
-                                        ]"
-                                    >
-                                        {{ subj.name }}
-                                    </button>
-                                </div>
-
-                                <!-- Preview of schedule -->
-                                <div v-if="editSchedules.length > 0" class="mt-4 p-3 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50">
-                                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-3 ml-1">Schedule Preview</p>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <div 
-                                            v-for="(slot, i) in editSchedules" 
-                                            :key="i"
-                                            class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 shadow-[0_1px_2px_rgba(0,0,0,0.02)] border border-zinc-100 dark:border-zinc-800/80"
-                                        >
-                                            <div class="h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 shrink-0" />
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-[10px] font-bold truncate leading-tight">{{ getSubjectName(slot.subject_id) }}</p>
-                                                <p class="text-[9px] text-zinc-500 font-semibold tabular-nums mt-0.5">
-                                                    {{ slot.day }} · {{ formatTimeTo12h(slot.start) }} – {{ formatTimeTo12h(slot.end) }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                        </div>
-
-                        <DialogFooter class="mt-4 flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
-                            <DialogClose as-child>
-                                <Button type="button" variant="outline" size="sm" class="text-xs h-9">
-                                    Cancel
-                                </Button>
-                            </DialogClose>
-                            <Button type="submit" :disabled="submitting" size="sm" class="text-xs h-9 px-6 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900">
-                                {{ submitting ? 'Saving…' : 'Save changes' }}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog v-model:open="qrModalOpen">
-                <DialogContent class="max-w-sm flex max-h-[85dvh] flex-col">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Student QR code
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <div v-if="selectedStudent" class="min-h-0 flex-1 overflow-y-auto pr-1 space-y-4">
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold">
-                                {{ selectedStudent.name }}
-                            </p>
-                            <p class="text-xs text-muted-foreground">
-                                {{ selectedStudent.student_number }}
-                                ·
-                                {{ selectedStudent.section || 'No section' }}
-                            </p>
-                        </div>
-
-                        <div class="flex items-center justify-center rounded-lg border bg-white p-4">
-                            <canvas id="qr-canvas" ref="qrCanvas" class="h-48 w-48"></canvas>
-                        </div>
-
-                        <p class="text-xs text-muted-foreground">
-                            This QR encodes a secure token for this student. You
-                            can print or share it, and regenerate it anytime to
-                            invalidate older copies.
-                        </p>
-
-                        <div class="rounded-lg border border-sidebar-border/50 bg-background/50 p-3">
-                            <p class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                Student portal link
-                            </p>
-                            <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
-                                <a
-                                    :href="studentPortalUrl(selectedStudent.qr_token)"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="min-w-0 flex-1 break-all text-xs font-mono text-primary hover:underline sm:truncate sm:break-normal"
-                                    :title="studentPortalUrl(selectedStudent.qr_token)"
-                                >
-                                    {{ studentPortalUrl(selectedStudent.qr_token) }}
-                                </a>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    class="shrink-0 self-start sm:self-auto"
-                                    @click="copyStudentPortalLink"
-                                >
-                                    Copy
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <DialogFooter v-if="selectedStudent" class="mt-3 flex flex-wrap items-center justify-between gap-2">
-                        <Button type="button" size="sm" variant="outline" @click="regenerateQr">
-                            Regenerate
-                        </Button>
-                        <div class="flex flex-wrap gap-2 justify-end">
-                            <Button type="button" size="sm" variant="outline" @click="downloadQr">
-                                Download
-                            </Button>
-                            <Button type="button" size="sm" variant="outline" @click="openPrintCards">
-                                Print
-                            </Button>
-                            <Button type="button" size="sm" @click="closeQrModal">
-                                Close
-                            </Button>
-                        </div>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <!-- Import Students Dialog -->
-            <Dialog v-model:open="importModalOpen">
-                <DialogContent class="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle class="flex items-center gap-2">
-                            <UserPlus class="h-5 w-5" />
-                            Import Students
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div class="py-4 space-y-4">
-                        <p class="text-sm text-muted-foreground">
-                            Upload a CSV file containing student information. The file should have the following headers: 
-                            <code class="text-xs bg-muted px-1 rounded font-bold">name</code>, 
-                            <code class="text-xs bg-muted px-1 rounded font-bold">student_number</code>, 
-                            <code class="text-xs bg-muted px-1 rounded font-bold">email</code>, 
-                            <code class="text-xs bg-muted px-1 rounded font-bold">section</code>.
-                        </p>
-
-                        <div class="flex items-center justify-between p-3 border rounded-lg bg-zinc-50 dark:bg-zinc-900/50">
-                            <div class="flex items-center gap-3">
-                                <div class="p-2 rounded-full bg-zinc-200 dark:bg-zinc-800">
-                                    <Download class="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-xs font-bold">Need a template?</span>
-                                    <span class="text-[10px] text-muted-foreground">Download our sample CSV file.</span>
-                                </div>
-                            </div>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                class="text-[10px] font-bold h-7"
-                                as-child
-                            >
-                                <a href="/students/sample" target="_blank">Download Sample</a>
-                            </Button>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">CSV File</label>
-                            <input 
-                                type="file" 
-                                accept=".csv"
-                                class="w-full text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-semibold file:bg-zinc-900 file:text-white dark:file:bg-white dark:file:text-zinc-900 hover:file:bg-zinc-800 transition-all cursor-pointer border rounded-lg p-1"
-                                @change="handleFileChange"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter class="gap-2">
-                        <Button variant="outline" @click="importModalOpen = false">
-                            Cancel
-                        </Button>
-                        <Button 
-                            :disabled="!importFile || importing"
-                            @click="submitImport"
-                        >
-                            {{ importing ? 'Importing...' : 'Start Import' }}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <!-- Generic Confirmation Modal -->
-            <Dialog :open="!!confirmModalOpen" @update:open="val => confirmModalOpen = val">
-                <DialogContent class="max-w-sm">
-                    <DialogHeader>
-                        <DialogTitle>{{ confirmTitle }}</DialogTitle>
-                    </DialogHeader>
-                    <div class="py-2">
-                        <p class="text-sm text-muted-foreground">
-                            {{ confirmDescription }}
-                        </p>
-                    </div>
-                    <DialogFooter class="flex gap-2">
-                        <Button variant="outline" @click="confirmModalOpen = false">
-                            Cancel
-                        </Button>
-                        <Button 
-                            :variant="confirmIsDestructive ? 'destructive' : 'default'"
-                            @click="handleConfirm"
-                        >
-                            Confirm
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <!-- Welcome Modal -->
-            <Dialog :open="!!showWelcomeModal" @update:open="val => showWelcomeModal = val as any">
-                <DialogContent class="sm:max-w-[440px] max-w-[95vw] p-0 overflow-hidden border-none bg-transparent shadow-none">
-                    <div class="relative bg-card rounded-[32px] overflow-hidden border border-border/50 shadow-2xl animate-in zoom-in-95 duration-300">
-                        <!-- Background Glow -->
-                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-zinc-500/10 rounded-full blur-[80px]"></div>
-                        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-zinc-500/10 rounded-full blur-[80px]"></div>
-
-                        <div class="relative p-6 sm:p-8 flex flex-col items-center text-center">
-                            <!-- Mascot / Icon -->
-                            <div class="relative mb-4 sm:mb-6 group">
-                                <div class="absolute inset-0 bg-foreground/10 rounded-full blur-2xl group-hover:bg-foreground/20 transition-all duration-500 scale-110"></div>
-                                <div class="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-card shadow-xl overflow-hidden bg-background flex items-center justify-center">
-                                    <Scan class="w-12 h-12 text-foreground transform group-hover:scale-110 transition-transform duration-500" stroke-width="1.5" />
-                                </div>
-                                <div class="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-foreground text-background p-1.5 sm:p-2 rounded-2xl shadow-lg animate-bounce">
-                                    <Zap class="w-3 h-3 sm:w-4 sm:h-4" />
-                                </div>
-                            </div>
-
-                            <DialogHeader class="space-y-2 sm:space-y-3">
-                                <DialogTitle class="text-2xl sm:text-3xl font-black font-serif tracking-tight text-foreground">
-                                    Welcome Back, <span class="bg-gradient-to-r from-zinc-800 to-zinc-500 dark:from-zinc-200 dark:to-zinc-500 bg-clip-text text-transparent">{{ page.props.auth?.user?.name?.split(' ')[0] || 'Admin' }}</span>!
-                                </DialogTitle>
-                                <DialogDescription class="text-sm sm:text-base text-muted-foreground font-medium leading-relaxed px-2 sm:px-4">
-                                    We're excited to have you back! Your attendance hub is ready. Let's manage some records today.
-                                </DialogDescription>
-                            </DialogHeader>
-
-                            <div class="mt-6 sm:mt-8 grid grid-cols-2 gap-2 sm:gap-3 w-full">
-                                <div class="p-3 sm:p-4 rounded-2xl bg-muted/50 border border-border/40 text-left hover:border-foreground/20 transition-colors">
-                                    <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Students</p>
-                                    <p class="text-base sm:text-lg font-bold text-foreground tabular-nums">{{ students.length }}</p>
-                                </div>
-                                <div class="p-3 sm:p-4 rounded-2xl bg-muted/50 border border-border/40 text-left hover:border-foreground/20 transition-colors">
-                                    <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">At Risk</p>
-                                    <p class="text-base sm:text-lg font-bold text-foreground tabular-nums">{{ atRiskCount }}</p>
-                                </div>
-                            </div>
-
-                            <DialogFooter class="mt-6 sm:mt-8 w-full sm:justify-center">
-                                <button @click="closeWelcomeModal" class="w-full sm:w-auto px-8 sm:px-10 py-3 sm:py-4 rounded-[18px] sm:rounded-[20px] bg-foreground text-background font-bold text-sm sm:text-base shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                                    Get Started
-                                </button>
-                            </DialogFooter>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
     </AppLayout>
 </template>
 
 <style scoped>
-.status-pulse {
-    transition: all 0.3s ease;
+/* Page-level fade-in for the main wrapper */
+.fade-enter-active {
+    transition: opacity 0.4s ease, transform 0.4s ease;
 }
-
-.glass-card {
-    background: rgba(23, 23, 23, 0.7);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+.fade-leave-active {
+    transition: opacity 0.2s ease;
 }
-
-.dark .glass-card {
-    background: rgba(15, 15, 15, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+.fade-enter-from {
+    opacity: 0;
+    transform: translateY(8px);
+}
+.fade-leave-to {
+    opacity: 0;
 }
 </style>

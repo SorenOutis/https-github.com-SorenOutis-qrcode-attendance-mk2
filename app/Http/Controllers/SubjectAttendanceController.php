@@ -123,18 +123,20 @@ class SubjectAttendanceController extends Controller
             ->groupBy('status')
             ->get(['status', 'count']);
 
-        $studentStats = Student::query()
-            ->whereIn('id', $enrolledIds->toArray(), 'and', false)
-            ->select(['id', 'name', 'student_number', 'email', 'section', 'schedule', 'photo'])
-            ->get(['id', 'name', 'student_number', 'email', 'section', 'schedule', 'photo'])
-            ->map(function ($student) use ($subject, $startDate, $endDate) {
-                $records = Attendance::query()
-                    ->where('subject_id', '=', (int) $subject->id, 'and')
-                    ->where('student_id', '=', (int) $student->id, 'and')
-                    ->where('scanned_at', '>=', $startDate->toDateTimeString(), 'and')
-                    ->where('scanned_at', '<=', $endDate->toDateTimeString(), 'and')
-                    ->get(['status']);
+        $allAttendance = Attendance::query()
+            ->where('subject_id', '=', (int) $subject->id)
+            ->where('scanned_at', '>=', $startDate->toDateTimeString())
+            ->where('scanned_at', '<=', $endDate->toDateTimeString())
+            ->whereIn('student_id', $enrolledIds->toArray())
+            ->get(['student_id', 'status'])
+            ->groupBy('student_id');
 
+        $studentStats = Student::query()
+            ->whereIn('id', $enrolledIds->toArray())
+            ->select(['id', 'name', 'student_number', 'email', 'section', 'schedule', 'photo'])
+            ->get()
+            ->map(function ($student) use ($allAttendance) {
+                $records = $allAttendance->get($student->id) ?? collect();
                 $total = $records->count();
                 $positive = $records->whereIn('status', ['Present', 'present', 'Late', 'late', 'Excused', 'excused'])->count();
                 $rate = $total > 0 ? round(($positive / $total) * 100, 1) : 0;
@@ -158,7 +160,7 @@ class SubjectAttendanceController extends Controller
             ->sortBy('attendance_rate')
             ->values();
 
-        $perPage = 25;
+        $perPage = 100;
         $currentPage = max(1, (int) $request->integer('page', 1));
         $paginatedStudents = new LengthAwarePaginator(
             $studentStats->forPage($currentPage, $perPage)->values(),

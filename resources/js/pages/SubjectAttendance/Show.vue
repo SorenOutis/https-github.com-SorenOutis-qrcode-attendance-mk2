@@ -145,7 +145,44 @@ const overallRate = computed(() => {
 });
 
 const studentRows = computed(() => props.students.data ?? []);
+const displayLimit = ref(25);
+const displayedStudents = computed(() => studentRows.value.slice(0, displayLimit.value));
+
 const studentRankStart = computed(() => props.students.from ?? ((props.students.current_page - 1) * props.students.per_page + 1));
+
+function showMore() {
+    const list = document.querySelector('.student-list-container');
+    if (list) {
+        // Record current height
+        const startHeight = list.clientHeight;
+        displayLimit.value = studentRows.value.length;
+        
+        // Next tick wait for DOM update
+        setTimeout(() => {
+            const endHeight = list.clientHeight;
+            // Immediate reset then animate
+            gsap.fromTo(list, 
+                { height: startHeight }, 
+                { height: 'auto', duration: 0.6, ease: 'expo.out', clearProps: 'height' }
+            );
+            
+            // Animate new items
+            const currentItems = list.querySelectorAll('.student-row');
+            const newItems = Array.from(currentItems).slice(25);
+            if (newItems.length) {
+                gsap.from(newItems, {
+                    opacity: 0,
+                    y: 20,
+                    stagger: 0.02,
+                    duration: 0.4,
+                    ease: 'power2.out'
+                });
+            }
+        }, 0);
+    } else {
+        displayLimit.value = studentRows.value.length;
+    }
+}
 
 const { success, error } = useToast();
 
@@ -440,17 +477,18 @@ onMounted(() => {
                     <div class="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 mb-2">
                         <input 
                             type="checkbox" 
-                            :checked="selectedIds.length === studentRows.length && studentRows.length > 0"
+                            :checked="selectedIds.length === displayedStudents.length && displayedStudents.length > 0"
                             @change="toggleAll"
                             class="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 focus:ring-zinc-900 transition-all cursor-pointer"
                         />
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Select All Students on this page</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Select All Visible Students</span>
                     </div>
 
-                    <template v-for="(student, idx) in studentRows" :key="student.id">
-                        <div
-                            class="flex items-center gap-2 sm:gap-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 px-2 sm:px-4 py-2 sm:py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm hover:shadow-md group w-full"
-                        >
+                    <div class="student-list-container space-y-2 overflow-hidden">
+                        <template v-for="(student, idx) in displayedStudents" :key="student.id">
+                            <div
+                                class="student-row flex items-center gap-2 sm:gap-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 px-2 sm:px-4 py-2 sm:py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm hover:shadow-md group w-full"
+                            >
                             <input 
                                 type="checkbox" 
                                 :checked="selectedIds.includes(student.id)"
@@ -508,6 +546,20 @@ onMounted(() => {
                             </div>
                         </div>
                     </template>
+                    </div>
+
+                    <!-- Show More Button -->
+                    <div v-if="studentRows.length > displayLimit" class="pt-4 flex justify-center">
+                        <button 
+                            @click="showMore"
+                            class="group relative flex items-center gap-2 px-8 py-3 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-[0.97] shadow-xl shadow-zinc-900/10 dark:shadow-none isolate"
+                        >
+                            <span class="relative z-10 flex items-center gap-2">
+                                Show More Students
+                                <ChevronDown class="h-3 w-3 group-hover:translate-y-0.5 transition-transform" />
+                            </span>
+                        </button>
+                    </div>
 
                     <div
                         v-if="students.last_page > 1"

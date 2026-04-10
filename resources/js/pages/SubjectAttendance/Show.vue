@@ -259,14 +259,14 @@ function deleteStudent(student: StudentData) {
 
 function rateColor(rate: number): string {
     if (rate >= 90) return 'text-zinc-900 dark:text-white';
-    if (rate >= 75) return 'text-zinc-600 dark:text-zinc-300';
-    return 'text-rose-600 dark:text-rose-400';
+    if (rate >= 75) return 'text-zinc-500 dark:text-zinc-400';
+    return 'text-rose-500 dark:text-rose-400';
 }
 
 function rateBg(rate: number): string {
-    if (rate >= 90) return 'bg-zinc-900 dark:bg-zinc-100';
-    if (rate >= 75) return 'bg-zinc-500';
-    return 'bg-rose-500';
+    if (rate >= 90) return 'bg-zinc-900 dark:bg-white';
+    if (rate >= 75) return 'bg-zinc-500 dark:bg-zinc-400';
+    return 'bg-rose-500 dark:bg-rose-400';
 }
 
 onMounted(() => {
@@ -325,94 +325,96 @@ onMounted(() => {
                     { label: 'Total Records', value: statusDistribution.reduce((s, x) => s + x.count, 0), icon: Clock },
                     { label: 'Present', value: statusDistribution.filter(s => ['Present','present'].includes(s.status)).reduce((s,x) => s + x.count, 0), icon: TrendingUp },
                     { label: 'Absent', value: statusDistribution.filter(s => ['Absent','absent'].includes(s.status)).reduce((s,x) => s + x.count, 0), icon: BookOpen },
-                ]" :key="i" data-card class="group relative overflow-hidden rounded-2xl p-4 sm:p-5 transition-all bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 preserve-3d shadow-3d text-center">
-                    <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-2 sm:mb-3 border border-zinc-100 dark:border-zinc-800">
-                        <component :is="stat.icon" class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
+                ]" :key="i" class="group relative overflow-hidden rounded-[20px] p-4 sm:p-5 transition-all duration-300 hover:-translate-y-1 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-sm hover:shadow-md text-center">
+                    <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center mx-auto mb-2 sm:mb-3 border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+                        <component :is="stat.icon" class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400 dark:text-zinc-500" />
                     </div>
                     <div class="text-xl sm:text-2xl font-serif font-black">{{ stat.value }}</div>
-                    <div class="text-[8px] sm:text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-1">{{ stat.label }}</div>
+                    <div class="text-[8px] sm:text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-1">{{ stat.label }}</div>
                 </div>
             </div>
 
             <div class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <!-- Trend Chart -->
-                <div class="subject-detail-card md:col-span-2 rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-8 shadow-xl sm:shadow-2xl">
+                <div class="subject-detail-card md:col-span-2 rounded-[20px] border border-zinc-200/50 dark:border-zinc-800/50 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl p-4 sm:p-6 shadow-sm text-zinc-900 dark:text-white isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700">
+                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-900/5 dark:bg-white/5 blur-3xl -z-10 transition-opacity group-hover:bg-zinc-900/10 dark:group-hover:bg-white/10"></div>
                     <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
-                            <TrendingUp class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
+                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+                            <TrendingUp class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400 dark:text-zinc-500" />
                         </div>
                         <div>
                             <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Attendance Trend</h3>
-                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Over Time</p>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none">Over Time</p>
                         </div>
                     </div>
                     <div class="h-[180px] sm:h-[300px] w-full">
                         <Line v-if="daily.length" :data="lineData" :options="chartOptions" />
-                        <div v-else class="h-full flex items-center justify-center text-sm text-zinc-400">No data in range</div>
+                        <div v-else class="h-full flex items-center justify-center text-sm font-bold text-zinc-400/60 dark:text-zinc-600/60 tracking-widest uppercase">No data in range</div>
                     </div>
                 </div>
 
                 <!-- Status Pie -->
-                <div class="subject-detail-card rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-8 shadow-xl sm:shadow-2xl">
+                <div class="subject-detail-card rounded-[20px] border border-zinc-200/50 dark:border-zinc-800/50 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl p-4 sm:p-6 shadow-sm text-zinc-900 dark:text-white isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700">
+                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-900/5 dark:bg-white/5 blur-3xl -z-10 transition-opacity group-hover:bg-zinc-900/10 dark:group-hover:bg-white/10"></div>
                     <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
-                            <Clock class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
+                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+                            <Clock class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400 dark:text-zinc-500" />
                         </div>
                         <div>
                             <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Status Mix</h3>
-                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Distribution</p>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none">Distribution</p>
                         </div>
                     </div>
                     <div class="h-[180px] sm:h-[300px] w-full">
                         <Pie v-if="statusDistribution.length" :data="pieData" :options="chartOptions" />
-                        <div v-else class="h-full flex items-center justify-center text-sm text-zinc-400">No data</div>
+                        <div v-else class="h-full flex items-center justify-center text-sm font-bold text-zinc-400/60 dark:text-zinc-600/60 tracking-widest uppercase">No data</div>
                     </div>
                 </div>
             </div>
 
             <!-- Student Leaderboard -->
-            <div data-card class="subject-detail-card group relative overflow-hidden rounded-2xl p-4 sm:p-6 transition-all bg-white dark:bg-black border border-zinc-100 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900 preserve-3d shadow-3d">
+            <div data-card class="subject-detail-card relative overflow-hidden rounded-[20px] p-4 sm:p-6 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 text-zinc-900 dark:text-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700 isolate">
+                <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-900/5 dark:bg-white/5 blur-3xl -z-10 transition-opacity"></div>
                 <div class="mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                    <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
-                        <Users class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
+                    <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+                        <Users class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400 dark:text-zinc-500" />
                     </div>
                     <div>
                         <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Student Leaderboard</h3>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Sorted by Attendance Rate</p>
+                        <p class="text-[9px] sm:text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none">Sorted by Attendance Rate</p>
                     </div>
                 </div>
 
                 <div v-if="studentRows.length" class="space-y-2">
                     <template v-for="(student, idx) in studentRows" :key="student.id">
                         <div
-                            data-card
-                            class="flex items-center gap-2 sm:gap-4 rounded-2xl border border-zinc-100 dark:border-zinc-900/40 bg-white dark:bg-zinc-950/40 px-2 sm:px-4 py-2 sm:py-3 hover:bg-zinc-100 dark:hover:bg-zinc-900/40 transition-all shadow-sm hover:shadow-md group w-full"
+                            class="flex items-center gap-2 sm:gap-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 px-2 sm:px-4 py-2 sm:py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all shadow-sm hover:shadow-md group w-full"
                         >
                             <span class="w-6 text-center text-[10px] sm:text-xs font-black text-zinc-400 dark:text-zinc-500">{{ studentRankStart + idx }}</span>
                             <Link :href="`/students/${student.id}/analytics`" class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 group/info">
-                                <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-zinc-200 dark:bg-zinc-800 overflow-hidden shrink-0">
+                                <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0">
                                     <img v-if="student.photo" :src="student.photo" class="h-full w-full object-cover" :alt="student.name" />
-                                    <div v-else class="h-full w-full flex items-center justify-center text-xs font-bold text-zinc-400">
+                                    <div v-else class="h-full w-full flex items-center justify-center text-xs font-bold text-zinc-500 dark:text-zinc-400">
                                         {{ student.name.charAt(0) }}
                                     </div>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <div class="text-xs sm:text-sm font-bold truncate group-hover/info:text-zinc-600 dark:group-hover/info:text-zinc-300 transition-colors">{{ student.name }}</div>
-                                    <div class="text-[9px] text-zinc-400 font-medium">{{ student.student_number }} <span v-if="student.section">• {{ student.section }}</span></div>
+                                    <div class="text-xs sm:text-sm font-bold truncate group-hover/info:text-zinc-600 dark:group-hover/info:text-zinc-300 transition-colors text-zinc-900 dark:text-white">{{ student.name }}</div>
+                                    <div class="text-[9px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest mt-0.5">{{ student.student_number }} <span v-if="student.section">• {{ student.section }}</span></div>
                                 </div>
                             </Link>
 
                             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                                 <button
                                     @click="openEditModal(student)"
-                                    class="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition-all active:scale-95"
+                                    class="p-2 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95"
                                     title="Edit Student"
                                 >
                                     <Pencil class="h-3.5 w-3.5" />
                                 </button>
                                 <button
                                     @click="deleteStudent(student)"
-                                    class="p-2 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-900/20 transition-all active:scale-95"
+                                    class="p-2 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all active:scale-95"
                                     title="Remove Student"
                                 >
                                     <Trash2 class="h-3.5 w-3.5" />
@@ -420,13 +422,13 @@ onMounted(() => {
                             </div>
 
                             <div class="text-right shrink-0 min-w-[60px] sm:min-w-[72px]">
-                                <div class="text-sm sm:text-base font-black" :class="rateColor(student.attendance_rate)">
+                                <div class="text-sm sm:text-base font-black flex justify-end" :class="rateColor(student.attendance_rate)">
                                     {{ student.attendance_rate }}%
                                 </div>
-                                <div class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider">{{ student.total_records }} records</div>
+                                <div class="text-[8px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">{{ student.total_records }} records</div>
                             </div>
                             <div class="hidden md:block w-24">
-                                <div class="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
+                                <div class="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden mix-blend-multiply dark:mix-blend-lighten opacity-80 group-hover:opacity-100 transition-opacity shadow-inner">
                                     <div class="h-full rounded-full transition-all" :class="rateBg(student.attendance_rate)" :style="{ width: `${student.attendance_rate}%` }"></div>
                                 </div>
                             </div>

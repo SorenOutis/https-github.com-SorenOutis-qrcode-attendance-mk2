@@ -52,11 +52,6 @@ const mainNavItems: NavItem[] = [
         icon: MessageCircle,
     },
     {
-        title: 'Profile',
-        href: profileEdit().url,
-        icon: User,
-    },
-    {
         title: 'Backups',
         href: backupsIndex().url,
         icon: Database,
@@ -70,6 +65,11 @@ const mainNavItems: NavItem[] = [
         title: 'Calendar',
         href: '/calendar',
         icon: Calendar,
+    },
+    {
+        title: 'Profile',
+        href: profileEdit().url,
+        icon: User,
     },
 ];
 

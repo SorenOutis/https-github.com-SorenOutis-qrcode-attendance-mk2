@@ -13,7 +13,7 @@ import {
     ArcElement,
 } from 'chart.js';
 import gsap from 'gsap';
-import { Download, TrendingUp, Users, Clock, ChevronDown } from 'lucide-vue-next';
+import { Download, TrendingUp, Users, Clock, ChevronDown, Table as TableIcon, LayoutGrid } from 'lucide-vue-next';
 import { onMounted, ref, watch } from 'vue';
 import { Line, Bar, Pie } from 'vue-chartjs';
 import { Button } from '@/components/ui/button';
@@ -214,7 +214,7 @@ function exportPdf() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-48 rounded-xl">
                             <DropdownMenuItem @select="exportCsv" class="flex items-center gap-2 py-2.5">
-                                <Table class="h-4 w-4 text-zinc-400" />
+                                <TableIcon class="h-4 w-4 text-zinc-400" />
                                 <span>Export as CSV</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem @select="exportExcel" class="flex items-center gap-2 py-2.5">
@@ -231,7 +231,7 @@ function exportPdf() {
             </div>
 
             <!-- Filters Bar -->
-            <div class="rounded-xl sm:rounded-[2rem] bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50 shadow-inner overflow-hidden">
+            <div class="rounded-[20px] bg-background/50 backdrop-blur-xl border border-sidebar-border/50 shadow-sm overflow-hidden mb-6 mt-2">
                 <!-- Mobile filter toggle -->
                 <button
                     class="flex w-full items-center justify-between px-4 py-2.5 sm:hidden"
@@ -244,16 +244,16 @@ function exportPdf() {
                     />
                 </button>
                 <div
-                    class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-6"
+                    class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-5 text-foreground"
                     :class="filtersExpanded ? 'block' : 'hidden sm:grid'"
                 >
                     <div class="space-y-1.5 sm:space-y-2">
-                        <label class="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 ml-1">Subject Scope</label>
+                        <label class="text-[9px] uppercase font-black tracking-widest text-muted-foreground ml-1">Subject Scope</label>
                         <Select v-model="selectedSubject">
-                            <SelectTrigger class="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-white dark:bg-black border-zinc-100 dark:border-zinc-800 shadow-sm focus:ring-0 text-xs sm:text-sm">
+                            <SelectTrigger class="h-9 sm:h-10 rounded-xl bg-background border-sidebar-border/80 shadow-sm focus:ring-0 text-xs font-bold font-serif uppercase tracking-widest">
                                 <SelectValue placeholder="All Subjects" />
                             </SelectTrigger>
-                            <SelectContent class="rounded-xl sm:rounded-2xl">
+                            <SelectContent class="rounded-xl">
                                 <SelectItem value="all">Global Perspective</SelectItem>
                                 <SelectItem v-for="subject in props.subjects" :key="subject.id" :value="subject.id.toString()">
                                     {{ subject.name }}
@@ -262,12 +262,12 @@ function exportPdf() {
                         </Select>
                     </div>
                     <div class="space-y-1.5 sm:space-y-2">
-                        <label class="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 ml-1">Time Horizon (From)</label>
-                        <Input type="date" v-model="startDate" class="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-white dark:bg-black border-zinc-100 dark:border-zinc-800 shadow-sm focus:ring-0 text-xs sm:text-sm" />
+                        <label class="text-[9px] uppercase font-black tracking-widest text-muted-foreground ml-1">Time Horizon (From)</label>
+                        <Input type="date" v-model="startDate" class="h-9 sm:h-10 rounded-xl bg-background border-sidebar-border/80 shadow-sm focus:ring-0 text-[10px] sm:text-xs font-bold uppercase tracking-widest uppercase" />
                     </div>
                     <div class="space-y-1.5 sm:space-y-2">
-                        <label class="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 ml-1">Time Horizon (To)</label>
-                        <Input type="date" v-model="endDate" class="h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-white dark:bg-black border-zinc-100 dark:border-zinc-800 shadow-sm focus:ring-0 text-xs sm:text-sm" />
+                        <label class="text-[9px] uppercase font-black tracking-widest text-muted-foreground ml-1">Time Horizon (To)</label>
+                        <Input type="date" v-model="endDate" class="h-9 sm:h-10 rounded-xl bg-background border-sidebar-border/80 shadow-sm focus:ring-0 text-[10px] sm:text-xs font-bold uppercase tracking-widest" />
                     </div>
                 </div>
             </div>
@@ -278,16 +278,16 @@ function exportPdf() {
 
             <div v-else class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <!-- Trend Card -->
-                <div class="report-card md:col-span-2 rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-8 shadow-xl sm:shadow-2xl text-zinc-900 dark:text-white isolate">
-                    <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-zinc-50 dark:bg-zinc-900/30 blur-3xl -z-10"></div>
+                <div class="report-card md:col-span-2 rounded-[20px] border border-sidebar-border/40 bg-background/50 backdrop-blur-xl p-4 sm:p-6 shadow-sm text-foreground isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-sidebar-border">
+                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/5 blur-3xl -z-10 transition-opacity group-hover:bg-primary/10"></div>
                     <div class="mb-3 sm:mb-6 flex items-center justify-between">
                         <div class="flex items-center gap-2 sm:gap-3">
-                            <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
-                                <TrendingUp class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
+                            <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-background flex items-center justify-center border border-sidebar-border/50 shadow-sm">
+                                <TrendingUp class="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                             </div>
                             <div>
                                 <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Attendance Pulse</h3>
-                                <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">30 Day Horizon</p>
+                                <p class="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">30 Day Horizon</p>
                             </div>
                         </div>
                     </div>
@@ -297,15 +297,15 @@ function exportPdf() {
                 </div>
 
                 <!-- Status Distribution -->
-                <div class="report-card rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-8 shadow-xl sm:shadow-2xl text-zinc-900 dark:text-white isolate">
-                    <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-zinc-50 dark:bg-zinc-900/30 blur-3xl -z-10"></div>
+                <div class="report-card rounded-[20px] border border-sidebar-border/40 bg-background/50 backdrop-blur-xl p-4 sm:p-6 shadow-sm text-foreground isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-sidebar-border">
+                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/5 blur-3xl -z-10 transition-opacity group-hover:bg-primary/10"></div>
                     <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
-                            <Clock class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
+                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-background flex items-center justify-center border border-sidebar-border/50 shadow-sm">
+                            <Clock class="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                         </div>
                         <div>
                             <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Status Mix</h3>
-                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Distribution</p>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Distribution</p>
                         </div>
                     </div>
                     <div class="h-[220px] sm:h-[350px] lg:h-[400px] w-full mt-3 sm:mt-6">
@@ -314,15 +314,15 @@ function exportPdf() {
                 </div>
 
                 <!-- Section Comparison -->
-                <div class="report-card md:col-span-2 rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-8 shadow-xl sm:shadow-2xl text-zinc-900 dark:text-white isolate">
-                    <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-zinc-50 dark:bg-zinc-900/30 blur-3xl -z-10"></div>
+                <div class="report-card md:col-span-2 rounded-[20px] border border-sidebar-border/40 bg-background/50 backdrop-blur-xl p-4 sm:p-6 shadow-sm text-foreground isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-sidebar-border">
+                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/5 blur-3xl -z-10 transition-opacity group-hover:bg-primary/10"></div>
                     <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
-                            <Users class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
+                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-background flex items-center justify-center border border-sidebar-border/50 shadow-sm">
+                            <Users class="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                         </div>
                         <div>
                             <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Section Leaderboard</h3>
-                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Comparison</p>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Comparison</p>
                         </div>
                     </div>
                     <div class="h-[220px] sm:h-[350px] lg:h-[400px] w-full mt-3 sm:mt-6">
@@ -330,14 +330,14 @@ function exportPdf() {
                     </div>
                 </div>
                 
-                <div class="report-card rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-zinc-900 dark:bg-white p-5 sm:p-8 shadow-xl sm:shadow-2xl text-white dark:text-zinc-900 flex flex-col justify-center items-center text-center isolate">
-                    <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-zinc-800/50 dark:bg-zinc-100/50 blur-3xl -z-10"></div>
-                    <div class="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-white/10 dark:bg-black/5 flex items-center justify-center mb-4 sm:mb-6 border border-white/20 dark:border-black/5">
-                        <TrendingUp class="h-5 w-5 sm:h-7 sm:w-7" />
+                <div class="report-card rounded-[20px] border border-zinc-200/50 dark:border-zinc-800/50 bg-background p-5 sm:p-8 shadow-sm text-foreground flex flex-col justify-center items-center text-center isolate relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                    <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-3xl -z-10"></div>
+                    <div class="h-10 w-10 sm:h-14 sm:w-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center mb-4 sm:mb-6 border border-sidebar-border shadow-sm">
+                        <TrendingUp class="h-5 w-5 sm:h-7 sm:w-7 text-muted-foreground" />
                     </div>
-                    <h3 class="text-base sm:text-xl font-black mb-1.5 sm:mb-2 font-serif uppercase tracking-tight">Generate Deep Logs</h3>
-                    <p class="text-[10px] sm:text-xs text-zinc-400 dark:text-zinc-500 mb-4 sm:mb-6 font-medium leading-relaxed">Extract full student trajectories and attendance maps in CSV format.</p>
-                    <Button variant="outline" class="rounded-full px-6 sm:px-8 h-9 sm:h-11 border-white/20 dark:border-black/20 hover:bg-white hover:text-black dark:hover:bg-black dark:hover:text-white transition-all font-bold uppercase tracking-widest text-[10px]" @click="exportCsv">Initiate Export</Button>
+                    <h3 class="text-base sm:text-lg font-black mb-1.5 sm:mb-2 font-serif uppercase tracking-tight leading-tight">Generate Deep Logs</h3>
+                    <p class="text-[9.5px] sm:text-[10px] text-muted-foreground font-bold tracking-wide leading-relaxed mb-6">Extract full student trajectories and attendance maps in CSV format.</p>
+                    <Button variant="outline" class="rounded-full px-6 sm:px-8 h-9 sm:h-10 border-sidebar-border bg-background shadow-sm hover:bg-muted transition-all font-black uppercase tracking-widest text-[9px]" @click="exportCsv">Initiate Export</Button>
                 </div>
             </div>
         </div>

@@ -31,6 +31,7 @@ import {
 import { useToast } from '@/composables/useToast';
 import TimeInput from '@/components/TimeInput.vue';
 import StudentFormModal from '@/components/dashboard/modals/StudentFormModal.vue';
+import QrCodeModal from '@/components/dashboard/modals/QrCodeModal.vue';
 
 interface Student {
     id: number;
@@ -231,7 +232,6 @@ function regenerateQr() {
                         );
                         if (updated) {
                             selectedStudent.value = updated;
-                            nextTick(() => drawQrToCanvas());
                         }
                     },
                 });
@@ -240,63 +240,17 @@ function regenerateQr() {
     );
 }
 
-async function drawQrToCanvas() {
-    const canvas = document.querySelector<HTMLCanvasElement>('#qr-canvas');
-    const student = selectedStudent.value;
-    if (!canvas || !student?.qr_token) return;
-
-    try {
-        await QRCode.toCanvas(canvas, student.qr_token, {
-            width: 192,
-            margin: 1,
-            color: { dark: '#000000', light: '#ffffff' },
-        });
-    } catch (e) {
-        console.error('QR code draw failed:', e);
-    }
-}
-
-watch(
-    [qrModalOpen, selectedStudent],
-    ([open, student]) => {
-        if (open && student) {
-            nextTick(() => drawQrToCanvas());
-        }
-    },
-    { immediate: true },
-);
-
-function downloadQr() {
-    const canvas = document.querySelector<HTMLCanvasElement>('#qr-canvas');
-    if (!canvas || !selectedStudent.value) return;
-
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = `${selectedStudent.value.name}-qr.png`;
-    link.click();
-}
-
 function studentPortalUrl(token: string) {
     const base = window.location.origin;
     return `${base}/portal/${encodeURIComponent(token)}`;
 }
 
-async function copyStudentPortalLink() {
+function copyStudentPortalLink() {
     const token = selectedStudent.value?.qr_token;
     if (!token) return;
     const url = studentPortalUrl(token);
-
-    try {
-        await navigator.clipboard.writeText(url);
-    } catch {
-        // Fallback for older browsers / blocked clipboard
-        const input = document.createElement('input');
-        input.value = url;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-    }
+    navigator.clipboard.writeText(url);
+    toast.success('Link copied to clipboard');
 }
 
 function openPrintCards(id?: number) {
@@ -594,66 +548,16 @@ function formatTimeTo12h(timeStr?: string) {
         </Dialog>
 
         <!-- QR Code Modal -->
-        <Dialog :open="qrModalOpen" @update:open="closeQrModal">
-            <DialogContent class="sm:max-w-md p-0 overflow-hidden rounded-[32px] border-none shadow-2xl">
-                <DialogHeader class="p-8 pb-4">
-                    <DialogTitle class="text-2xl font-serif font-black tracking-tight leading-none">Student QR Code</DialogTitle>
-                    <DialogDescription class="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-2">Unique entry pass for {{ selectedStudent?.name }}</DialogDescription>
-                </DialogHeader>
-
-                <div class="p-8 pt-4 flex flex-col items-center">
-                    <div class="relative group p-4 bg-white rounded-3xl shadow-3d border border-zinc-100 dark:border-zinc-800 mb-8">
-                        <canvas id="qr-canvas" class="rounded-xl"></canvas>
-                        <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-3xl pointer-events-none">
-                            <Download class="h-8 w-8 text-white/50" />
-                        </div>
-                    </div>
-
-                    <div class="w-full space-y-3">
-                        <Button 
-                            variant="outline" 
-                            @click="downloadQr" 
-                            class="w-full rounded-2xl h-12 font-black uppercase tracking-widest text-xs"
-                        >
-                            <Download class="mr-2 h-4 w-4" /> Download PNG
-                        </Button>
-                        <div class="grid grid-cols-2 gap-3">
-                            <Button 
-                                variant="ghost" 
-                                @click="copyStudentPortalLink" 
-                                class="rounded-2xl h-12 font-black uppercase tracking-widest text-[10px]"
-                            >
-                                <Mail class="mr-2 h-3.5 w-3.5" /> Portal Link
-                            </Button>
-                            <Button 
-                                variant="ghost" 
-                                @click="regenerateQr" 
-                                class="rounded-2xl h-12 font-black uppercase tracking-widest text-[10px] text-muted-foreground hover:text-zinc-950"
-                            >
-                                <RefreshCw class="mr-2 h-3.5 w-3.5" /> Reset Token
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div class="mt-8 pt-8 w-full border-t border-zinc-100 dark:border-zinc-800/80 flex justify-between items-center px-2">
-                        <Button
-                            variant="ghost"
-                            class="rounded-xl h-10 px-4 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                            @click="openPrintCards()"
-                        >
-                            <Download class="mr-2 h-3.5 w-3.5" /> Print Card
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            class="rounded-xl h-10 px-4 text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20"
-                            @click="closeQrModal"
-                        >
-                            Dismiss
-                        </Button>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+        <QrCodeModal 
+            v-model:open="qrModalOpen"
+            :student="selectedStudent"
+            :qr-canvas="null"
+            :student-portal-url="studentPortalUrl"
+            @regenerate="regenerateQr"
+            @download="() => {}"
+            @print="() => {}"
+            @copy-link="copyStudentPortalLink"
+        />
     </AppLayout>
 </template>
 

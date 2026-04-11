@@ -50,6 +50,7 @@ class AttendanceController extends Controller
         $schedule = collect($student->schedule ?? [])
             ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end']))
             ->filter(fn ($slot) => $slot['day'] === $dayOfWeek)
+            ->sortBy('start')
             ->values();
 
         if ($schedule->isEmpty()) {
@@ -78,12 +79,6 @@ class AttendanceController extends Controller
         $status = 'Time Out'; // Default status if no active slot found
 
         foreach ($schedule as $index => $slot) {
-            // Check if this slot was already recorded today
-            $alreadyRecorded = $dailyRecords->contains('slot_index', $index);
-            if ($alreadyRecorded) {
-                continue;
-            }
-
             $slotEnd = CarbonImmutable::parse($date.' '.$slot['end'], $appTz);
 
             // If the current time is before the end of this slot, it's our candidate
@@ -97,10 +92,27 @@ class AttendanceController extends Controller
         if ($targetSlot) {
             $slot = $targetSlot;
             $slotIndex = $targetIndex;
+
+            // Check if this slot was already recorded today
+            $alreadyRecorded = $dailyRecords->contains('slot_index', $slotIndex);
+            if ($alreadyRecorded) {
+                $nextSlot = $schedule->get($slotIndex + 1);
+                if ($nextSlot) {
+                    $nextTime = CarbonImmutable::parse($date.' '.$nextSlot['start'], $appTz)->format('g:i A');
+                    $msg = "You have already recorded attendance for the current subject. The next subject will open at {$nextTime}.";
+                } else {
+                    $msg = 'You have already recorded attendance for your last subject. Please wait until its time ends to scan for Time Out.';
+                }
+
+                return response()->json([
+                    'message' => $msg,
+                ], 422);
+            }
+
             $start = CarbonImmutable::parse($date.' '.$slot['start'], $appTz);
             $diffMinutes = (int) abs($now->diffInMinutes($start));
 
-            if ($now->lessThan($start->addMinutes($graceMinutes))) {
+            if ($now->lessThanOrEqualTo($start->addMinutes($graceMinutes)->endOfMinute())) {
                 $status = 'Present';
                 $minutesEarly = $now->lessThan($start) ? $diffMinutes : 0;
             } else {

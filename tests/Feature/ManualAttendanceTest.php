@@ -3,7 +3,6 @@
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\User;
-use App\Models\Attendance;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
@@ -24,7 +23,7 @@ test('can view manage attendance index page', function () {
 
 test('can view manage attendance show page for a specific subject and date', function () {
     $date = CarbonImmutable::parse('next Monday')->toDateString();
-    
+
     // Create a student enrolled in this subject on Monday
     Student::create([
         'name' => 'John Doe',
@@ -36,8 +35,8 @@ test('can view manage attendance show page for a specific subject and date', fun
                 'start' => '09:00',
                 'end' => '10:30',
                 'subject_id' => $this->subject->id,
-            ]
-        ]
+            ],
+        ],
     ]);
 
     $this->actingAs($this->user)
@@ -53,7 +52,7 @@ test('can view manage attendance show page for a specific subject and date', fun
 
 test('can auto-save toggle a manual attendance record', function () {
     $date = CarbonImmutable::parse('next Monday')->toDateString();
-    
+
     $student = Student::create([
         'name' => 'Jane Doe',
         'student_number' => '123456',
@@ -64,8 +63,8 @@ test('can auto-save toggle a manual attendance record', function () {
                 'start' => '09:00',
                 'end' => '10:30',
                 'subject_id' => $this->subject->id,
-            ]
-        ]
+            ],
+        ],
     ]);
 
     $response = $this->actingAs($this->user)

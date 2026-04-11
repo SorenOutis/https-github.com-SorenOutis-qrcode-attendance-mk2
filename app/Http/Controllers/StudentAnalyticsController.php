@@ -128,6 +128,53 @@ class StudentAnalyticsController extends Controller
             })
             ->values();
 
+        // Calculate Detailed History based on Schedule
+        $studentSchedule = $student->schedule ?? [];
+        $detailedHistory = [];
+        $subjectMap = $subjects->pluck('name', 'id');
+
+        // Loop through the selected range to find missing scans
+        $tempDate = $startDate;
+        while ($tempDate->lte($endDate)) {
+            $dayName = $tempDate->format('l');
+            $scheduledSessions = collect($studentSchedule)
+                ->where('day', $dayName)
+                ->sortBy('start');
+
+            foreach ($scheduledSessions as $session) {
+                $status = 'Absent';
+                $scannedAt = null;
+
+                // Find if an attendance record exists for this subject on this date
+                $record = Attendance::query()
+                    ->where('student_id', (int) $student->id)
+                    ->where('subject_id', (int) $session['subject_id'])
+                    ->whereDate('scanned_at', $tempDate->toDateString())
+                    ->first();
+
+                if ($record) {
+                    $status = $record->status;
+                    $scannedAt = $record->scanned_at;
+                } elseif ($tempDate->isFuture() || $tempDate->isToday()) {
+                    // Don't mark future or today's upcoming as absent yet
+                    continue;
+                }
+
+                $detailedHistory[] = [
+                    'date' => $tempDate->toDateString(),
+                    'day' => $dayName,
+                    'subject_name' => $subjectMap->get($session['subject_id']) ?? 'Unknown Subject',
+                    'schedule_time' => CarbonImmutable::parse($session['start'])->format('g:i A').' - '.CarbonImmutable::parse($session['end'])->format('g:i A'),
+                    'status' => $status,
+                    'scanned_at' => $scannedAt,
+                ];
+            }
+            $tempDate = $tempDate->addDay();
+        }
+
+        // Sort history by date descending
+        $detailedHistory = collect($detailedHistory)->sortByDesc('date')->values();
+
         return Inertia::render('StudentAnalytics', [
             'student' => [
                 'id' => $student->id,
@@ -138,6 +185,7 @@ class StudentAnalyticsController extends Controller
             ],
             'dailyTrend' => $dailyTrend,
             'subjectBreakdown' => $subjectBreakdown,
+            'detailedHistory' => $detailedHistory,
             'streak' => [
                 'current' => $currentStreak,
                 'longest' => $longestStreak,
@@ -153,6 +201,14 @@ class StudentAnalyticsController extends Controller
             'heatmap' => $heatmap,
             'filters' => ['days' => $days],
             'subjects' => $subjects,
+            'enrolledSubjects' => collect($studentSchedule)->map(function ($item) use ($subjectMap) {
+                return [
+                    'id' => $item['subject_id'],
+                    'name' => $subjectMap->get($item['subject_id']) ?? 'Unknown',
+                    'time' => CarbonImmutable::parse($item['start'])->format('g:i A').' - '.CarbonImmutable::parse($item['end'])->format('g:i A'),
+                    'day' => $item['day'],
+                ];
+            })->values(),
         ]);
     }
 }

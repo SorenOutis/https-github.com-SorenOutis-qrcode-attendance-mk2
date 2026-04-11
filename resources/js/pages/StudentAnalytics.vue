@@ -23,11 +23,22 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 type DailyTrend = { date: string; present: number; late: number; absent: number; excused: number };
 type SubjectBreakdown = { id: number; name: string; total_records: number; attendance_rate: number; present: number; late: number; absent: number; excused: number };
 type HeatmapDay = { date: string; status: string; count: number };
+type DetailedHistory = { 
+    date: string; 
+    day: string; 
+    subject_name: string; 
+    schedule_time: string; 
+    status: string; 
+    scanned_at: string | null 
+};
+type EnrolledSubject = { id: number; name: string; time: string; day: string };
 
 const props = defineProps<{
     student: { id: number; name: string; student_number: string; section: string | null; photo: string | null };
     dailyTrend: DailyTrend[];
     subjectBreakdown: SubjectBreakdown[];
+    detailedHistory: DetailedHistory[];
+    enrolledSubjects: EnrolledSubject[];
     streak: { current: number; longest: number };
     stats: { total_records: number; percentage: number; present: number; late: number; absent: number; excused: number };
     heatmap: HeatmapDay[];
@@ -309,6 +320,123 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
+
+            <!-- Enrolled Subjects & Schedule -->
+            <div class="analytics-card rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-4 sm:p-8 shadow-xl sm:shadow-2xl">
+                <div class="mb-3 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                    <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
+                        <BookOpen class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
+                    </div>
+                    <div>
+                        <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Enrolled Subjects</h3>
+                        <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Weekly Schedule Overview</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div v-for="item in enrolledSubjects" :key="item.id" class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">{{ item.day }}</span>
+                        </div>
+                        <h4 class="text-sm font-black text-zinc-900 dark:text-white truncate">{{ item.name }}</h4>
+                        <div class="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500">
+                            <Calendar class="h-3 w-3" />
+                            {{ item.time }}
+                        </div>
+                    </div>
+                </div>
+                <!-- Empty state -->
+                <div v-if="!enrolledSubjects.length" class="text-center py-6 text-zinc-400 text-sm font-bold uppercase tracking-widest">
+                    No subjects found in schedule
+                </div>
+            </div>
+
+            <!-- Detailed Attendance Log -->
+            <div class="analytics-card rounded-xl sm:rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800/50 bg-white dark:bg-black p-0 overflow-hidden shadow-xl sm:shadow-2xl">
+                <div class="p-4 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/20">
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-white dark:bg-zinc-900 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
+                            <Table class="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
+                        </div>
+                        <div>
+                            <h3 class="font-serif font-black text-base sm:text-xl tracking-tight leading-none mb-0.5 sm:mb-1">Attendance Log</h3>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">Daily schedule execution</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto max-h-[800px] overflow-y-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse relative">
+                        <thead class="sticky top-0 z-10">
+                            <tr class="bg-zinc-50 dark:bg-zinc-900 shadow-sm">
+                                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Date</th>
+                                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Subject</th>
+                                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Schedule</th>
+                                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-center">Outcome</th>
+                                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-right">Scan Time</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                            <tr v-for="log in detailedHistory" :key="log.date + log.subject_name" class="group hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors">
+                                <td class="px-6 py-5 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-black text-zinc-900 dark:text-white">{{ new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</span>
+                                        <span class="text-[9px] font-bold text-zinc-400 uppercase">{{ log.day }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-1.5 w-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700"></div>
+                                        <span class="text-sm font-bold text-zinc-600 dark:text-zinc-300">{{ log.subject_name }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 whitespace-nowrap">
+                                    <span class="text-[10px] font-black tracking-widest text-zinc-400 uppercase">{{ log.schedule_time }}</span>
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <span 
+                                        class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest inline-block border"
+                                        :class="{
+                                            'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100': log.status === 'Present',
+                                            'bg-zinc-500/10 text-zinc-500 border-zinc-500/20': log.status === 'Late',
+                                            'bg-rose-500/10 text-rose-600 border-rose-500/20': log.status === 'Absent',
+                                            'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border-zinc-200 dark:border-zinc-700': log.status === 'Time Out'
+                                        }"
+                                    >
+                                        {{ log.status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5 text-right whitespace-nowrap">
+                                    <span v-if="log.scanned_at" class="text-[10px] font-black text-zinc-900 dark:text-white tracking-widest">
+                                        {{ new Date(log.scanned_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) }}
+                                    </span>
+                                    <span v-else class="text-[10px] font-black text-zinc-300 dark:text-zinc-700 tracking-widest">-- : --</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div v-if="!detailedHistory.length" class="text-center py-20 bg-zinc-50/30">
+                    <p class="text-zinc-400 text-sm font-bold uppercase tracking-widest">No history records found for this period</p>
+                </div>
+            </div>
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.05);
+}
+</style>

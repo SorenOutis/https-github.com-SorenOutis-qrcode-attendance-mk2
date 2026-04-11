@@ -302,7 +302,7 @@ async function handleCodeDetected(token: string) {
             if (scanError.value) {
                 scanError.value = null;
             }
-        }, 1000);
+        }, 2000);
 
         // Hands-free auto-resume after error
         if (isOpen.value && mediaStream) {

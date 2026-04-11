@@ -266,7 +266,6 @@ async function handleCodeDetected(token: string) {
         }
 
         scanFeedback.value = 'success';
-        scanResultModalOpen.value = true;
         
         // Refresh the page data if we are on dashboard or attendance to show the update
         router.reload({ only: ['students', 'attendanceStats'] });
@@ -276,10 +275,20 @@ async function handleCodeDetected(token: string) {
         }
 
         setTimeout(() => { scanFeedback.value = null; }, 1500);
+
+        // Hands-free auto-resume after success
+        if (isOpen.value && mediaStream) {
+            isCooldownActive.value = true;
+            setTimeout(() => {
+                isCooldownActive.value = false;
+                if (isOpen.value && mediaStream) {
+                    startScanningLoop();
+                }
+            }, 2500); // 2.5s cooldown before next student can scan
+        }
     } catch (error: any) {
         scanError.value = error.message || 'An unexpected error occurred during scanning.';
         scanFeedback.value = 'error';
-        scanResultModalOpen.value = true;
         
         if (navigator.vibrate) {
             navigator.vibrate(200);
@@ -287,19 +296,24 @@ async function handleCodeDetected(token: string) {
 
         toast.error(scanError.value || 'An error occurred');
         setTimeout(() => { scanFeedback.value = null; }, 1500);
-    }
-}
 
-function closeResultModal() {
-    scanResultModalOpen.value = false;
-    if (isOpen.value && mediaStream) {
-        isCooldownActive.value = true;
+        // Clear error display after 1 second
         setTimeout(() => {
-            isCooldownActive.value = false;
-            if (isOpen.value && mediaStream) {
-                startScanningLoop();
+            if (scanError.value) {
+                scanError.value = null;
             }
-        }, 2000);
+        }, 1000);
+
+        // Hands-free auto-resume after error
+        if (isOpen.value && mediaStream) {
+            isCooldownActive.value = true;
+            setTimeout(() => {
+                isCooldownActive.value = false;
+                if (isOpen.value && mediaStream) {
+                    startScanningLoop();
+                }
+            }, 2500);
+        }
     }
 }
 
@@ -409,159 +423,115 @@ function handleClose() {
                     </div>
                 </div>
 
-                <!-- Right Section: Details & History -->
+                <!-- Right Section: Persistent Details & History -->
                 <div class="p-6 md:p-8 bg-zinc-50/50 dark:bg-white/[0.02] border-t md:border-t-0 md:border-l border-zinc-100 dark:border-zinc-900/50 flex flex-col justify-between space-y-6">
-                    <div class="space-y-6">
-                        <div class="rounded-2xl bg-white dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/80">
-                            <p class="text-[11px] font-bold leading-relaxed text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                    <div class="space-y-6 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                        <!-- Active Scan Result (High Visibility) -->
+                        <div v-if="lastScanResult && !scanError" class="animate-in zoom-in slide-in-from-top-4 duration-500">
+                            <div class="rounded-3xl bg-white dark:bg-zinc-900 p-6 border-2 border-zinc-100 dark:border-zinc-800 shadow-xl space-y-5 text-center relative overflow-hidden ring-1 ring-zinc-950/5">
+                                <!-- Status Badge Overlay -->
+                                <div class="absolute top-0 right-0 p-3">
+                                    <span 
+                                        class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border"
+                                        :class="{
+                                            'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': lastScanResult.status === 'Present',
+                                            'bg-amber-500/10 text-amber-600 border-amber-500/20': lastScanResult.status === 'Late',
+                                            'bg-zinc-500/10 text-zinc-600 border-zinc-500/20': lastScanResult.status === 'Time Out'
+                                        }"
+                                    >
+                                        {{ lastScanResult.status }}
+                                    </span>
+                                </div>
+
+                                <!-- Profile Photo -->
+                                <div class="mx-auto size-24 rounded-[2rem] overflow-hidden border-4 border-zinc-50 dark:border-zinc-800 shadow-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                                    <img v-if="lastScanResult.student.photo" :src="lastScanResult.student.photo" class="h-full w-full object-cover">
+                                    <span v-else class="text-2xl font-black text-zinc-300">{{ lastScanResult.student.name.charAt(0) }}</span>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Scan Successful</p>
+                                    <h3 class="text-xl font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
+                                        {{ lastScanResult.student.name }}
+                                    </h3>
+                                    <p class="text-[11px] font-bold text-zinc-400 tracking-widest">{{ lastScanResult.student.student_number }}</p>
+                                </div>
+
+                                <div class="pt-2 flex flex-col items-center gap-1.5 border-t border-zinc-100 dark:border-zinc-800 mt-2">
+                                    <p class="text-[9px] font-bold text-zinc-400 flex items-center gap-2">
+                                        <span class="opacity-50 italic">Subject:</span> {{ lastScanResult.subject?.name || 'N/A' }} 
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Instructions (hidden when someone is scanned successfully) -->
+                        <div v-if="!lastScanResult || scanError" class="rounded-2xl bg-white dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all animate-in fade-in duration-500">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="size-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                                    <Scan class="size-4" />
+                                </div>
+                                <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-white">Waiting for Scan</h4>
+                            </div>
+                            <p class="text-[11px] font-bold leading-relaxed text-zinc-400 uppercase tracking-wide">
                                 Align the student's QR code within the frame for automatic detection.
                             </p>
                         </div>
 
-                        <div v-if="scanError && !scanResultModalOpen" class="space-y-3">
-                            <p class="text-[10px] font-black tracking-widest uppercase text-center text-white bg-zinc-900 p-3 rounded-xl border border-zinc-800 shadow-lg">
-                                {{ scanError }}
-                            </p>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                class="w-full rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-black tracking-widest uppercase"
-                                @click="startCamera"
-                            >
-                                Retry Camera
-                            </Button>
+                        <!-- Error State -->
+                        <div v-if="scanError" class="animate-shake-global">
+                            <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 shadow-2xl space-y-3">
+                                <div class="flex items-center gap-2 text-rose-500">
+                                    <AlertCircle class="size-4" />
+                                    <span class="text-[10px] font-black uppercase tracking-[0.2em]">Scan Refused</span>
+                                </div>
+                                <p class="text-[11px] font-bold tracking-wide text-zinc-400 leading-relaxed uppercase">
+                                    {{ scanError }}
+                                </p>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    class="w-full h-9 rounded-xl border-white/5 bg-white/10 text-white font-black tracking-widest uppercase text-[9px] hover:bg-white/20"
+                                    @click="startCamera"
+                                >
+                                    Try Again
+                                </Button>
+                            </div>
                         </div>
 
                         <!-- Recent Scans History -->
-                        <div v-if="recentScans.length > 0" class="space-y-3">
+                        <div v-if="recentScans.length > 0" class="space-y-3 pt-2">
                             <div class="flex items-center justify-between">
-                                <h4 class="text-[10px] font-black tracking-widest uppercase text-zinc-400">Recent Activity</h4>
-                                <span class="px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black text-zinc-500 uppercase">{{ recentScans.length }} session{{ recentScans.length > 1 ? 's' : '' }}</span>
+                                <h4 class="text-[10px] font-black tracking-widest uppercase text-zinc-400/60">Recent History</h4>
+                                <span class="px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[8px] font-black text-zinc-400 uppercase">{{ recentScans.length }}</span>
                             </div>
-                            <div class="space-y-2 max-h-[220px] md:max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                            <div class="space-y-2">
                                 <div 
                                     v-for="scan in recentScans" 
                                     :key="scan.id"
-                                    class="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800/50 animate-in slide-in-from-bottom-2 duration-300 shadow-sm"
+                                    class="flex items-center gap-3 p-2.5 rounded-xl bg-white/50 dark:bg-zinc-900/30 border border-zinc-100/50 dark:border-zinc-800/30 opacity-60 hover:opacity-100 transition-opacity"
                                 >
-                                    <div 
-                                        class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-                                        :class="[
-                                            scan.status === 'Present' ? 'bg-emerald-500/10 text-emerald-500' :
-                                            scan.status === 'Late' ? 'bg-amber-500/10 text-amber-500' :
-                                            'bg-zinc-500/10 text-zinc-500'
-                                        ]"
-                                    >
-                                        <CheckCircle2 v-if="scan.status === 'Present'" class="size-4" />
-                                        <AlertCircle v-else-if="scan.status === 'Late'" class="size-4" />
-                                        <Scan v-else class="size-4" />
+                                    <div class="size-7 rounded-lg overflow-hidden shrink-0 border border-zinc-100 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                                        <img v-if="scan.student.photo" :src="scan.student.photo" class="h-full w-full object-cover">
+                                        <span v-else class="text-[10px] font-black text-zinc-400">{{ scan.student.name.charAt(0) }}</span>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-[11px] font-bold text-zinc-950 dark:text-white truncate">{{ scan.student.name }}</p>
-                                        <p class="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">
+                                        <p class="text-[10px] font-bold text-zinc-950 dark:text-white truncate">{{ scan.student.name }}</p>
+                                        <p class="text-[8px] font-medium text-zinc-400 uppercase tracking-widest">
                                             {{ scan.status }} · {{ formatTimeTo12h(new Date(scan.scanned_at).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })) }}
                                         </p>
-                                    </div>
-                                    <div class="text-[8px] font-black h-5 px-1.5 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 rounded flex items-center justify-center opacity-60">
-                                        {{ scan.subject?.name || 'N/A' }}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <DialogFooter class="sm:justify-stretch pt-4">
+                    <DialogFooter class="sm:justify-stretch pt-4 border-t border-zinc-100 dark:border-zinc-900/50">
                         <Button variant="outline" size="lg" class="w-full h-14 rounded-2xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-900 font-black tracking-widest uppercase transition-all shadow-md active:scale-95" @click="handleClose">
                             Exit Scanner
                         </Button>
                     </DialogFooter>
                 </div>
-            </div>
-        </DialogContent>
-    </Dialog>
-
-    <!-- Scan Result Modal -->
-    <Dialog :open="scanResultModalOpen" @update:open="(val) => !val && closeResultModal()">
-        <DialogContent class="max-w-xs sm:max-w-sm p-0 overflow-hidden border-0 shadow-3xl rounded-[2.5rem] bg-background">
-            <div 
-                class="p-8 text-center space-y-5"
-                :class="scanError ? 'bg-zinc-900 text-white' : 'bg-white dark:bg-black text-zinc-950 dark:text-white'"
-            >
-                <!-- Icon -->
-                <div 
-                    class="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] shadow-2xl transition-transform duration-500 hover:scale-110 ring-1 ring-zinc-950/10"
-                    :class="[
-                        scanError ? 'bg-zinc-800 text-white' : '',
-                        !scanError && scanHeadline?.mood === 'early' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400' : '',
-                        !scanError && scanHeadline?.mood === 'ontime' ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : '',
-                        !scanError && scanHeadline?.mood === 'late' ? 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400' : '',
-                        !scanError && scanHeadline?.mood === 'neutral' ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white' : '',
-                        !scanError ? 'animate-bounce' : 'animate-shake-global'
-                    ]"
-                >
-                    <CheckCircle2 v-if="!scanError" class="h-12 w-12" />
-                    <AlertCircle v-else class="h-12 w-12" />
-                </div>
-                
-                <div class="space-y-3">
-                    <!-- Smart Headline -->
-                    <template v-if="!scanError && lastScanResult && scanHeadline">
-                        <div class="space-y-0.5">
-                            <p class="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">{{ scanHeadline.verb }}</p>
-                            <h3 class="text-2xl font-black tracking-tight leading-tight text-zinc-950 dark:text-white">
-                                {{ lastScanResult.student.name }}
-                            </h3>
-                            <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                                {{ lastScanResult.student.student_number }}
-                            </p>
-                        </div>
-
-                        <!-- Smart Timing Badge -->
-                        <div class="flex flex-col items-center gap-2 pt-1">
-                            <span 
-                                class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest shadow-sm border"
-                                :class="[
-                                    scanHeadline.mood === 'early' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' : '',
-                                    scanHeadline.mood === 'ontime' ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20' : '',
-                                    scanHeadline.mood === 'late' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20' : '',
-                                    scanHeadline.mood === 'neutral' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700' : '',
-                                ]"
-                            >
-                                <span v-if="scanHeadline.mood === 'early'">⚡</span>
-                                <span v-if="scanHeadline.mood === 'ontime'">✅</span>
-                                <span v-if="scanHeadline.mood === 'late'">⏰</span>
-                                <span v-if="scanHeadline.mood === 'neutral'">🏁</span>
-                                {{ scanHeadline.detail ?? lastScanResult.status }}
-                            </span>
-                            <!-- Subject Name -->
-                            <p v-if="lastScanResult.subject" class="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                                for {{ lastScanResult.subject.name }}
-                            </p>
-                            <!-- Slot Time -->
-                            <p v-if="lastScanResult.slot_start" class="text-[10px] font-bold text-zinc-400 tracking-wider">
-                                {{ formatTimeTo12h(lastScanResult.slot_start) }} – {{ formatTimeTo12h(lastScanResult.slot_end) }}
-                            </p>
-                        </div>
-                    </template>
-
-                    <!-- Error State -->
-                    <template v-else>
-                        <h3 class="text-3xl font-black tracking-tighter text-white">SCAN FAILED</h3>
-                    </template>
-                </div>
-
-                <Button 
-                    class="w-full h-14 rounded-[1.5rem] text-sm font-black tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.95] shadow-xl uppercase"
-                    :variant="scanError ? 'secondary' : 'default'"
-                    @click="closeResultModal"
-                >
-                    Continue
-                </Button>
-                
-                <p v-if="!scanError && lastScanResult" class="text-[9px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">
-                    {{ formatDateTime(lastScanResult.scanned_at) }}
-                </p>
             </div>
         </DialogContent>
     </Dialog>

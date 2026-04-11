@@ -159,6 +159,7 @@ class AttendanceController extends Controller
                 'student_number' => $student->student_number,
                 'email' => $student->email,
                 'section' => $student->section,
+                'photo' => $student->photo,
             ],
             'attendance' => [
                 'id' => $attendance->id,

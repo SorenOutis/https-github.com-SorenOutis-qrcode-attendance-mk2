@@ -291,7 +291,7 @@ async function submitStudent() {
         student_number: form.value.student_number,
         email: form.value.email || null,
         section: form.value.section || null,
-        subjects: form.value.selectedSubjectIds,
+        schedule: derivedSchedules.value,
         photo: form.value.photo,
     }, {
         onSuccess: () => {

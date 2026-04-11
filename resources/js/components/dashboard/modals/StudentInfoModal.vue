@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, CheckCircle2, AlertCircle, X, Pencil, QrCode, Printer, Trash2 } from 'lucide-vue-next';
+import { Clock, CheckCircle2, AlertCircle, X, Pencil, QrCode, Printer, Trash2, ChevronDown } from 'lucide-vue-next';
 
 type AttendanceRecord = {
     id: number;
@@ -42,14 +42,13 @@ const props = defineProps<Props>();
 const emit = defineEmits(['update:open', 'edit', 'viewQr', 'printCard', 'delete', 'updateStatus', 'markManually']);
 
 const historyExpanded = ref(false);
+const scheduleExpanded = ref(true);
 
 const groupedAttendanceHistory = computed(() => {
     const groups: { date: string; label: string; records: AttendanceRecord[] }[] = [];
     const seen = new Map<string, AttendanceRecord[]>();
 
-    const list = historyExpanded.value
-        ? props.attendanceHistory
-        : props.attendanceHistory.slice(0, 5);
+    const list = props.attendanceHistory;
 
     for (const record of list) {
         const d = new Date(record.scanned_at);
@@ -133,8 +132,18 @@ function getAvatarGradient(name: string) {
 
                 <!-- Schedule Section -->
                 <div v-if="student.schedule?.length" class="space-y-3">
-                    <h3 class="text-[10px] font-black uppercase tracking-widest text-zinc-400 px-1">Enrolled Schedule</h3>
-                    <div class="grid gap-2">
+                    <button 
+                        @click="scheduleExpanded = !scheduleExpanded" 
+                        class="flex items-center justify-between w-full px-1 group"
+                    >
+                        <h3 class="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200 transition-colors">Enrolled Schedule</h3>
+                        <ChevronDown 
+                            class="h-3.5 w-3.5 text-zinc-400 group-hover:text-zinc-600 transition-all duration-300" 
+                            :class="{ '-rotate-90 opacity-50': !scheduleExpanded }"
+                        />
+                    </button>
+                    
+                    <div v-show="scheduleExpanded" class="grid gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                         <div v-for="(slot, i) in student.schedule" :key="i" class="flex items-center justify-between p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/20 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                             <div class="flex flex-col min-w-0">
                                 <span class="text-xs font-bold text-zinc-900 dark:text-white truncate">{{ getSubjectName(slot.subject_id) }}</span>
@@ -150,62 +159,71 @@ function getAvatarGradient(name: string) {
 
                 <!-- Attendance History -->
                 <div class="space-y-3">
-                    <div class="flex items-center justify-between px-1">
-                        <h3 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Activity History</h3>
-                        <button v-if="attendanceHistory.length > 5" @click="historyExpanded = !historyExpanded" class="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-white hover:opacity-70 transition-opacity">
-                            {{ historyExpanded ? 'View Less' : `View All (${attendanceHistory.length})` }}
-                        </button>
-                    </div>
+                    <button 
+                        @click="historyExpanded = !historyExpanded" 
+                        class="flex items-center justify-between w-full px-1 group"
+                    >
+                        <h3 class="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200 transition-colors">Activity History</h3>
+                        <div class="flex items-center gap-2">
+                            <span v-if="!historyExpanded && attendanceHistory.length" class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{{ attendanceHistory.length }} Records</span>
+                            <ChevronDown 
+                                class="h-3.5 w-3.5 text-zinc-400 group-hover:text-zinc-600 transition-all duration-300" 
+                                :class="{ '-rotate-90 opacity-50': !historyExpanded }"
+                            />
+                        </div>
+                    </button>
                     
-                    <div v-if="historyLoading" class="py-10 text-center">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400 animate-pulse">Loading history...</span>
-                    </div>
-                    <div v-else-if="attendanceHistory.length === 0" class="py-10 text-center rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">No records found</span>
-                    </div>
-                    <div v-else class="space-y-4 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
-                        <div v-for="group in groupedAttendanceHistory" :key="group.date" class="space-y-2">
-                            <div class="text-[9px] font-black uppercase tracking-widest text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/50 sticky top-0 py-1.5 px-3 rounded-lg backdrop-blur-sm z-10 border border-zinc-100/50 dark:border-zinc-800/50">
-                                {{ group.label }}
-                            </div>
-                            <div class="space-y-1.5 px-1">
-                                <div v-for="record in group.records" :key="record.id" class="flex items-center justify-between py-2 px-3 rounded-xl bg-zinc-50/30 dark:bg-zinc-900/20 border border-transparent hover:border-zinc-100 dark:hover:border-zinc-800 transition-colors">
-                                    <div class="flex flex-col">
-                                        <span class="text-[11px] font-bold text-zinc-900 dark:text-white tabular-nums">
-                                            {{ new Date(record.scanned_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) }}
-                                        </span>
-                                        <span v-if="record.slot_start" class="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter tabular-nums mt-0.5">
-                                            {{ formatTimeTo12h(record.slot_start) }} – {{ formatTimeTo12h(record.slot_end) }}
-                                        </span>
+                    <div v-show="historyExpanded" class="space-y-3">
+                        <div v-if="historyLoading" class="py-10 text-center">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400 animate-pulse">Loading history...</span>
+                        </div>
+                        <div v-else-if="attendanceHistory.length === 0" class="py-10 text-center rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">No records found</span>
+                        </div>
+                        <div v-else class="space-y-4 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                            <div v-for="group in groupedAttendanceHistory" :key="group.date" class="space-y-2">
+                                <div class="text-[9px] font-black uppercase tracking-widest text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/50 sticky top-0 py-1.5 px-3 rounded-lg backdrop-blur-sm z-10 border border-zinc-100/50 dark:border-zinc-800/50">
+                                    {{ group.label }}
+                                </div>
+                                <div class="space-y-1.5 px-1">
+                                    <div v-for="record in group.records" :key="record.id" class="flex items-center justify-between py-2 px-3 rounded-xl bg-zinc-50/30 dark:bg-zinc-900/20 border border-transparent hover:border-zinc-100 dark:hover:border-zinc-800 transition-colors">
+                                        <div class="flex flex-col">
+                                            <span class="text-[11px] font-bold text-zinc-900 dark:text-white tabular-nums">
+                                                {{ new Date(record.scanned_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) }}
+                                            </span>
+                                            <span v-if="record.slot_start" class="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter tabular-nums mt-0.5">
+                                                {{ formatTimeTo12h(record.slot_start) }} – {{ formatTimeTo12h(record.slot_end) }}
+                                            </span>
+                                        </div>
+                                        <Select 
+                                            :model-value="record.status" 
+                                            @update:model-value="(val: string) => emit('updateStatus', record.id, val)"
+                                            :disabled="updatingRecordId === record.id"
+                                        >
+                                            <SelectTrigger class="h-6 w-24 rounded-lg border-none bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:ring-0 text-[10px] font-black uppercase tracking-widest p-0 justify-end gap-1.5">
+                                                <div v-if="updatingRecordId === record.id" class="flex items-center gap-1.5">
+                                                    <span class="animate-pulse text-zinc-400 italic">Saving</span>
+                                                </div>
+                                                <SelectValue v-else>
+                                                    <span :class="[
+                                                        'px-2 py-0.5 rounded-md inline-block',
+                                                        record.status === 'Present'  ? 'text-emerald-500 bg-emerald-500/10' :
+                                                        record.status === 'Late'     ? 'text-amber-500 bg-amber-500/10' :
+                                                        record.status === 'Time Out' ? 'text-zinc-500 bg-zinc-500/10' :
+                                                        record.status === 'Absent'   ? 'text-rose-500 bg-rose-500/10' : 'text-zinc-400'
+                                                    ]">
+                                                        {{ record.status }}
+                                                    </span>
+                                                </SelectValue>
+                                            </SelectTrigger>
+                                            <SelectContent class="rounded-xl shadow-2xl">
+                                                <SelectItem value="Present" class="text-[10px] font-black uppercase tracking-widest">Present</SelectItem>
+                                                <SelectItem value="Late" class="text-[10px] font-black uppercase tracking-widest">Late</SelectItem>
+                                                <SelectItem value="Time Out" class="text-[10px] font-black uppercase tracking-widest">Time Out</SelectItem>
+                                                <SelectItem value="Absent" class="text-[10px] font-black uppercase tracking-widest">Absent</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
-                                    <Select 
-                                        :model-value="record.status" 
-                                        @update:model-value="(val: string) => emit('updateStatus', record.id, val)"
-                                        :disabled="updatingRecordId === record.id"
-                                    >
-                                        <SelectTrigger class="h-6 w-24 rounded-lg border-none bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:ring-0 text-[10px] font-black uppercase tracking-widest p-0 justify-end gap-1.5">
-                                            <div v-if="updatingRecordId === record.id" class="flex items-center gap-1.5">
-                                                <span class="animate-pulse text-zinc-400 italic">Saving</span>
-                                            </div>
-                                            <SelectValue v-else>
-                                                <span :class="[
-                                                    'px-2 py-0.5 rounded-md inline-block',
-                                                    record.status === 'Present'  ? 'text-emerald-500 bg-emerald-500/10' :
-                                                    record.status === 'Late'     ? 'text-amber-500 bg-amber-500/10' :
-                                                    record.status === 'Time Out' ? 'text-zinc-500 bg-zinc-500/10' :
-                                                    record.status === 'Absent'   ? 'text-rose-500 bg-rose-500/10' : 'text-zinc-400'
-                                                ]">
-                                                    {{ record.status }}
-                                                </span>
-                                            </SelectValue>
-                                        </SelectTrigger>
-                                        <SelectContent class="rounded-xl shadow-2xl">
-                                            <SelectItem value="Present" class="text-[10px] font-black uppercase tracking-widest">Present</SelectItem>
-                                            <SelectItem value="Late" class="text-[10px] font-black uppercase tracking-widest">Late</SelectItem>
-                                            <SelectItem value="Time Out" class="text-[10px] font-black uppercase tracking-widest">Time Out</SelectItem>
-                                            <SelectItem value="Absent" class="text-[10px] font-black uppercase tracking-widest">Absent</SelectItem>
-                                        </SelectContent>
-                                    </Select>
                                 </div>
                             </div>
                         </div>

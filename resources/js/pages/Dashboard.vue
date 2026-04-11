@@ -332,8 +332,9 @@ function openStudentInfoModal(student: Student) {
 async function fetchAttendanceHistory(studentId: number) {
     historyLoading.value = true;
     try {
-        const response = await fetch(`/students/${studentId}/attendance-history`);
-        attendanceHistory.value = await response.json();
+        const response = await fetch(`/students/${studentId}/attendance`);
+        const data = await response.json();
+        attendanceHistory.value = data.history || [];
     } catch (e) {
         toast.error('Failed to load history');
     } finally {

@@ -160,10 +160,16 @@ class StudentAnalyticsController extends Controller
                     continue;
                 }
 
+                // Only include if the subject still exists
+                $subjectName = $subjectMap->get($session['subject_id']);
+                if (! $subjectName) {
+                    continue;
+                }
+
                 $detailedHistory[] = [
                     'date' => $tempDate->toDateString(),
                     'day' => $dayName,
-                    'subject_name' => $subjectMap->get($session['subject_id']) ?? 'Unknown Subject',
+                    'subject_name' => $subjectName,
                     'schedule_time' => CarbonImmutable::parse($session['start'])->format('g:i A').' - '.CarbonImmutable::parse($session['end'])->format('g:i A'),
                     'status' => $status,
                     'scanned_at' => $scannedAt,
@@ -201,14 +207,16 @@ class StudentAnalyticsController extends Controller
             'heatmap' => $heatmap,
             'filters' => ['days' => $days],
             'subjects' => $subjects,
-            'enrolledSubjects' => collect($studentSchedule)->map(function ($item) use ($subjectMap) {
-                return [
-                    'id' => $item['subject_id'],
-                    'name' => $subjectMap->get($item['subject_id']) ?? 'Unknown',
-                    'time' => CarbonImmutable::parse($item['start'])->format('g:i A').' - '.CarbonImmutable::parse($item['end'])->format('g:i A'),
-                    'day' => $item['day'],
-                ];
-            })->values(),
+            'enrolledSubjects' => collect($studentSchedule)
+                ->filter(fn ($item) => $subjectMap->has($item['subject_id']))
+                ->map(function ($item) use ($subjectMap) {
+                    return [
+                        'id' => $item['subject_id'],
+                        'name' => $subjectMap->get($item['subject_id']),
+                        'time' => CarbonImmutable::parse($item['start'])->format('g:i A').' - '.CarbonImmutable::parse($item['end'])->format('g:i A'),
+                        'day' => $item['day'],
+                    ];
+                })->values(),
         ]);
     }
 }

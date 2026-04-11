@@ -99,7 +99,9 @@ class DashboardController extends Controller
             ->get()
             ->groupBy('student_id');
 
-        $mapStudent = function ($student) use ($latestByStudent, $statusesByStudent, $allAttendancesByStudent) {
+        $existingSubjectIds = $subjects->pluck('id')->toArray();
+
+        $mapStudent = function ($student) use ($latestByStudent, $statusesByStudent, $allAttendancesByStudent, $existingSubjectIds) {
             $latest = $latestByStudent->get($student->id);
 
             $historyStats = $allAttendancesByStudent->get($student->id, collect());
@@ -112,6 +114,12 @@ class DashboardController extends Controller
             $positiveRecords = $presentCount + $lateCount + $excusedCount;
             $attendancePercentage = $totalRecords > 0 ? (int) round(($positiveRecords / $totalRecords) * 100) : 100;
 
+            // Filter out deleted subjects from schedule
+            $schedule = collect($student->schedule ?? [])
+                ->filter(fn ($slot) => in_array((int) ($slot['subject_id'] ?? 0), $existingSubjectIds))
+                ->values()
+                ->all();
+
             return [
                 'id' => $student->id,
                 'name' => $student->name,
@@ -119,7 +127,7 @@ class DashboardController extends Controller
                 'email' => $student->email,
                 'section' => $student->section,
                 'qr_token' => $student->qr_token,
-                'schedule' => $student->schedule,
+                'schedule' => $schedule,
                 'photo' => $student->photo,
                 'created_at' => $student->created_at,
                 'deleted_at' => $student->deleted_at,

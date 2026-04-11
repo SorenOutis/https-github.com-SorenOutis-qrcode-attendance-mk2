@@ -325,152 +325,157 @@ function handleClose() {
 
 <template>
     <Dialog :open="isOpen" @update:open="(val) => !val && handleClose()">
-        <DialogContent class="max-w-md border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden p-0">
-            <DialogHeader class="p-6 pb-2">
-                <DialogTitle class="text-2xl font-black tracking-tight flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 dark:bg-zinc-100 dark:border-white shadow-xl">
-                        <Scan class="size-6 text-white dark:text-zinc-900" />
-                    </div>
-                    Scan Student QR
-                </DialogTitle>
-            </DialogHeader>
+        <DialogContent class="max-w-[calc(100vw-2rem)] md:max-w-4xl border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden p-0 transition-all duration-500">
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <!-- Left Section: Scanner Feed -->
+                <div class="p-6 md:p-8 flex flex-col space-y-6">
+                    <DialogHeader class="p-0">
+                        <DialogTitle class="text-2xl font-black tracking-tight flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 dark:bg-zinc-100 dark:border-white shadow-xl">
+                                <Scan class="size-6 text-white dark:text-zinc-900" />
+                            </div>
+                            Scan QR
+                        </DialogTitle>
+                    </DialogHeader>
 
-            <div class="space-y-6 px-6 pb-6 pt-2">
-                <div class="relative aspect-square overflow-hidden rounded-2xl border-4 border-zinc-100 dark:border-zinc-900 bg-black shadow-2xl ring-1 ring-zinc-950/10 preserve-3d">
-                    <video
-                        ref="videoRef"
-                        class="h-full w-full object-cover opacity-90 transition-transform duration-500"
-                        :class="{ '-scale-x-100': facingMode === 'user' }"
-                        playsinline
-                        muted
-                    ></video>
+                    <div class="relative aspect-square md:aspect-auto md:flex-1 overflow-hidden rounded-2xl border-4 border-zinc-100 dark:border-zinc-900 bg-black shadow-2xl ring-1 ring-zinc-950/10 preserve-3d">
+                        <video
+                            ref="videoRef"
+                            class="h-full w-full object-cover opacity-90 transition-transform duration-500"
+                            :class="{ '-scale-x-100': facingMode === 'user' }"
+                            playsinline
+                            muted
+                        ></video>
 
-                    <!-- Camera Switch Button -->
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        class="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/50 border-white/20 text-white backdrop-blur-md z-30 hover:bg-black/70 transition-all active:scale-90"
-                        @click="toggleCamera"
-                    >
-                        <RotateCw class="size-5" />
-                    </Button>
-
-                    <!-- 3D Grid Overlay -->
-                    <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
-                        <div class="absolute inset-0 [background-image:linear-gradient(to_right,rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:40px_40px] [transform:perspective(500px)_rotateX(60deg)_translateY(-50%)]"></div>
-                    </div>
-
-                    <!-- Scanning Volume / Corners -->
-                    <div class="absolute inset-4 pointer-events-none opacity-40 z-20">
-                        <div class="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-white rounded-tl-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
-                        <div class="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-white rounded-tr-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
-                        <div class="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-white rounded-bl-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
-                        <div class="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-white rounded-br-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
-                    </div>
-                    
-                    <!-- Center Targeting Dot -->
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30 z-20">
-                        <div class="size-2 rounded-full bg-white shadow-[0_0_10px_white]"></div>
-                    </div>
-
-                    <!-- Cooldown Overlay -->
-                    <div 
-                        v-if="isCooldownActive"
-                        class="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-20"
-                    >
-                        <div class="flex flex-col items-center gap-4">
-                            <div class="h-12 w-12 animate-spin rounded-full border-4 border-white border-t-transparent shadow-[0_0_15px_rgba(255,255,255,0.3)]"></div>
-                            <span class="text-xs font-black text-white tracking-[0.2em]">READY IN 2S...</span>
-                        </div>
-                    </div>
-
-                    <!-- Scanner Feedback Overlay -->
-                    <div 
-                        v-if="scanning"
-                        class="absolute inset-0 pointer-events-none transition-all duration-500 z-10"
-                        :class="{
-                            'bg-white/10 border-white': scanFeedback === 'success',
-                            'bg-zinc-900/40 border-zinc-800': scanFeedback === 'error',
-                        }"
-                    >
-                        <!-- Scan Line (Enhanced 3D Laser) -->
-                        <div 
-                            v-if="!scanFeedback"
-                            class="absolute left-0 right-0 h-[4px] bg-white shadow-[0_0_50px_10px_rgba(255,255,255,1),0_0_100px_20px_rgba(255,255,255,0.5)] animate-scan-line-laser after:content-[''] after:absolute after:inset-0 after:bg-white after:h-[2px] after:top-1/2 after:-translate-y-1/2 after:blur-[1px]"
-                        ></div>
-
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <CheckCircle2 v-if="scanFeedback === 'success'" class="h-20 w-20 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)] animate-in zoom-in duration-300" />
-                            <AlertCircle v-if="scanFeedback === 'error'" class="h-20 w-20 text-white drop-shadow-[0_0_20px_rgba(0,0,0,0.5)] animate-shake-global" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="rounded-2xl bg-zinc-100 dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/80">
-                    <p class="text-[11px] font-bold leading-relaxed text-zinc-600 dark:text-zinc-400 uppercase tracking-wide text-center">
-                        Align the student's QR code within the frame for automatic detection
-                    </p>
-                </div>
-
-                <div v-if="scanError && !scanResultModalOpen" class="space-y-3">
-                    <p class="text-[10px] font-black tracking-widest uppercase text-center text-white bg-zinc-900 p-3 rounded-xl border border-zinc-800 shadow-lg">
-                        {{ scanError }}
-                    </p>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        class="w-full rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-black tracking-widest uppercase"
-                        @click="startCamera"
-                    >
-                        Retry Camera
-                    </Button>
-                </div>
-
-                <DialogFooter class="sm:justify-center">
-                    <Button variant="outline" size="lg" class="w-full h-14 rounded-2xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-900 font-black tracking-widest uppercase transition-all shadow-md active:scale-95" @click="handleClose">
-                        Exit Scanner
-                    </Button>
-                </DialogFooter>
-
-                <!-- Recent Scans History -->
-                <div v-if="recentScans.length > 0" class="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-900">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-[10px] font-black tracking-widest uppercase text-zinc-400">Recent Activity</h4>
-                        <span class="px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black text-zinc-500 uppercase">{{ recentScans.length }} session{{ recentScans.length > 1 ? 's' : '' }}</span>
-                    </div>
-                    <div class="space-y-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
-                        <div 
-                            v-for="scan in recentScans" 
-                            :key="scan.id"
-                            class="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50 animate-in slide-in-from-bottom-2 duration-300"
+                        <!-- Camera Switch Button -->
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            class="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/50 border-white/20 text-white backdrop-blur-md z-30 hover:bg-black/70 transition-all active:scale-90"
+                            @click="toggleCamera"
                         >
+                            <RotateCw class="size-5" />
+                        </Button>
+
+                        <!-- 3D Grid Overlay -->
+                        <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+                            <div class="absolute inset-0 [background-image:linear-gradient(to_right,rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:40px_40px] [transform:perspective(500px)_rotateX(60deg)_translateY(-50%)]"></div>
+                        </div>
+
+                        <!-- Scanning Volume / Corners -->
+                        <div class="absolute inset-4 pointer-events-none opacity-40 z-20">
+                            <div class="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-white rounded-tl-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
+                            <div class="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-white rounded-tr-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
+                            <div class="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-white rounded-bl-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
+                            <div class="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-white rounded-br-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
+                        </div>
+                        
+                        <!-- Center Targeting Dot -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30 z-20">
+                            <div class="size-2 rounded-full bg-white shadow-[0_0_10px_white]"></div>
+                        </div>
+
+                        <!-- Cooldown Overlay -->
+                        <div 
+                            v-if="isCooldownActive"
+                            class="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-20"
+                        >
+                            <div class="flex flex-col items-center gap-4">
+                                <div class="h-12 w-12 animate-spin rounded-full border-4 border-white border-t-transparent shadow-[0_0_15px_rgba(255,255,255,0.3)]"></div>
+                                <span class="text-xs font-black text-white tracking-[0.2em]">READY IN 2S...</span>
+                            </div>
+                        </div>
+
+                        <!-- Scanner Feedback Overlay -->
+                        <div 
+                            v-if="scanning"
+                            class="absolute inset-0 pointer-events-none transition-all duration-500 z-10"
+                            :class="{
+                                'bg-white/10 border-white': scanFeedback === 'success',
+                                'bg-zinc-900/40 border-zinc-800': scanFeedback === 'error',
+                            }"
+                        >
+                            <!-- Scan Line (Enhanced 3D Laser) -->
                             <div 
-                                class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-                                :class="[
-                                    scan.status === 'Present' ? 'bg-emerald-500/10 text-emerald-500' :
-                                    scan.status === 'Late' ? 'bg-amber-500/10 text-amber-500' :
-                                    'bg-zinc-500/10 text-zinc-500'
-                                ]"
-                            >
-                                <CheckCircle2 v-if="scan.status === 'Present'" class="size-4" />
-                                <Clock v-else-if="scan.status === 'Late'" class="size-4" />
-                                <Scan v-else class="size-4" />
+                                v-if="!scanFeedback"
+                                class="absolute left-0 right-0 h-[4px] bg-white shadow-[0_0_50px_10px_rgba(255,255,255,1),0_0_100px_20px_rgba(255,255,255,0.5)] animate-scan-line-laser after:content-[''] after:absolute after:inset-0 after:bg-white after:h-[2px] after:top-1/2 after:-translate-y-1/2 after:blur-[1px]"
+                            ></div>
+
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <CheckCircle2 v-if="scanFeedback === 'success'" class="h-20 w-20 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)] animate-in zoom-in duration-300" />
+                                <AlertCircle v-if="scanFeedback === 'error'" class="h-20 w-20 text-white drop-shadow-[0_0_20px_rgba(0,0,0,0.5)] animate-shake-global" />
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-[11px] font-bold text-zinc-950 dark:text-white truncate">{{ scan.student.name }}</p>
-                                <p class="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">
-                                    {{ scan.status }} · {{ formatTimeTo12h(new Date(scan.scanned_at).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })) }}
-                                </p>
-                            </div>
-                            <Badge 
-                                variant="outline" 
-                                class="text-[8px] font-black h-5 px-1.5 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
-                            >
-                                {{ scan.subject?.name || 'N/A' }}
-                            </Badge>
                         </div>
                     </div>
+                </div>
+
+                <!-- Right Section: Details & History -->
+                <div class="p-6 md:p-8 bg-zinc-50/50 dark:bg-white/[0.02] border-t md:border-t-0 md:border-l border-zinc-100 dark:border-zinc-900/50 flex flex-col justify-between space-y-6">
+                    <div class="space-y-6">
+                        <div class="rounded-2xl bg-white dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/80">
+                            <p class="text-[11px] font-bold leading-relaxed text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                                Align the student's QR code within the frame for automatic detection.
+                            </p>
+                        </div>
+
+                        <div v-if="scanError && !scanResultModalOpen" class="space-y-3">
+                            <p class="text-[10px] font-black tracking-widest uppercase text-center text-white bg-zinc-900 p-3 rounded-xl border border-zinc-800 shadow-lg">
+                                {{ scanError }}
+                            </p>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="w-full rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-black tracking-widest uppercase"
+                                @click="startCamera"
+                            >
+                                Retry Camera
+                            </Button>
+                        </div>
+
+                        <!-- Recent Scans History -->
+                        <div v-if="recentScans.length > 0" class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-[10px] font-black tracking-widest uppercase text-zinc-400">Recent Activity</h4>
+                                <span class="px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black text-zinc-500 uppercase">{{ recentScans.length }} session{{ recentScans.length > 1 ? 's' : '' }}</span>
+                            </div>
+                            <div class="space-y-2 max-h-[220px] md:max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div 
+                                    v-for="scan in recentScans" 
+                                    :key="scan.id"
+                                    class="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800/50 animate-in slide-in-from-bottom-2 duration-300 shadow-sm"
+                                >
+                                    <div 
+                                        class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                                        :class="[
+                                            scan.status === 'Present' ? 'bg-emerald-500/10 text-emerald-500' :
+                                            scan.status === 'Late' ? 'bg-amber-500/10 text-amber-500' :
+                                            'bg-zinc-500/10 text-zinc-500'
+                                        ]"
+                                    >
+                                        <CheckCircle2 v-if="scan.status === 'Present'" class="size-4" />
+                                        <AlertCircle v-else-if="scan.status === 'Late'" class="size-4" />
+                                        <Scan v-else class="size-4" />
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-[11px] font-bold text-zinc-950 dark:text-white truncate">{{ scan.student.name }}</p>
+                                        <p class="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">
+                                            {{ scan.status }} · {{ formatTimeTo12h(new Date(scan.scanned_at).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })) }}
+                                        </p>
+                                    </div>
+                                    <div class="text-[8px] font-black h-5 px-1.5 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 rounded flex items-center justify-center opacity-60">
+                                        {{ scan.subject?.name || 'N/A' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter class="sm:justify-stretch pt-4">
+                        <Button variant="outline" size="lg" class="w-full h-14 rounded-2xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-zinc-900 font-black tracking-widest uppercase transition-all shadow-md active:scale-95" @click="handleClose">
+                            Exit Scanner
+                        </Button>
+                    </DialogFooter>
                 </div>
             </div>
         </DialogContent>

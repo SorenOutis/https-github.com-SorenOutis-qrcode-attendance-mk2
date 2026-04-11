@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\ActivityLogger;
 use App\Models\Attendance;
 use App\Models\Student;
+use App\Models\Subject;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -47,9 +48,12 @@ class AttendanceController extends Controller
         $date = $now->toDateString();
         $time = $now->format('H:i');
 
+        $validSubjectIds = Subject::pluck('id')->toArray();
+
         $schedule = collect($student->schedule ?? [])
-            ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end']))
+            ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end'], $slot['subject_id']))
             ->filter(fn ($slot) => $slot['day'] === $dayOfWeek)
+            ->filter(fn ($slot) => in_array((int) $slot['subject_id'], $validSubjectIds))
             ->sortBy('start')
             ->values();
 
@@ -101,7 +105,7 @@ class AttendanceController extends Controller
                     $nextTime = CarbonImmutable::parse($date.' '.$nextSlot['start'], $appTz)->format('g:i A');
                     $msg = "You have already recorded attendance for the current subject. The next subject will open at {$nextTime}.";
                 } else {
-                    $msg = 'You have already recorded attendance for your last subject. Please wait until its time ends to scan for Time Out.';
+                    $msg = "All classes for today are completed. Your next session will be on your next scheduled day.";
                 }
 
                 return response()->json([
@@ -124,7 +128,7 @@ class AttendanceController extends Controller
             // Check if they've already Timed Out today
             if ($dailyRecords->contains('status', 'Time Out')) {
                 return response()->json([
-                    'message' => 'You have already completed your attendance (Time Out) for today.',
+                    'message' => 'All classes for today are completed. See you next time!',
                 ], 422);
             }
 

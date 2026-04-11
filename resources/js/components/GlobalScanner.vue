@@ -340,13 +340,13 @@ function handleClose() {
 <template>
     <Dialog :open="isOpen" @update:open="(val) => !val && handleClose()">
         <DialogContent class="max-w-[calc(100vw-2rem)] md:max-w-4xl border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden p-0 transition-all duration-500">
-            <div class="grid grid-cols-1 md:grid-cols-2">
-                <!-- Left Section: Scanner Feed -->
-                <div class="p-6 md:p-8 flex flex-col space-y-6">
-                    <DialogHeader class="p-0">
-                        <DialogTitle class="text-2xl font-black tracking-tight flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 dark:bg-zinc-100 dark:border-white shadow-xl">
-                                <Scan class="size-6 text-white dark:text-zinc-900" />
+            <div class="flex flex-col md:grid md:grid-cols-2 h-full overflow-hidden">
+                <!-- Left Section: Scanner -->
+                <div class="h-[35vh] md:h-full flex flex-col bg-zinc-950 p-3 md:p-6 lg:p-10 relative overflow-hidden group">
+                    <DialogHeader class="p-0 mb-4">
+                        <DialogTitle class="text-xl md:text-2xl font-black tracking-tight flex items-center gap-3 text-white">
+                            <div class="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-xl bg-white/10 border border-white/20 shadow-xl">
+                                <Scan class="size-5 md:size-6 text-white" />
                             </div>
                             Scan QR
                         </DialogTitle>
@@ -424,15 +424,15 @@ function handleClose() {
                 </div>
 
                 <!-- Right Section: Persistent Details & History -->
-                <div class="p-6 md:p-8 bg-zinc-50/50 dark:bg-white/[0.02] border-t md:border-t-0 md:border-l border-zinc-100 dark:border-zinc-900/50 flex flex-col justify-between space-y-6">
-                    <div class="space-y-6 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                <div class="p-4 md:p-8 bg-zinc-50/50 dark:bg-white/[0.02] border-t md:border-t-0 md:border-l border-zinc-100 dark:border-zinc-900/50 flex flex-col min-h-0 overflow-hidden">
+                    <div class="space-y-4 md:space-y-6 flex-1 overflow-y-auto pr-1 custom-scrollbar pb-4">
                         <!-- Active Scan Result (High Visibility) -->
                         <div v-if="lastScanResult && !scanError" class="animate-in zoom-in slide-in-from-top-4 duration-500">
-                            <div class="rounded-3xl bg-white dark:bg-zinc-900 p-6 border-2 border-zinc-100 dark:border-zinc-800 shadow-xl space-y-5 text-center relative overflow-hidden ring-1 ring-zinc-950/5">
+                            <div class="rounded-2xl md:rounded-3xl bg-white dark:bg-zinc-900 p-4 md:p-6 border-2 border-zinc-100 dark:border-zinc-800 shadow-xl space-y-4 md:space-y-5 text-center relative overflow-hidden ring-1 ring-zinc-950/5">
                                 <!-- Status Badge Overlay -->
-                                <div class="absolute top-0 right-0 p-3">
+                                <div class="absolute top-0 right-0 p-2 md:p-3">
                                     <span 
-                                        class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border"
+                                        class="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest border"
                                         :class="{
                                             'bg-emerald-500/10 text-emerald-600 border-emerald-500/20': lastScanResult.status === 'Present',
                                             'bg-amber-500/10 text-amber-600 border-amber-500/20': lastScanResult.status === 'Late',
@@ -444,21 +444,21 @@ function handleClose() {
                                 </div>
 
                                 <!-- Profile Photo -->
-                                <div class="mx-auto size-24 rounded-[2rem] overflow-hidden border-4 border-zinc-50 dark:border-zinc-800 shadow-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                                <div class="mx-auto size-16 md:size-24 rounded-2xl md:rounded-[2rem] overflow-hidden border-2 md:border-4 border-zinc-50 dark:border-zinc-800 shadow-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
                                     <img v-if="lastScanResult.student.photo" :src="lastScanResult.student.photo" class="h-full w-full object-cover">
-                                    <span v-else class="text-2xl font-black text-zinc-300">{{ lastScanResult.student.name.charAt(0) }}</span>
+                                    <span v-else class="text-xl md:text-2xl font-black text-zinc-300">{{ lastScanResult.student.name.charAt(0) }}</span>
                                 </div>
 
-                                <div class="space-y-1">
-                                    <p class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Scan Successful</p>
-                                    <h3 class="text-xl font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
+                                <div class="space-y-0.5 md:space-y-1">
+                                    <p class="text-[8px] md:text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Scan Successful</p>
+                                    <h3 class="text-lg md:text-xl font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
                                         {{ lastScanResult.student.name }}
                                     </h3>
-                                    <p class="text-[11px] font-bold text-zinc-400 tracking-widest">{{ lastScanResult.student.student_number }}</p>
+                                    <p class="text-[9px] md:text-[11px] font-bold text-zinc-400 tracking-widest">{{ lastScanResult.student.student_number }}</p>
                                 </div>
 
-                                <div class="pt-2 flex flex-col items-center gap-1.5 border-t border-zinc-100 dark:border-zinc-800 mt-2">
-                                    <p class="text-[9px] font-bold text-zinc-400 flex items-center gap-2">
+                                <div class="pt-2 flex flex-col items-center gap-1 border-t border-zinc-100 dark:border-zinc-800 mt-2">
+                                    <p class="text-[8px] md:text-[9px] font-bold text-zinc-400 flex items-center gap-2">
                                         <span class="opacity-50 italic">Subject:</span> {{ lastScanResult.subject?.name || 'N/A' }} 
                                     </p>
                                 </div>
